@@ -39,6 +39,9 @@ jobs:
   publish-npm:
     needs: build-and-test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Repository checkout
         uses: actions/checkout@v4
@@ -56,9 +59,7 @@ jobs:
         run: yarn build
 
       - name: Publish to npmjs
-        run: yarn npm publish
-        env:
-          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
 
   publish-github:
     needs: build-and-test
