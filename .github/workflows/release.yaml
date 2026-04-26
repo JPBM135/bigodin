@@ -2,7 +2,7 @@ name: Release
 
 on:
   release:
-    types: [published]
+    types: [ published ]
   workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
       - name: Node setup
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -30,6 +30,9 @@ jobs:
             exit 1
           fi
 
+      - name: Setup mustache spec
+        run: yarn test:setup:mustache-spec
+
       - name: Build and test
         run: yarn test
 
@@ -43,8 +46,8 @@ jobs:
       - name: Node setup (npmjs)
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -70,9 +73,9 @@ jobs:
       - name: Node setup (GitHub Packages)
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@jpbm135'
+          node-version: "22"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@jpbm135"
 
       - name: Install dependencies
         run: yarn install --immutable
