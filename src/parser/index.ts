@@ -168,9 +168,9 @@ export const $template = Pr.context('mustache', function* () {
         statements: [],
     }];
 
-    /* $lab:coverage:off$ */
+    /* v8 ignore start */
     while (true) {
-    /* $lab:coverage:on$ */
+    /* v8 ignore stop */
         const txt = yield Pr.optional($text);
         if (txt) {
             topOfStackStmts(stack).push(txt);
@@ -211,17 +211,17 @@ export const $template = Pr.context('mustache', function* () {
                     if (expression.type === 'LITERAL') {
                         yield Pr.fail(`Blocks must receive path expressions or helpers. Literal blocks are not allowed.`);
                         // Never happens, just for typescript to know that below here, expression is not LiteralStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         return;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
 
                     if (expression.type === 'VARIABLE') {
                         yield Pr.fail(`Variable blocks are not allowed, use '{{#if $var}}' for conditionals or '{{#each $var}}' for loops instead.`);
                         // Never happens, just for typescript to know that below here, expression is not VariableStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         return;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
 
                     stack.push(buildBlock(open, expression, typeChar === '^'));
@@ -235,16 +235,16 @@ export const $template = Pr.context('mustache', function* () {
                     if (expression.type === 'LITERAL') {
                         yield Pr.fail(`Unexpected {{/${expression.value}}}. Literal blocks are not allowed to be closed.`);
                         // Never happens, just for typescript to know that below here, expression is not LiteralStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         return;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
                     if (expression.type === 'VARIABLE') {
                         yield Pr.fail(`Unexpected {{/${expression.name}}}. Variable blocks are not allowed.`);
                         // Never happens, just for typescript to know that below here, expression is not VariableStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         return;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
 
                     if (expression.params.length > 0) {
@@ -314,18 +314,18 @@ export const $template = Pr.context('mustache', function* () {
                     if (stmt.expression.type === 'LITERAL') {
                         yield Pr.fail('{{else}} blocks cannot have parameters');
                         // Never happens, just for typescript to know that below here, expression is not LiteralStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         break;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
 
                     // Else followed by variable
                     if (stmt.expression.type === 'VARIABLE') {
                         yield Pr.fail('{{else}} blocks cannot have variable parameters. Use "{{else if $var}}" instead.');
                         // Never happens, just for typescript to know that below here, expression is not VariableStatement
-                        /* $lab:coverage:off$ */
+                        /* v8 ignore start */
                         break;
-                        /* $lab:coverage:on$ */
+                        /* v8 ignore stop */
                     }
 
                     // Nested block

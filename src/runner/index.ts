@@ -73,14 +73,14 @@ export async function runStatement(execution: Execution, statement: Statement): 
             return await runAssignment(execution, statement);
         case 'VARIABLE':
             return await runVariable(execution, statement);
+        /* v8 ignore start */
         case 'TEMPLATE':
             // Shouldn't happen, only here for TS's exhaustiveness checking below
-            /* $lab:coverage:off$ */
             throw new Error('Template statements cannot be nested');
-            /* $lab:coverage:on$ */
         default:
             statement satisfies never;
             return null;
+        /* v8 ignore stop */
     }
 }
 

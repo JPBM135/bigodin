@@ -1,27 +1,24 @@
-const Lab = require('@hapi/lab');
-const Code = require('@hapi/code');
+import { describe, it, expect } from 'vitest';
 
-const { $expression } = require('../../dist/parser/expression');
-const parse = code => $expression.parse(code + '}}');
+import { $expression } from '../../src/parser/expression';
 
-const { describe, it } = exports.lab = Lab.script();
-const { expect } = Code;
+const parse = (code: string) => $expression.parse(code + '}}');
 
 describe('parser', () => {
     describe('expression', () => {
 
         it('should parse literals', () => {
-            expect(parse('true')).to.equal({
+            expect(parse('true')).toEqual({
                 type: 'LITERAL',
                 loc: { start: 0, end: 4 },
                 value: true,
             });
-            expect(parse('42')).to.equal({
+            expect(parse('42')).toEqual({
                 type: 'LITERAL',
                 loc: { start: 0, end: 2 },
                 value: 42,
             });
-            expect(parse('"foo"')).to.equal({
+            expect(parse('"foo"')).toEqual({
                 type: 'LITERAL',
                 loc: { start: 0, end: 5 },
                 value: 'foo',
@@ -29,19 +26,19 @@ describe('parser', () => {
         });
 
         it('should parse path parameters', () => {
-            expect(parse('foo')).to.equal({
+            expect(parse('foo')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 3 },
                 path: 'foo',
                 params: [],
             });
-            expect(parse('foo.bar')).to.equal({
+            expect(parse('foo.bar')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 7 },
                 path: 'foo.bar',
                 params: [],
             });
-            expect(parse('foo.a-b')).to.equal({
+            expect(parse('foo.a-b')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 7 },
                 path: 'foo.a-b',
@@ -50,7 +47,7 @@ describe('parser', () => {
         });
 
         it('should parse helpers', () => {
-            expect(parse('foo "bar"')).to.equal({
+            expect(parse('foo "bar"')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 9 },
                 path: 'foo',
@@ -60,7 +57,7 @@ describe('parser', () => {
                     value: 'bar',
                 }],
             });
-            expect(parse('foo bar')).to.equal({
+            expect(parse('foo bar')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 7 },
                 path: 'foo',
@@ -71,7 +68,7 @@ describe('parser', () => {
                     params: [],
                 }],
             });
-            expect(parse('foo bar baz')).to.equal({
+            expect(parse('foo bar baz')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 11 },
                 path: 'foo',
@@ -87,7 +84,7 @@ describe('parser', () => {
                     params: [],
                 }],
             });
-            expect(parse('foo bar "baz"')).to.equal({
+            expect(parse('foo bar "baz"')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 13 },
                 path: 'foo',
@@ -105,7 +102,7 @@ describe('parser', () => {
         });
 
         it('should parse parenthised arguments', () => {
-            expect(parse('foo ("bar") (5)')).to.equal({
+            expect(parse('foo ("bar") (5)')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 15 },
                 path: 'foo',
@@ -120,7 +117,7 @@ describe('parser', () => {
                 }],
             });
 
-            expect(parse('foo (bar)')).to.equal({
+            expect(parse('foo (bar)')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 9 },
                 path: 'foo',
@@ -134,7 +131,7 @@ describe('parser', () => {
         });
 
         it('should parse nested expressions', () => {
-            expect(parse('foo (bar "5") true')).to.equal({
+            expect(parse('foo (bar "5") true')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 18 },
                 path: 'foo',
@@ -153,7 +150,7 @@ describe('parser', () => {
                     value: true,
                 }],
             });
-            expect(parse('foo (bar "5" (baz "yada" 7)) true')).to.equal({
+            expect(parse('foo (bar "5" (baz "yada" 7)) true')).toEqual({
                 type: 'EXPRESSION',
                 loc: { start: 0, end: 33 },
                 path: 'foo',
@@ -188,7 +185,7 @@ describe('parser', () => {
         });
 
         it('should not close mustache inside string literal', () => {
-            expect(parse('"foo }}"')).to.equal({
+            expect(parse('"foo }}"')).toEqual({
                 type: 'LITERAL',
                 loc: { start: 0, end: 8 },
                 value: 'foo }}',
@@ -196,13 +193,13 @@ describe('parser', () => {
         });
 
         it('should give friendly errors', () => {
-            expect(() => parse('"foo" 5')).to.throw(/literal mustaches cannot have parameters/i);
-            expect(() => parse('foo bar)')).to.throw(/this parenthesis wasn't opened/i);
-            expect(() => parse('true)')).to.throw(/this parenthesis wasn't opened/i);
-            expect(() => parse('foo (bar')).to.throw(/make sure every parenthesis was closed/i);
-            expect(() => parse('foo (true')).to.throw(/make sure every parenthesis was closed/i);
-            expect(() => parse('foo ()')).to.throw(/expected literal, helper or context path/i);
-            expect(() => parse('foo !')).to.throw(/expected expression parameters or "}}"/i);
+            expect(() => parse('"foo" 5')).toThrow(/literal mustaches cannot have parameters/i);
+            expect(() => parse('foo bar)')).toThrow(/this parenthesis wasn't opened/i);
+            expect(() => parse('true)')).toThrow(/this parenthesis wasn't opened/i);
+            expect(() => parse('foo (bar')).toThrow(/make sure every parenthesis was closed/i);
+            expect(() => parse('foo (true')).toThrow(/make sure every parenthesis was closed/i);
+            expect(() => parse('foo ()')).toThrow(/expected literal, helper or context path/i);
+            expect(() => parse('foo !')).toThrow(/expected expression parameters or "}}"/i);
         });
     });
 });

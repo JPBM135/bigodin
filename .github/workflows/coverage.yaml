@@ -21,8 +21,6 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Build
-        run: yarn build
 
       - name: Clone spec repository
         run: yarn test:setup:mustache-spec
@@ -32,4 +30,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage.html
+          path: coverage/

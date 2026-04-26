@@ -1,12 +1,12 @@
 import Pr from 'pierrejs';
 import { char } from './utils';
 
-/* $lab:coverage:off$ */
+/* v8 ignore start */
 enum State {
     READ_CHAR,
     READ_ESCAPED_CHAR,
 }
-/* $lab:coverage:on$ */
+/* v8 ignore stop */
 
 const escapes = {
     '"': '"',
@@ -28,9 +28,9 @@ export const lString = Pr.context('string', function* () {
     let state: State = State.READ_CHAR;
     let content = '';
 
-    /* $lab:coverage:off$ */
+    /* v8 ignore start */
     while (true) {
-    /* $lab:coverage:on$ */
+    /* v8 ignore stop */
         switch (state) {
             case State.READ_CHAR: {
                 const c = yield char;
@@ -54,10 +54,10 @@ export const lString = Pr.context('string', function* () {
                 break;
             }
 
-            /* $lab:coverage:off$ */
+            /* v8 ignore start */
             default:
                 yield Pr.fail(`Unexpected state ${state} at string parser`);
-            /* $lab:coverage:on$ */
+            /* v8 ignore stop */
         }
     }
 });

@@ -1,53 +1,50 @@
-const Lab = require('@hapi/lab');
-const Code = require('@hapi/code');
+import { describe, it, expect } from 'vitest';
 
-const { compile, compileExpression, run, default: Bigodon } = require('../../dist');
-const { VERSION } = require('../../dist/parser/index');
-const { Execution } = require('../../dist/runner/execution');
-
-const { describe, it } = exports.lab = Lab.script();
-const { expect } = Code;
+import { compile, compileExpression, run } from '../../src';
+import Bigodon from '../../src';
+import { VERSION } from '../../src/parser';
+import { Execution } from '../../src/runner/execution';
 
 describe('runner', () => {
     describe('Execution', () => {
         it('should use default values in of()', () => {
             const execution = Execution.of({});
-            expect(execution.extraHelpers).to.be.an.instanceof(Map);
-            expect(execution.extraHelpers.size).to.equal(0);
-            expect(execution.maxExecutionMillis).to.equal(Infinity);
-            expect(execution.allowDefaultHelpers).to.equal(true);
+            expect(execution.extraHelpers).toBeInstanceOf(Map);
+            expect(execution.extraHelpers.size).toEqual(0);
+            expect(execution.maxExecutionMillis).toEqual(Infinity);
+            expect(execution.allowDefaultHelpers).toEqual(true);
         });
 
         it('should handle explicit undefined values for all options', () => {
             const execution = Execution.of({}, undefined, {
                 data: undefined,
                 maxExecutionMillis: undefined,
-                allowDefaultHelpers: undefined
+                allowDefaultHelpers: undefined,
             });
-            expect(execution.maxExecutionMillis).to.equal(Infinity);
-            expect(execution.allowDefaultHelpers).to.equal(true);
+            expect(execution.maxExecutionMillis).toEqual(Infinity);
+            expect(execution.allowDefaultHelpers).toEqual(true);
         });
 
         it('should handle zero maxExecutionMillis', () => {
             const execution = Execution.of({}, new Map(), { maxExecutionMillis: 0 });
-            expect(execution.maxExecutionMillis).to.equal(Infinity);
+            expect(execution.maxExecutionMillis).toEqual(Infinity);
         });
 
         it('should handle null maxExecutionMillis', () => {
-            const execution = Execution.of({}, new Map(), { maxExecutionMillis: null });
-            expect(execution.maxExecutionMillis).to.equal(Infinity);
+            const execution = Execution.of({}, new Map(), { maxExecutionMillis: null as any });
+            expect(execution.maxExecutionMillis).toEqual(Infinity);
         });
 
         it('should handle null allowDefaultHelpers', () => {
-            const execution = Execution.of({}, new Map(), { allowDefaultHelpers: null });
-            expect(execution.allowDefaultHelpers).to.equal(true);
+            const execution = Execution.of({}, new Map(), { allowDefaultHelpers: null as any });
+            expect(execution.allowDefaultHelpers).toEqual(true);
         });
 
         it('should handle explicit true/false allowDefaultHelpers', () => {
             const e1 = Execution.of({}, new Map(), { allowDefaultHelpers: true });
-            expect(e1.allowDefaultHelpers).to.equal(true);
+            expect(e1.allowDefaultHelpers).toEqual(true);
             const e2 = Execution.of({}, new Map(), { allowDefaultHelpers: false });
-            expect(e2.allowDefaultHelpers).to.equal(false);
+            expect(e2.allowDefaultHelpers).toEqual(false);
         });
     });
 
@@ -56,71 +53,71 @@ describe('runner', () => {
             type: 'TEMPLATE',
             version: -1,
             statements: [],
-        })).to.reject();
+        } as any)).rejects.toThrow();
 
         await expect(run({
             type: 'TEMPLATE',
             version: 1e9,
             statements: [],
-        })).to.reject();
+        } as any)).rejects.toThrow();
     });
 
     it('should return text statements', async () => {
         const templ = compile('Lorem ipsum');
-        expect(await templ()).to.equal('Lorem ipsum');
+        expect(await templ()).toEqual('Lorem ipsum');
     });
 
     it('should ignore comments', async () => {
         const templ = compile('Lorem {{! ipsum }} dolor');
-        expect(await templ()).to.equal('Lorem  dolor');
+        expect(await templ()).toEqual('Lorem  dolor');
     });
 
     describe('mustache', () => {
         it('should return literal path expressions', async () => {
             const templ = compile('Hello, {{ "George" }}!');
-            expect(await templ()).to.equal('Hello, George!');
+            expect(await templ()).toEqual('Hello, George!');
         });
 
         it('should return simple path expressions', async () => {
             const templ = compile('Hello, {{ name }}!');
-            expect(await templ({ name: 'George' })).to.equal('Hello, George!');
-            expect(await templ()).to.equal('Hello, !');
-            expect(await templ({})).to.equal('Hello, !');
-            expect(await templ({ name: null })).to.equal('Hello, !');
-            expect(await templ({ name: 5 })).to.equal('Hello, 5!');
-            expect(await templ({ name: false })).to.equal('Hello, false!');
+            expect(await templ({ name: 'George' })).toEqual('Hello, George!');
+            expect(await templ()).toEqual('Hello, !');
+            expect(await templ({})).toEqual('Hello, !');
+            expect(await templ({ name: null })).toEqual('Hello, !');
+            expect(await templ({ name: 5 })).toEqual('Hello, 5!');
+            expect(await templ({ name: false })).toEqual('Hello, false!');
         });
 
         it('should return empty for function-valued simple path expressions', async () => {
             const templ = compile('Hello, {{ foo }}!');
-            expect(await templ({ foo: () => {} })).to.equal('Hello, !');
+            expect(await templ({ foo: () => {} })).toEqual('Hello, !');
         });
 
         it('should return deep path expressions', async () => {
             const templ = compile('Hello, {{ name.first }} {{ name.last }}!');
-            expect(await templ({ name: { first: 'George', last: 'Schmidt' } })).to.equal('Hello, George Schmidt!');
-            expect(await templ()).to.equal('Hello,  !');
-            expect(await templ({})).to.equal('Hello,  !');
-            expect(await templ({ name: null })).to.equal('Hello,  !');
-            expect(await templ({ name: 5 })).to.equal('Hello,  !');
-            expect(await templ({ name: false })).to.equal('Hello,  !');
+            expect(await templ({ name: { first: 'George', last: 'Schmidt' } })).toEqual('Hello, George Schmidt!');
+            expect(await templ()).toEqual('Hello,  !');
+            expect(await templ({})).toEqual('Hello,  !');
+            expect(await templ({ name: null })).toEqual('Hello,  !');
+            expect(await templ({ name: 5 })).toEqual('Hello,  !');
+            expect(await templ({ name: false })).toEqual('Hello,  !');
         });
 
         it('should return empty for function-valued deep path expressions', async () => {
             const templ = compile('Hello, {{ foo.bar }}!');
-            expect(await templ({ foo: () => {} })).to.equal('Hello, !');
+            expect(await templ({ foo: () => {} })).toEqual('Hello, !');
         });
 
         it('should return empty for function-valued own properties', async () => {
             const templ = compile('{{ obj.fn }}');
-            expect(await templ({ obj: { fn() { return 'x'; } } })).to.equal('');
+            expect(await templ({ obj: { fn() { return 'x'; } } })).toEqual('');
         });
 
         it('should allow $this for helper-path disambiguisation', async () => {
             const bigodon = new Bigodon();
             bigodon.addHelper('foo', () => 'wrong');
             const templ = bigodon.compile('{{ $this.foo }} {{ $this.obj.deep }}');
-            expect(await templ({ foo: 'bar', obj: { deep: 'baz' } })).to.equal('bar baz');
+            expect(await templ({ foo: 'bar', obj: { deep: 'baz' } })).toEqual('bar baz');
         });
 
         it('should return context values converted to string', async () => {
@@ -134,7 +131,7 @@ describe('runner', () => {
                 bFalse: false,
                 nil: null,
                 undef: void 0,
-            })).to.equal('[object Object] [object Array] foo 0 true false  ');
+            })).toEqual('[object Object] [object Array] foo 0 true false  ');
         });
 
         it('should ignore unsafe keys', async () => {
@@ -142,27 +139,27 @@ describe('runner', () => {
             expect(await templ({ name: {
                 __proto__: 'foo',
                 constructor: 'bar',
-            } })).to.equal('Hello,  !');
+            } })).toEqual('Hello,  !');
         });
 
         it('should not return Object prototype keys', async () => {
             const templ = compile('{{ hasOwnProperty }}{{ obj.toString }}{{ obj.hasOwnProperty }}');
-            expect(await templ({ obj: {} })).to.equal('');
+            expect(await templ({ obj: {} })).toEqual('');
         });
 
         it('should not return Array prototype keys', async () => {
             const templ = compile('{{ arr.length }}{{ arr.toString }}');
-            expect(await templ({ arr: [] })).to.equal('');
+            expect(await templ({ arr: [] })).toEqual('');
         });
 
         it('should not return String prototype keys', async () => {
             const templ = compile('{{ str.length }}{{ str.toString }}');
-            expect(await templ({ str: 'yada' })).to.equal('');
+            expect(await templ({ str: 'yada' })).toEqual('');
         });
 
         it('should not return Number prototype keys', async () => {
             const templ = compile('{{ num.toString }}{{ num.toFixed }}');
-            expect(await templ({ num: 1 })).to.equal('');
+            expect(await templ({ num: 1 })).toEqual('');
         });
 
         it('should ignore unknown statements', async () => {
@@ -178,51 +175,51 @@ describe('runner', () => {
                 }, {
                     type: 'TEXT',
                     value: 'bar',
-                }]
-            });
+                }],
+            } as any);
 
-            expect(result).to.equal('foobar');
+            expect(result).toEqual('foobar');
         });
     });
 
     describe('expressions', () => {
         it('should return undefined with literal with no value', async () => {
             const templ = compileExpression('foo');
-            expect(await templ()).to.equal(undefined);
+            expect(await templ()).toEqual(undefined);
         });
 
         it('should return literal value', async () => {
             const templ = compileExpression('foo');
-            expect(await templ({ foo: 'bar' })).to.equal('bar');
+            expect(await templ({ foo: 'bar' })).toEqual('bar');
         });
 
         it('should return undefined for function-valued expression results', async () => {
             const templ = compileExpression('foo');
-            expect(await templ({ foo: () => {} })).to.equal(undefined);
+            expect(await templ({ foo: () => {} })).toEqual(undefined);
         });
 
         it('should return undefined for function-valued expression traversal', async () => {
             const templ = compileExpression('foo.bar');
-            expect(await templ({ foo: () => {} })).to.equal(undefined);
+            expect(await templ({ foo: () => {} })).toEqual(undefined);
         });
 
         it('should evaluate expression as true', async () => {
             const templ = compileExpression('if foo');
-            expect(await templ({ foo: 'bar' })).to.equal(true);
+            expect(await templ({ foo: 'bar' })).toEqual(true);
         });
 
         it('should evaluate expression as false', async () => {
             const templ = compileExpression('if foo');
-            expect(await templ({ foo: '' })).to.equal(false);
+            expect(await templ({ foo: '' })).toEqual(false);
         });
 
         it('should evaluate more complex expression as true', async () => {
             const bigodon = new Bigodon();
-            bigodon.addHelper('eq', (a, b) => a === b);
-            bigodon.addHelper('startsWith', (s, p) => String(s).startsWith(p));
-            bigodon.addHelper('and', (...args) => args.every(Boolean));
+            bigodon.addHelper('eq', (a: any, b: any) => a === b);
+            bigodon.addHelper('startsWith', (s: any, p: any) => String(s).startsWith(p));
+            bigodon.addHelper('and', (...args: any[]) => args.every(Boolean));
             const templ = bigodon.compileExpression('and (startsWith foo "b") (eq fruit "apple")');
-            expect(await templ({ foo: 'bar', fruit: 'apple' })).to.equal(true);
+            expect(await templ({ foo: 'bar', fruit: 'apple' })).toEqual(true);
         });
     });
 
@@ -232,10 +229,8 @@ describe('runner', () => {
         const templ = compile(source);
 
         it('should interrupt execution after limit', async () => {
-            // Dry running first so code is cached in memory
             await templ({ bigArray }, { maxExecutionMillis: 5 }).catch(() => {});
 
-            // Creating execution before awaiting so this time isn't included
             const promise = templ({ bigArray }, {
                 maxExecutionMillis: 50,
             }).catch(() => {});
@@ -245,18 +240,18 @@ describe('runner', () => {
             await promise;
             const elapsed = Date.now() - start;
 
-            expect(elapsed).to.be.below(55);
-            expect(elapsed).to.be.above(49);
+            expect(elapsed).toBeLessThan(55);
+            expect(elapsed).toBeGreaterThan(49);
         });
 
         it('should interrupt execution with error', async () => {
             const promise = templ({ bigArray }, { maxExecutionMillis: 5 });
-            await expect(promise).to.reject('Execution time limit exceeded');
+            await expect(promise).rejects.toThrow('Execution time limit exceeded');
         });
 
         it('should not interrupt when execution takes less than limit', async () => {
             const template = compile('Hello, {{foo}}');
-            expect(await template({ foo: 'bar' }, { maxExecutionMillis: 50 })).to.equal('Hello, bar');
+            expect(await template({ foo: 'bar' }, { maxExecutionMillis: 50 })).toEqual('Hello, bar');
         });
     });
 });
