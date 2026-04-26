@@ -253,5 +253,66 @@ describe('runner', () => {
             const template = compile('Hello, {{foo}}');
             expect(await template({ foo: 'bar' }, { maxExecutionMillis: 50 })).toEqual('Hello, bar');
         });
+
+        it('cannot abort a single async helper mid-await', async () => {
+            // Pin current behavior: runStatement only checks elapsedMillis at the
+            // TOP of each statement. A helper that's already started cannot be
+            // interrupted — it will finish, even if it overshoots the limit. Only
+            // *subsequent* statements are aborted. This test proves the helper
+            // ran to completion despite the 5ms budget.
+            const bigodin = new Bigodin();
+            let finished = false;
+            bigodin.addHelper('slow', () => new Promise<string>(r => {
+                setTimeout(() => { finished = true; r('ok'); }, 100);
+            }));
+            const templ = bigodin.compile('{{slow}}');
+            const start = Date.now();
+            const res = await templ({}, { maxExecutionMillis: 5 });
+            const elapsed = Date.now() - start;
+            expect(res).toEqual('ok');
+            expect(finished).toEqual(true);
+            expect(elapsed).toBeGreaterThanOrEqual(95);
+        });
+
+        it('aborts the statement that follows an overshoot', async () => {
+            const bigodin = new Bigodin();
+            bigodin.addHelper('slow', () => new Promise(r => setTimeout(r, 100)));
+            const templ = bigodin.compile('{{slow}}after');
+            await expect(templ({}, { maxExecutionMillis: 5 }))
+                .rejects.toThrow(/Execution time limit exceeded/);
+        });
+    });
+
+    describe('concurrent runs', () => {
+        it('share no Execution state between parallel invocations', async () => {
+            const bigodin = new Bigodin();
+            bigodin.addHelper('wait', (ms: number) => new Promise(r => setTimeout(r, ms)));
+            const templ = bigodin.compile('{{= $x label}}{{wait ms}}{{$x}}');
+
+            const results = await Promise.all([
+                templ({ label: 'A', ms: 30 }),
+                templ({ label: 'B', ms: 5 }),
+                templ({ label: 'C', ms: 15 }),
+            ]);
+            expect(results).toEqual(['A', 'B', 'C']);
+        });
+
+        it('does not leak the data side-channel across concurrent runs', async () => {
+            const bigodin = new Bigodin();
+            bigodin.addHelper('tag', function (this: any, v: string) {
+                this.data.tag = v;
+                return '';
+            });
+            const templ = bigodin.compile('{{tag label}}');
+
+            const dataA: any = {};
+            const dataB: any = {};
+            await Promise.all([
+                templ({ label: 'A' }, { data: dataA }),
+                templ({ label: 'B' }, { data: dataB }),
+            ]);
+            expect(dataA.tag).toEqual('A');
+            expect(dataB.tag).toEqual('B');
+        });
     });
 });
