@@ -1,77 +1,68 @@
 # Bigodin
-Secure Handlebars/Mustache templating for user-provided templates with async helpers support and human-friendly parsing errors.
 
+Secure Handlebars/Mustache templating for user-provided templates, with async helpers and human-friendly parse errors. Templates are parsed into a JSON AST and **interpreted** at runtime — never compiled to JavaScript — so it is safe to evaluate templates submitted by end users.
 
-## Features
+Bigodin is a fork of [Bigodon](https://github.com/gabriel-pinheiro/bigodon) that drops unnecessary features and grows the supported subset of the Mustache spec, aiming to be a drop-in replacement for Mustache in user-provided template scenarios.
 
-As well as most Handlebars features like:
-- Handlebars dot notation inside mustaches (`{{foo.bar}}`)
-- Handlebars literal values (`{{helper 5 6}}`)
-- Comments (`{{! ... }}`)
-- Nested expressions (`{{outer (inner data.firstName data.secondName)}}`)
-- Blocks (`{{#name}}...{{/name}}`)
-- Inverted blocks (`{{^name}}...{{/name}}`)
-- Else blocks (`{{#name}}...{{else}}...{{/name}}`)
-- Parent and current context (`{{#list}}{{$parent.name}} {{$this}}{{/list}}`)
-
-Bigodin also supports:
-- Async helpers, you can await for requests, database access, file access and so on.
-- Safely evaluate user-provided templates. (Templates aren't transpiled to JavaScript, they're interpreted by Bigodin)
-- Much better performance.
-- Better error reporting.
-- Minimal core: only the block primitives (`if`, `unless`, `with`, `each`, `return`) ship by default. Register your own utilities with `addHelper`.
-
-Bigodin is used in production by [Mocko](https://mocko.dev/).
+- 📚 [Library API](LIB.md) · [Template language](LANGUAGE.md) · [Built-in helpers](HELPERS.md)
+- 🧪 Mustache spec coverage: 103 / 110 attempted tests pass (see [compatibility table](#mustache-spec-compatibility))
 
 ## Installation
 
-Add the `bigodin` dependency to your project. Types included:
 ```shell
-yarn add bigodin
+yarn add @jpbm135/bigodin
+# or
+npm install @jpbm135/bigodin
 ```
 
-## Usage
+Types are bundled. Node ≥ 18 required.
+
+## Quick start
 
 ```javascript
-const { compile } = require('bigodin');
+const { compile } = require('@jpbm135/bigodin');
 
 async function main() {
-    const source = 'Hello, {{name}}!';
-    const template = compile(source);
-
-    const result = await template({
-        name: 'George'
-    });
-
+    const template = compile('Hello, {{name}}!');
+    const result = await template({ name: 'George' });
     console.log(result); // Hello, George!
 }
 
 main().catch(console.error);
 ```
 
-Or, if you want to split parsing from execution between services or cache the parsed AST:
+Split parsing from execution (e.g. cache the AST in Redis, parse in one service and run in another):
+
 ```javascript
-const { parse, run } = require('bigodin');
+const { parse, run } = require('@jpbm135/bigodin');
 
-const source = 'Hello, {{name}}!';
-const ast = parse(source); // This will return a JSON object that can be persisted for later usage
+const ast = parse('Hello, {{name}}!'); // plain JSON — safe to persist
 
-
-// In another process or later:
-async function main() {
-    const result = await run(ast, {
-        name: 'George'
-    });
-
-    console.log(result); // Hello, George!
-}
-main().catch(console.error);
+// later, possibly in another process:
+const result = await run(ast, { name: 'George' });
 ```
 
-## Check how to use the lib [here](LIB.md)
-## Check how to use the language [here](LANGUAGE.md)
+## Features
 
-## Check the available helpers [here](HELPERS.md)
+Handlebars-style template syntax:
+
+- Dot-path access inside mustaches (`{{foo.bar}}`)
+- Literal arguments (`{{helper 5 "hi" true}}`)
+- Comments (`{{! ... }}`)
+- Nested expressions (`{{outer (inner data.first data.second)}}`)
+- Blocks and inverted blocks (`{{#list}}…{{/list}}`, `{{^list}}…{{/list}}`)
+- `{{else}}` and chained `{{else if}}`
+- Context navigation with `$parent`, `$root`, `$this`
+- Variable assignment (`{{= $foo "bar"}}`) within a template
+
+What sets Bigodin apart:
+
+- **Async helpers** — `await` requests, database calls, file IO, etc. directly from a helper.
+- **Safe by construction** — no codegen, no `eval`, no `Function` constructor; templates are walked over a JSON AST.
+- **Execution limits** — `maxExecutionMillis` and `halt()` let you bound runtime on hostile input.
+- **Better error messages** — parser combinators surface line/column and what was expected.
+- **Minimal core** — only the block primitives ship by default (`if`, `unless`, `with`, `each`, `return`); add your own with `addHelper`.
+- **Persistable AST** — versioned JSON; old ASTs fail loudly when the runner has moved on.
 
 ## Mustache spec compatibility
 
@@ -109,3 +100,28 @@ analysis, and proposed implementations — live in
 Run `yarn test:spec` to execute the full Mustache spec suite locally
 (it clones [mustache/spec](https://github.com/mustache/spec) into
 `test/mustache/` on first run).
+
+## Known limitations / not supported
+
+Things Bigodin **does not** do, by design or because they are out of scope. Read this before reaching for a workaround.
+
+### Mustache features
+
+- **No HTML escaping by default.** `{{x}}`, `{{{x}}}`, and `{{&x}}` all emit raw output. If you render to HTML, register an escape helper and call it explicitly (or wrap your template in one).
+- **No automatic context-stack walking.** A missing key resolves to `undefined`, not the parent context. Walk up explicitly with `$parent` / `$root`.
+- **No partials** (`{{>name}}`), **set-delimiters** (`{{=<% %>=}}`), **dynamic names** (`{{*name}}`), or **template inheritance** (`{{<p}}{{$b}}…`). See `mustache-compat/` for rationale.
+- **No Mustache lambdas.** Functions placed in the rendering context are not invoked. Use `addHelper` instead — that is the supported extension point.
+
+### Runtime / API
+
+- **Templates are interpreted, never compiled.** You cannot get a JavaScript function out of a template; this is the security guarantee, not an oversight.
+- **Helpers must be registered ahead of time** via `addHelper` (or the `extraHelpers` argument to `run`). Templates cannot define their own helpers, import code, or read files.
+- **Module-level `parse`/`run`/`compile` exports do not carry custom helpers.** `addHelper` only mutates the instance it is called on — instantiate `new Bigodin()` if you need a registry of your own.
+- **Only one runtime dependency** (`pierrejs`). New runtime deps are scrutinized; the value prop is "safe to run on user input".
+
+### Security boundaries
+
+- Helper names matching `__proto__`, `constructor`, `prototype`, etc. are rejected — registering or looking them up will throw. This is intentional anti-prototype-pollution behavior; do not work around it.
+- The `data` channel on `Execution` is helper-only. Templates cannot read it; helpers can mutate it via `this.data` to share side-channel state.
+
+If you need one of the unsupported Mustache features, open an issue — most "Not planned" entries have a design note in [`mustache-compat/`](mustache-compat/README.md) explaining the tradeoff.
