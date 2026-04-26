@@ -33,7 +33,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
             return expr;
         }
 
-        ensure(expr.length > 0, '[internal bigodon error] expressionFromStack received an empty frame');
+        ensure(expr.length > 0, '[internal bigodin error] expressionFromStack received an empty frame');
         const [stmt, ...params] = expr;
 
         // Below here, statements inside parentheses, a new frame
@@ -46,7 +46,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         // no parenthesis, no new frame
         // Ex: `("str")`, `($var)`
         if (stmt.type !== 'EXPRESSION') {
-            ensure(params.length === 0, '[internal bigodon error] expressionFromStack received a non-expression with parameters');
+            ensure(params.length === 0, '[internal bigodin error] expressionFromStack received a non-expression with parameters');
             return stmt;
         }
 
@@ -57,7 +57,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         }
 
         // Expressions with parameters to be parsed
-        ensure(stmt.params.length === 0, '[internal bigodon error] expressionFromStack received an expression with parsed and unparsed parameters');
+        ensure(stmt.params.length === 0, '[internal bigodin error] expressionFromStack received an expression with parsed and unparsed parameters');
         stmt.params = params.map(expressionFromStack);
         return stmt;
     };

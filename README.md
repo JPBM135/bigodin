@@ -1,4 +1,4 @@
-# Bigodon
+# Bigodin
 Secure Handlebars/Mustache templating for user-provided templates with async helpers support and human-friendly parsing errors.
 
 
@@ -14,26 +14,26 @@ As well as most Handlebars features like:
 - Else blocks (`{{#name}}...{{else}}...{{/name}}`)
 - Parent and current context (`{{#list}}{{$parent.name}} {{$this}}{{/list}}`)
 
-Bigodon also supports:
+Bigodin also supports:
 - Async helpers, you can await for requests, database access, file access and so on.
-- Safely evaluate user-provided templates. (Templates aren't transpiled to JavaScript, they're interpreted by Bigodon)
+- Safely evaluate user-provided templates. (Templates aren't transpiled to JavaScript, they're interpreted by Bigodin)
 - Much better performance.
 - Better error reporting.
 - Minimal core: only the block primitives (`if`, `unless`, `with`, `each`, `return`) ship by default. Register your own utilities with `addHelper`.
 
-Bigodon is used in production by [Mocko](https://mocko.dev/).
+Bigodin is used in production by [Mocko](https://mocko.dev/).
 
 ## Installation
 
-Add the `bigodon` dependency to your project. Types included:
+Add the `bigodin` dependency to your project. Types included:
 ```shell
-yarn add bigodon
+yarn add bigodin
 ```
 
 ## Usage
 
 ```javascript
-const { compile } = require('bigodon');
+const { compile } = require('bigodin');
 
 async function main() {
     const source = 'Hello, {{name}}!';
@@ -51,7 +51,7 @@ main().catch(console.error);
 
 Or, if you want to split parsing from execution between services or cache the parsed AST:
 ```javascript
-const { parse, run } = require('bigodon');
+const { parse, run } = require('bigodin');
 
 const source = 'Hello, {{name}}!';
 const ast = parse(source); // This will return a JSON object that can be persisted for later usage
@@ -75,12 +75,12 @@ main().catch(console.error);
 
 ## Mustache spec compatibility
 
-Bigodon is a Handlebars-flavored superset and is **not** a drop-in Mustache
+Bigodin is a Handlebars-flavored superset and is **not** a drop-in Mustache
 implementation. Against the official [mustache/spec](https://github.com/mustache/spec)
 suite, **103 / 110** attempted tests currently pass (94%); the remaining 84
 spec tests live in 5 deliberately-skipped feature files (partials, dynamic-names,
 set-delimiters, inheritance, lambdas) and 4 individual tests are skipped because
-they require auto-walking the context stack — Bigodon uses Handlebars-style
+they require auto-walking the context stack — Bigodin uses Handlebars-style
 strict scoping (use `$parent`/`$root` to walk up explicitly).
 
 Detailed per-feature breakdowns — including failing test names, root-cause
@@ -93,18 +93,18 @@ analysis, and proposed implementations — live in
 | Sections `{{#x}}…{{/x}}`                 | Supported     | Empty arrays falsy on negated branch; truthy scalars do **not** push as context (Handlebars-style); use `$parent`/`$root` to walk the context stack |
 | Inverted sections `{{^x}}…{{/x}}`        | Supported     | Empty arrays correctly treated as falsy |
 | Comments `{{! … }}`                      | Supported     | Standalone-line whitespace is stripped |
-| Triple mustache `{{{x}}}`                | Supported     | Output is identical to `{{x}}` (Bigodon never HTML-escapes by default) |
+| Triple mustache `{{{x}}}`                | Supported     | Output is identical to `{{x}}` (Bigodin never HTML-escapes by default) |
 | Ampersand `{{&x}}`                       | Supported     | Output is identical to `{{x}}` |
 | Standalone-line whitespace stripping     | Supported     | Applied to comments and section open/close tags — see [standalone-line-whitespace.md](mustache-compat/standalone-line-whitespace.md) |
 | Implicit iterator `{{.}}`                | Supported     | Resolves to current context (alias of `{{$this}}`) — see [implicit-iterator.md](mustache-compat/implicit-iterator.md) |
 | Block heads with literal-named keys      | Supported     | `{{#null}}` / `{{#true}}` / `{{#false}}` / `{{#undefined}}` look up the matching key in context |
-| HTML Escaping for `{{x}}`                | Not supported | Bigodon emits raw output; register an escape helper if needed |
-| Auto context-stack walk on missing keys  | Not supported | Bigodon uses strict scoping — use `$parent`/`$root` to walk explicitly |
+| HTML Escaping for `{{x}}`                | Not supported | Bigodin emits raw output; register an escape helper if needed |
+| Auto context-stack walk on missing keys  | Not supported | Bigodin uses strict scoping — use `$parent`/`$root` to walk explicitly |
 | Set Delimiters `{{=<% %>=}}`             | Not planned   | See [set-delimiters.md](mustache-compat/set-delimiters.md) |
 | Partials `{{>name}}`                     | Not planned   | See [partials.md](mustache-compat/partials.md) |
 | Dynamic names `{{*name}}` (optional)     | Not planned   | Depends on partials — see [dynamic-names.md](mustache-compat/dynamic-names.md) |
-| Inheritance `{{<p}}{{$b}}…` (optional)   | Not planned   | `$` collides with Bigodon's variable syntax — see [inheritance.md](mustache-compat/inheritance.md) |
-| Lambdas (optional)                       | Not supported | Bigodon's helper API (`addHelper`) is the recommended alternative — see [lambdas.md](mustache-compat/lambdas.md) |
+| Inheritance `{{<p}}{{$b}}…` (optional)   | Not planned   | `$` collides with Bigodin's variable syntax — see [inheritance.md](mustache-compat/inheritance.md) |
+| Lambdas (optional)                       | Not supported | Bigodin's helper API (`addHelper`) is the recommended alternative — see [lambdas.md](mustache-compat/lambdas.md) |
 
 Run `yarn test:spec` to execute the full Mustache spec suite locally
 (it clones [mustache/spec](https://github.com/mustache/spec) into

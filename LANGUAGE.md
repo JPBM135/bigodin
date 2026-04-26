@@ -1,6 +1,6 @@
-# Bigodon Language Reference
+# Bigodin Language Reference
 
-Bigodon is a templating language that allows you to create **templates** that will generate an **output** when given a **context**. A context is a JSON-like object that can contain numbers, strings, booleans, arrays, objects.
+Bigodin is a templating language that allows you to create **templates** that will generate an **output** when given a **context**. A context is a JSON-like object that can contain numbers, strings, booleans, arrays, objects.
 
 You can access fields from the context in your template:
 
@@ -90,18 +90,18 @@ When a comment (or a section open/close tag) is the only non-whitespace content 
 
 ## Raw output
 
-`{{x}}`, `{{{x}}}`, and `{{&x}}` all produce the same output in Bigodon — values are emitted as-is, never HTML-escaped. The triple-mustache and ampersand forms are accepted for compatibility with Mustache templates; if you need HTML escaping, register an `escape` helper and call `{{escape x}}` explicitly.
+`{{x}}`, `{{{x}}}`, and `{{&x}}` all produce the same output in Bigodin — values are emitted as-is, never HTML-escaped. The triple-mustache and ampersand forms are accepted for compatibility with Mustache templates; if you need HTML escaping, register an `escape` helper and call `{{escape x}}` explicitly.
 
 ---
 
 ## Helpers
 
-Helpers are functions that can be called from within your templates. Bigodon ships only the [block primitives](HELPERS.md) (`if`, `unless`, `with`, `each`, `return`); everything else you register yourself with `addHelper` (see [LIB.md](LIB.md#helpers)).
+Helpers are functions that can be called from within your templates. Bigodin ships only the [block primitives](HELPERS.md) (`if`, `unless`, `with`, `each`, `return`); everything else you register yourself with `addHelper` (see [LIB.md](LIB.md#helpers)).
 
 For example, after registering a `capitalize` helper:
 
 ```js
-bigodon.addHelper('capitalize', s => String(s).charAt(0).toUpperCase() + String(s).slice(1));
+bigodin.addHelper('capitalize', s => String(s).charAt(0).toUpperCase() + String(s).slice(1));
 ```
 
 ```hbs

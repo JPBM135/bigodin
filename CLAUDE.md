@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Bigodon is a Handlebars/Mustache-style templating library focused on safely evaluating user-provided templates. Templates are parsed into a JSON AST and interpreted at runtime — they are never compiled to JavaScript. Helpers can be async. Published to npm as `bigodon`.
+Bigodin is a Handlebars/Mustache-style templating library focused on safely evaluating user-provided templates. Templates are parsed into a JSON AST and interpreted at runtime — they are never compiled to JavaScript. Helpers can be async. Published to npm as `bigodin`.
 
 User-facing docs: `README.md`, `LIB.md` (API), `LANGUAGE.md` (template syntax), `HELPERS.md` (built-in helpers).
 
@@ -55,7 +55,7 @@ A few helpers (`sort`, `splice`) are explicitly written to not mutate their inpu
 
 ### Public API surface (`src/index.ts`)
 
-Exports a `Bigodon` class plus pre-bound `parse`, `parseExpression`, `run`, `runExpression`, `compile`, `compileExpression` from a default singleton. The module-level convenience exports do **not** carry user helpers — `addHelper` only affects the instance it's called on, so users wanting custom helpers must `new Bigodon()`.
+Exports a `Bigodin` class plus pre-bound `parse`, `parseExpression`, `run`, `runExpression`, `compile`, `compileExpression` from a default singleton. The module-level convenience exports do **not** carry user helpers — `addHelper` only affects the instance it's called on, so users wanting custom helpers must `new Bigodin()`.
 
 ## Tests
 

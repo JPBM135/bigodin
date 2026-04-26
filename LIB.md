@@ -1,7 +1,7 @@
 ## Usage
 
 ```javascript
-const { compile } = require('bigodon');
+const { compile } = require('bigodin');
 
 async function main() {
     const source = 'Hello, {{name}}!';
@@ -19,7 +19,7 @@ main().catch(console.error);
 
 Or, if you want to split parsing from execution between services or cache the parsed AST:
 ```javascript
-const { parse, run } = require('bigodon');
+const { parse, run } = require('bigodin');
 
 const source = 'Hello, {{name}}!';
 const ast = parse(source); // This will return a JSON object that can be persisted for later usage
@@ -38,19 +38,19 @@ main().catch(console.error);
 
 ## Helpers
 
-To add extra helpers, you need to instantiate your own `bigodon` object.
+To add extra helpers, you need to instantiate your own `bigodin` object.
 
 ### JavaScript
 
 ```javascript
-const Bigodon = require('bigodon').default;
-const bigodon = new Bigodon();
+const Bigodin = require('bigodin').default;
+const bigodin = new Bigodin();
 
-bigodon.addHelper('add', (a, b) => a + b);
+bigodin.addHelper('add', (a, b) => a + b);
 
 async function main() {
     const source = '1 + 1 is {{add 1 1}}!';
-    const template = bigodon.compile(source); // Using our bigodon instance instead of the default compile
+    const template = bigodin.compile(source); // Using our bigodin instance instead of the default compile
     console.log(await template()); // 1 + 1 is 2!
 }
 
@@ -60,14 +60,14 @@ main().catch(console.error);
 ### TypeScript
 
 ```typescript
-import Bigodon from 'bigodon';
-const bigodon = new Bigodon();
+import Bigodin from 'bigodin';
+const bigodin = new Bigodin();
 
-bigodon.addHelper('add', (a: number, b: number): number => a + b);
+bigodin.addHelper('add', (a: number, b: number): number => a + b);
 
 async function main() {
     const source = '1 + 1 is {{add 1 1}}!';
-    const template = bigodon.compile(source); // Using our bigodon instance instead of the default compile
+    const template = bigodin.compile(source); // Using our bigodin instance instead of the default compile
     console.log(await template()); // 1 + 1 is 2!
 }
 
@@ -83,14 +83,14 @@ To add block helpers, simply create a helper that returns:
 - A truthy value to indicate that the block should be rendered with parent context
 
 ```javascript
-const Bigodon = require('bigodon').default;
-const bigodon = new Bigodon();
+const Bigodin = require('bigodin').default;
+const bigodin = new Bigodin();
 
-bigodon.addHelper('isEven', (value) => value % 2 === 0);
+bigodin.addHelper('isEven', (value) => value % 2 === 0);
 
 async function main() {
     const source = '{{num}} is {{#isEven num}}even{{else}}odd{{/isEven}}';
-    const template = bigodon.compile(source);
+    const template = bigodin.compile(source);
     console.log(await template({ num: 2 })); // 2 is even
     console.log(await template({ num: 3 })); // 3 is odd
 }
@@ -103,10 +103,10 @@ main().catch(console.error);
 Your helpers can provide data from the templates to your code by using the `this.data` object.
 
 ```typescript
-import Bigodon from 'bigodon';
-const bigodon = new Bigodon();
+import Bigodin from 'bigodin';
+const bigodin = new Bigodin();
 
-bigodon.addHelper('setTitle', function (title: string): void {
+bigodin.addHelper('setTitle', function (title: string): void {
     if(!this.data) {
         return;
     }
@@ -116,7 +116,7 @@ bigodon.addHelper('setTitle', function (title: string): void {
 
 async function main() {
     const source = '{{setTitle (uppercase text)}}';
-    const template = bigodon.compile(source);
+    const template = bigodin.compile(source);
 
     const data = {};
     await template({

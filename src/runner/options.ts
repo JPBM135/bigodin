@@ -1,4 +1,4 @@
-export type BigodonOptions = {
+export type BigodinOptions = {
     /**
      * Data that cannot be accessed from the template but can be accessed and modified from helpers
      *
@@ -14,7 +14,7 @@ export type BigodonOptions = {
     maxExecutionMillis?: number;
 
     /**
-     * Indicates whether the execution allows default helpers. Default helpers are provided by bigodon.
+     * Indicates whether the execution allows default helpers. Default helpers are provided by bigodin.
      *
      * @type {boolean}
      */

@@ -1,6 +1,6 @@
-# Bigodon Helpers
+# Bigodin Helpers
 
-Bigodon ships only the **block primitives** wired to template syntax. Anything else (string, math, date, array utilities, comparisons, etc.) was removed in 3.0.0 — register your own with `bigodon.addHelper(name, fn)`. See [LIB.md](./LIB.md) for the API and [LANGUAGE.md](./LANGUAGE.md) for syntax.
+Bigodin ships only the **block primitives** wired to template syntax. Anything else (string, math, date, array utilities, comparisons, etc.) was removed in 3.0.0 — register your own with `bigodin.addHelper(name, fn)`. See [LIB.md](./LIB.md) for the API and [LANGUAGE.md](./LANGUAGE.md) for syntax.
 
 | Helper   | Purpose                                                                               |
 |----------|---------------------------------------------------------------------------------------|
@@ -69,16 +69,16 @@ Halts the rest of the template. The runner returns whatever output has accumulat
 ## Adding your own helpers
 
 ```js
-const { default: Bigodon } = require('bigodon');
+const { default: Bigodin } = require('bigodin');
 
-const bigodon = new Bigodon();
-bigodon.addHelper('upper', s => String(s).toUpperCase());
-bigodon.addHelper('add', (a, b) => Number(a) + Number(b));
+const bigodin = new Bigodin();
+bigodin.addHelper('upper', s => String(s).toUpperCase());
+bigodin.addHelper('add', (a, b) => Number(a) + Number(b));
 
-const templ = bigodon.compile('Hello, {{upper name}}! You have {{add count 1}} messages.');
+const templ = bigodin.compile('Hello, {{upper name}}! You have {{add count 1}} messages.');
 await templ({ name: 'ana', count: 4 }); // "Hello, ANA! You have 5 messages."
 ```
 
 Helpers receive the `Execution` instance as `this` (use `this.data` for side-channel state, `this.halt()` to stop execution). Helpers can be `async`.
 
-> **Note on the module-level helpers** — the convenience exports `compile`, `parse`, `run` etc. on the default singleton do not carry user-registered helpers. Use `new Bigodon()` whenever you need custom helpers.
+> **Note on the module-level helpers** — the convenience exports `compile`, `parse`, `run` etc. on the default singleton do not carry user-registered helpers. Use `new Bigodin()` whenever you need custom helpers.

@@ -1,5 +1,5 @@
 import { LiteralValue } from '.';
-import { BigodonOptions } from './options';
+import { BigodinOptions } from './options';
 
 /**
  * Template execution, holds contexts, extra helpers, data.
@@ -16,18 +16,18 @@ export class Execution {
     private startMillis = Date.now();
 
     /**
-     * Bigodon variables
+     * Bigodin variables
      */
     public readonly variables: Record<string, LiteralValue> = {};
 
     /**
      * Template execution, holds contexts, extra helpers, data.
      *
-     * @param {object[]} contexts Contexts from which bigodon path expressions will evaluate
-     * @param {Map<string, Function>} extraHelpers Extra helpers that can be called other than default bigodon helpers
+     * @param {object[]} contexts Contexts from which bigodin path expressions will evaluate
+     * @param {Map<string, Function>} extraHelpers Extra helpers that can be called other than default bigodin helpers
      * @param {object?} data Data that cannot be accessed from the template but can be accessed and modified from helpers
      * @param {number} maxExecutionMillis Maximum milliseconds allowed for the template execution
-     * @param {boolean} allowDefaultHelpers Indicates whether the execution allows default helpers. Default helpers are provided by bigodon.
+     * @param {boolean} allowDefaultHelpers Indicates whether the execution allows default helpers. Default helpers are provided by bigodin.
      */
     private constructor(
         public readonly contexts: object[],
@@ -79,12 +79,12 @@ export class Execution {
     /**
      * Creates an execution from context, helpers and options.
      *
-     * @param {object} context Context from which bigodon path expressions will evaluate
-     * @param {Map<string, Function>?} extraHelpers Extra helpers that can be called other than default bigodon helpers
-     * @param {BigodonOptions} options Options for the current execution only
+     * @param {object} context Context from which bigodin path expressions will evaluate
+     * @param {Map<string, Function>?} extraHelpers Extra helpers that can be called other than default bigodin helpers
+     * @param {BigodinOptions} options Options for the current execution only
      * @return {Execution}
      */
-    static of(context: object, extraHelpers: Map<string, Function> = new Map(), options: BigodonOptions = {}): Execution {
+    static of(context: object, extraHelpers: Map<string, Function> = new Map(), options: BigodinOptions = {}): Execution {
         return new Execution(
             [context],
             extraHelpers,

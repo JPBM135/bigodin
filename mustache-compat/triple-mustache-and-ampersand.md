@@ -3,9 +3,9 @@
 ## Summary
 
 In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}`
-emit it raw. Bigodon does not HTML-escape by default — it treats every
+emit it raw. Bigodin does not HTML-escape by default — it treats every
 `{{x}}` as raw output — so the *behavior* the tests want already
-happens. The gap is purely syntactic: Bigodon's parser does not
+happens. The gap is purely syntactic: Bigodin's parser does not
 recognize the triple-brace or ampersand forms and rejects them at
 parse time.
 
@@ -36,7 +36,7 @@ From `interpolation.json`:
 
 From `interpolation.json` (escaping):
 
-- `HTML Escaping` — fails because Bigodon does *not* HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodon emits raw.
+- `HTML Escaping` — fails because Bigodin does *not* HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
 
 From `sections.json`:
 
@@ -66,7 +66,7 @@ Two independent sub-tasks:
 
 ### A. Accept `{{{x}}}` and `{{&x}}` as raw-emit syntax
 
-Bigodon already emits raw, so semantically these become aliases of
+Bigodin already emits raw, so semantically these become aliases of
 `{{x}}`. The change is parser-only:
 
 - In `src/parser/index.ts` `$template`, add two new branches inside the

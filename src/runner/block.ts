@@ -55,7 +55,7 @@ export async function runBlock(execution: Execution, block: BlockStatement): Pro
         return result;
     }
 
-    // Truthy scalar — preserve Bigodon's existing behavior of NOT pushing the
+    // Truthy scalar — preserve Bigodin's existing behavior of NOT pushing the
     // scalar onto the context stack. Mustache spec tests that rely on the
     // push are listed in test/spec.spec.js SKIPPED_FEATURES.
     return await runStatements(execution, block.statements);

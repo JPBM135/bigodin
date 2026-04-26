@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { compile, compileExpression, run } from '../../src';
-import Bigodon from '../../src';
+import Bigodin from '../../src';
 import { VERSION } from '../../src/parser';
 import { Execution } from '../../src/runner/execution';
 
@@ -114,9 +114,9 @@ describe('runner', () => {
         });
 
         it('should allow $this for helper-path disambiguisation', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('foo', () => 'wrong');
-            const templ = bigodon.compile('{{ $this.foo }} {{ $this.obj.deep }}');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('foo', () => 'wrong');
+            const templ = bigodin.compile('{{ $this.foo }} {{ $this.obj.deep }}');
             expect(await templ({ foo: 'bar', obj: { deep: 'baz' } })).toEqual('bar baz');
         });
 
@@ -214,11 +214,11 @@ describe('runner', () => {
         });
 
         it('should evaluate more complex expression as true', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('eq', (a: any, b: any) => a === b);
-            bigodon.addHelper('startsWith', (s: any, p: any) => String(s).startsWith(p));
-            bigodon.addHelper('and', (...args: any[]) => args.every(Boolean));
-            const templ = bigodon.compileExpression('and (startsWith foo "b") (eq fruit "apple")');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('eq', (a: any, b: any) => a === b);
+            bigodin.addHelper('startsWith', (s: any, p: any) => String(s).startsWith(p));
+            bigodin.addHelper('and', (...args: any[]) => args.every(Boolean));
+            const templ = bigodin.compileExpression('and (startsWith foo "b") (eq fruit "apple")');
             expect(await templ({ foo: 'bar', fruit: 'apple' })).toEqual(true);
         });
     });

@@ -146,7 +146,7 @@ const $mustache: Parser<Statement> = $expression.map((expression, { start, end }
 
 // Mustache spec compatibility: `{{#null}}` / `{{#true}}` / `{{#false}}` /
 // `{{#undefined}}` look up the matching key in context rather than meaning
-// the literal value (Bigodon's normal interpretation). Only applied as a
+// the literal value (Bigodin's normal interpretation). Only applied as a
 // block head; expression contexts still treat these names as literals.
 const $literalKeyBlockHead: Parser<ExpressionStatement> = Pr.context('literal-key-block-head', function* () {
     yield optionalSpaces;

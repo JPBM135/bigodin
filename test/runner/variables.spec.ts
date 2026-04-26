@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
 
 import { compile } from '../../src';
-import Bigodon from '../../src';
+import Bigodin from '../../src';
 
 const withHelpers = () => {
-    const bigodon = new Bigodon();
-    bigodon.addHelper('add', (a: any, b: any) => Number(a) + Number(b));
-    bigodon.addHelper('multiply', (a: any, b: any) => Number(a) * Number(b));
-    bigodon.addHelper('uppercase', (s: any) => String(s).toUpperCase());
-    bigodon.addHelper('capitalize', (s: any) => String(s).charAt(0).toUpperCase() + String(s).slice(1));
-    bigodon.addHelper('append', (...parts: any[]) => parts.map(String).join(''));
-    bigodon.addHelper('typeof', (v: any) => typeof v);
-    bigodon.addHelper('is', (a: any, b: any) => a == b);
-    bigodon.addHelper('default', (...args: any[]) => args.find(v => v !== null && typeof v !== 'undefined'));
-    return bigodon;
+    const bigodin = new Bigodin();
+    bigodin.addHelper('add', (a: any, b: any) => Number(a) + Number(b));
+    bigodin.addHelper('multiply', (a: any, b: any) => Number(a) * Number(b));
+    bigodin.addHelper('uppercase', (s: any) => String(s).toUpperCase());
+    bigodin.addHelper('capitalize', (s: any) => String(s).charAt(0).toUpperCase() + String(s).slice(1));
+    bigodin.addHelper('append', (...parts: any[]) => parts.map(String).join(''));
+    bigodin.addHelper('typeof', (v: any) => typeof v);
+    bigodin.addHelper('is', (a: any, b: any) => a == b);
+    bigodin.addHelper('default', (...args: any[]) => args.find(v => v !== null && typeof v !== 'undefined'));
+    return bigodin;
 };
 
 describe('runtime', () => {
@@ -39,14 +39,14 @@ describe('runtime', () => {
         });
 
         it('should assign variables from helper results', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $upperName (uppercase name)}}{{ $upperName }}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $upperName (uppercase name)}}{{ $upperName }}');
             expect(await template({ name: 'john' })).toEqual('JOHN');
         });
 
         it('should handle multiple variable assignments', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $x 1}}{{= $y 2}}{{= $sum (add $x $y)}}Result: {{ $sum }}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $x 1}}{{= $y 2}}{{= $sum (add $x $y)}}Result: {{ $sum }}');
             expect(await template()).toEqual('Result: 3');
         });
 
@@ -80,14 +80,14 @@ describe('runtime', () => {
         });
 
         it('should handle variables with helper calls', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $name "john"}}{{capitalize $name}}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $name "john"}}{{capitalize $name}}');
             expect(await template()).toEqual('John');
         });
 
         it('should handle complex expressions with variables', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $greeting "Hello"}}{{= $name "World"}}{{append $greeting ", " (uppercase $name) "!"}}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $greeting "Hello"}}{{= $name "World"}}{{append $greeting ", " (uppercase $name) "!"}}');
             expect(await template()).toEqual('Hello, WORLD!');
         });
 
@@ -102,8 +102,8 @@ describe('runtime', () => {
         });
 
         it('should maintain variable state within single template execution', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile(`
+            const bigodin = withHelpers();
+            const template = bigodin.compile(`
 {{= $counter 0}}
 {{#items}}
 {{= $counter (add $counter 1)}}
@@ -117,8 +117,8 @@ Total: {{ $counter }}
         });
 
         it('should handle assignment with complex helper expressions', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $result (add (multiply 3 4) 2)}}{{ $result }}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $result (add (multiply 3 4) 2)}}{{ $result }}');
             expect(await template()).toEqual('14');
         });
 
@@ -144,14 +144,14 @@ Total: {{ $counter }}
         });
 
         it('should handle variables with falsy values in conditions', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile('{{= $zero 0}}{{= $empty ""}}{{= $false false}}{{typeof $zero}} {{typeof $empty}} {{typeof $false}}');
+            const bigodin = withHelpers();
+            const template = bigodin.compile('{{= $zero 0}}{{= $empty ""}}{{= $false false}}{{typeof $zero}} {{typeof $empty}} {{typeof $false}}');
             expect(await template()).toEqual('number string boolean');
         });
 
         it('should handle variable reassignment in loops', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile(`
+            const bigodin = withHelpers();
+            const template = bigodin.compile(`
 {{= $sum 0}}
 {{#numbers}}
 {{= $sum (add $sum $this)}}
@@ -164,8 +164,8 @@ Total: {{ $counter }}
         });
 
         it('should handle variables in else if chains', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile(`
+            const bigodin = withHelpers();
+            const template = bigodin.compile(`
 {{= $status "pending"}}
 {{#is $status "complete"}}
 Done!
@@ -179,8 +179,8 @@ Unknown status
         });
 
         it('should not leak variables between template instances', async () => {
-            const bigodon = withHelpers();
-            const template = bigodon.compile(`
+            const bigodin = withHelpers();
+            const template = bigodin.compile(`
 {{#shouldSet}}
   {{= $foo "bar"}}
 {{/shouldSet}}

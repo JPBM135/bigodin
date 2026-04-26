@@ -3,10 +3,10 @@
 ## Summary
 
 A small handful of section/inverted tests fail not because of missing
-syntax but because Bigodon's runtime semantics for `{{#x}}…{{/x}}` and
+syntax but because Bigodin's runtime semantics for `{{#x}}…{{/x}}` and
 `{{^x}}…{{/x}}` differ from Mustache in narrow ways:
 
-- Behavior over scalar values (string, number) — Bigodon does not push
+- Behavior over scalar values (string, number) — Bigodin does not push
   them onto the context stack, so `{{.}}` and parent-context lookup
   inside the section don't work.
 - Whitespace produced by repeated standalone tags
@@ -23,7 +23,7 @@ need a runtime-level fix that doesn't fit either of those docs cleanly.
 From `sections.json`:
 
 - `Null is falsey` — `{{#null}}…{{/null}}` over an explicit `null`
-  value should render nothing; today Bigodon's check is `!value`, which
+  value should render nothing; today Bigodin's check is `!value`, which
   *should* handle `null` — needs verification (could be a
   null-prototype lookup quirk).
 - `Parent contexts` — names missing in the current context must be looked up in the parent stack.
@@ -35,7 +35,7 @@ From `sections.json`:
 From `inverted.json`:
 
 - `Null is falsey` — same as the sections version, on the inverted path.
-- `Empty List` — `{{^list}}…{{/list}}` with `list: []` should render the body. Bigodon's `runBlock` already guards `Array.isArray(value) && value.length === 0` on the *positive* path; the negation in `block.isNegated` may or may not symmetrically include this — needs confirmation.
+- `Empty List` — `{{^list}}…{{/list}}` with `list: []` should render the body. Bigodin's `runBlock` already guards `Array.isArray(value) && value.length === 0` on the *positive* path; the negation in `block.isNegated` may or may not symmetrically include this — needs confirmation.
 - `Doubled` — same standalone-line overlap.
 
 ## Why it fails today
@@ -69,7 +69,7 @@ Two gaps relative to the spec:
 2. **Truthy scalar context:** The final branch renders the body but does not push the scalar value onto the context stack. Mustache wants `{{#foo}}` over `foo: "bar"` to push `"bar"` so `{{.}}` resolves to it. (Same fix is recommended in [implicit-iterator.md](implicit-iterator.md); this doc is the place to track the *runtime* change while implicit-iterator covers the *parser* change.)
 
 `Parent contexts` requires that the path resolver walk *up* the
-context stack when a name isn't found in the current frame. Bigodon's
+context stack when a name isn't found in the current frame. Bigodin's
 `src/runner/path-expression.ts` already implements lookup; the failing
 test specifically uses dotted paths whose first segment is missing in
 the current frame. Whether walking happens correctly for that shape
@@ -144,10 +144,10 @@ No AST change. No `VERSION` bump.
 - **Small.** Patches A and B are ~5 lines each. Patch C is investigative
   but likely small once the cause is found.
 - Risk: medium. Patch B in particular changes behavior for any existing
-  Bigodon template that uses `{{#scalar}}…{{/scalar}}`. Run all of
+  Bigodin template that uses `{{#scalar}}…{{/scalar}}`. Run all of
   `yarn test` and confirm `test/runner/block.spec.js` still passes.
 
 ## Won't-fix rationale
 
-None — these are conformance bugs against a feature Bigodon already
+None — these are conformance bugs against a feature Bigodin already
 claims to support. Worth fixing.

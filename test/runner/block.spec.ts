@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { compile } from '../../src';
-import Bigodon from '../../src';
+import Bigodin from '../../src';
 
 describe('runner', () => { describe('blocks', () => {
     it('should return statements with truthy value', async () => {
@@ -70,9 +70,9 @@ describe('runner', () => { describe('blocks', () => {
     });
 
     it('should let access current object with $this', async () => {
-        const bigodon = new Bigodon();
-        bigodon.addHelper('stringify', (v: unknown) => JSON.stringify(v));
-        const templ = bigodon.compile('{{#val}}{{stringify $this}}{{/val}}');
+        const bigodin = new Bigodin();
+        bigodin.addHelper('stringify', (v: unknown) => JSON.stringify(v));
+        const templ = bigodin.compile('{{#val}}{{stringify $this}}{{/val}}');
         expect(await templ({ val: { foo: 'bar' } })).toEqual('{"foo":"bar"}');
     });
 
@@ -130,11 +130,11 @@ describe('runner', () => { describe('blocks', () => {
     });
 
     it('should accept helper returns as value', async () => {
-        const bigodon = new Bigodon();
+        const bigodin = new Bigodin();
 
-        bigodon.addHelper('foo', (val: unknown) => new Promise(r => setTimeout((r as any)({ val }), 50)));
+        bigodin.addHelper('foo', (val: unknown) => new Promise(r => setTimeout((r as any)({ val }), 50)));
 
-        const templ = bigodon.compile('{{#foo "bar"}}{{val}}{{/foo}}');
+        const templ = bigodin.compile('{{#foo "bar"}}{{val}}{{/foo}}');
         expect(await templ()).toEqual('bar');
     });
 
@@ -144,9 +144,9 @@ describe('runner', () => { describe('blocks', () => {
     });
 
     it('should parse complex templates with mustaches, blocks, and so on', async () => {
-        const bigodon = new Bigodon();
-        bigodon.addHelper('upper', (s: unknown) => String(s).toUpperCase());
-        const templ = bigodon.compile(`
+        const bigodin = new Bigodin();
+        bigodin.addHelper('upper', (s: unknown) => String(s).toUpperCase());
+        const templ = bigodin.compile(`
 {
 "id": {{id}},
 "code": "{{upper code}}",

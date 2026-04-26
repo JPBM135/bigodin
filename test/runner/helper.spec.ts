@@ -1,23 +1,23 @@
 import { describe, it, expect } from 'vitest';
 
 import { compile } from '../../src';
-import Bigodon from '../../src';
+import Bigodin from '../../src';
 
 describe('runner', () => {
     describe('helper', () => {
         it('should execute helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('upper', (s: unknown) => String(s).toUpperCase());
-            const templ = bigodon.compile('Hello, {{upper name }} {{upper "Schmidt" }}!');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('upper', (s: unknown) => String(s).toUpperCase());
+            const templ = bigodin.compile('Hello, {{upper name }} {{upper "Schmidt" }}!');
             const result = await templ({ name: 'George' });
             expect(result).toEqual('Hello, GEORGE SCHMIDT!');
         });
 
         it('should execute nested helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('upper', (s: unknown) => String(s).toUpperCase());
-            bigodon.addHelper('append', (a: unknown, b: unknown) => String(a) + String(b));
-            const templ = bigodon.compile('Hello, {{upper (append name " schmidt") }}!');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('upper', (s: unknown) => String(s).toUpperCase());
+            bigodin.addHelper('append', (a: unknown, b: unknown) => String(a) + String(b));
+            const templ = bigodin.compile('Hello, {{upper (append name " schmidt") }}!');
             const result = await templ({ name: 'George' });
             expect(result).toEqual('Hello, GEORGE SCHMIDT!');
         });
@@ -29,9 +29,9 @@ describe('runner', () => {
         });
 
         it('should execute parameterless extra helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('foo', () => 'bar');
-            const templ = bigodon.compile('{{foo}}');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('foo', () => 'bar');
+            const templ = bigodin.compile('{{foo}}');
             const result = await templ({ foo: 'wrong' });
             expect(result).toEqual('bar');
         });
@@ -64,64 +64,64 @@ describe('runner', () => {
         });
 
         it('should run extra helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('add', (a: number, b: number) => a + b);
-            const templ = bigodon.compile('{{add 1 2}}');
-            const result = await templ(bigodon as any);
+            const bigodin = new Bigodin();
+            bigodin.addHelper('add', (a: number, b: number) => a + b);
+            const templ = bigodin.compile('{{add 1 2}}');
+            const result = await templ(bigodin as any);
             expect(result).toEqual('3');
         });
 
         it('should prioritize extra helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('upper', () => 5);
-            const templ = bigodon.compile('{{upper "hello"}}');
-            const result = await templ(bigodon as any);
+            const bigodin = new Bigodin();
+            bigodin.addHelper('upper', () => 5);
+            const templ = bigodin.compile('{{upper "hello"}}');
+            const result = await templ(bigodin as any);
             expect(result).toEqual('5');
         });
 
         it('should preserve helper response types', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('add', (a: number, b: number) => a + b);
-            const templ = bigodon.compile('{{add (add 1 2) 4}}');
-            const result = await templ(bigodon as any);
+            const bigodin = new Bigodin();
+            bigodin.addHelper('add', (a: number, b: number) => a + b);
+            const templ = bigodin.compile('{{add (add 1 2) 4}}');
+            const result = await templ(bigodin as any);
             expect(result).toEqual('7');
         });
 
         it('should run async helpers in series', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('wait', (time: number) => new Promise(resolve => setTimeout(resolve, time)));
-            const templ = bigodon.compile('{{wait 200}}{{wait 300}}');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('wait', (time: number) => new Promise(resolve => setTimeout(resolve, time)));
+            const templ = bigodin.compile('{{wait 200}}{{wait 300}}');
             const start = Date.now();
-            await templ(bigodon as any);
+            await templ(bigodin as any);
             const deltaT = Date.now() - start;
             expect(deltaT).toBeGreaterThanOrEqual(490);
             expect(deltaT).toBeLessThanOrEqual(590);
         });
 
         it('should pass execution to helpers', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('setTitle', function (this: any, title: string) {
+            const bigodin = new Bigodin();
+            bigodin.addHelper('setTitle', function (this: any, title: string) {
                 this.data.title = title;
             });
 
-            const templ = bigodon.compile('{{setTitle "Hello"}}');
+            const templ = bigodin.compile('{{setTitle "Hello"}}');
 
             const data: any = {};
-            await templ(bigodon as any, { data });
+            await templ(bigodin as any, { data });
             expect(data.title).toEqual('Hello');
         });
 
         it('should log helper and location on error', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('fail', () => { throw new Error('fail'); });
+            const bigodin = new Bigodin();
+            bigodin.addHelper('fail', () => { throw new Error('fail'); });
 
-            const templ = bigodon.compile('{{fail}}');
-            await expect(templ(bigodon as any)).rejects.toThrow('Error at helper fail, position 2: fail');
+            const templ = bigodin.compile('{{fail}}');
+            await expect(templ(bigodin as any)).rejects.toThrow('Error at helper fail, position 2: fail');
         });
 
         it('should log helper when no location on error', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('fail', () => { throw new Error('fail'); });
+            const bigodin = new Bigodin();
+            bigodin.addHelper('fail', () => { throw new Error('fail'); });
 
             const ast = {
                 type: 'TEMPLATE',
@@ -136,7 +136,7 @@ describe('runner', () => {
                 }],
             };
 
-            await expect(bigodon.run(ast as any, bigodon as any)).rejects.toThrow('Error at helper fail: fail');
+            await expect(bigodin.run(ast as any, bigodin as any)).rejects.toThrow('Error at helper fail: fail');
         });
     });
 });

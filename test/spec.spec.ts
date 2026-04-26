@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 
-import Bigodon from '../src';
+import Bigodin from '../src';
 
 const SKIPPED_SPECS = [
     'partials.json',
@@ -56,9 +56,9 @@ describe('spec', () => {
                         data = test.data;
                     }
 
-                    const bigodon = new Bigodon();
+                    const bigodin = new Bigodin();
 
-                    const template = bigodon.compile(test.template);
+                    const template = bigodin.compile(test.template);
                     const result = await template(data);
 
                     expect(result, test.desc).toEqual(test.expected);

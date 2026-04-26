@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { compile, compileExpression } from '../src';
-import Bigodon from '../src';
+import Bigodin from '../src';
 
 describe('security', () => {
     describe('SSTI tests', () => {
@@ -52,8 +52,8 @@ describe('security', () => {
         });
 
         it('cannot reach global objects via $this/$root/$parent', async () => {
-            const bigodon = new Bigodon();
-            const templ = bigodon.compile('{{ $this.constructor }}{{$root.constructor}}');
+            const bigodin = new Bigodin();
+            const templ = bigodin.compile('{{ $this.constructor }}{{$root.constructor}}');
             const res = await templ({ a: 1 });
             expect(res).toEqual('');
         });
@@ -91,17 +91,17 @@ describe('security', () => {
         });
 
         it('helper-created objects do not expose constructor/prototype paths', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('makeDate', () => new Date('2024-01-01T00:00:00.000Z'));
-            const templ = bigodon.compile('{{#with (makeDate)}}{{constructor}}{{__proto__}}{{prototype}}{{/with}}');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('makeDate', () => new Date('2024-01-01T00:00:00.000Z'));
+            const templ = bigodin.compile('{{#with (makeDate)}}{{constructor}}{{__proto__}}{{prototype}}{{/with}}');
             const res = await templ();
             expect(res).toEqual('');
         });
 
         it('helper-created objects do not expose methods through path access', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('makeDate', () => new Date('2024-01-01T00:00:00.000Z'));
-            const templ = bigodon.compile('{{#with (makeDate)}}{{toISOString}}{{getTime}}{{/with}}');
+            const bigodin = new Bigodin();
+            bigodin.addHelper('makeDate', () => new Date('2024-01-01T00:00:00.000Z'));
+            const templ = bigodin.compile('{{#with (makeDate)}}{{toISOString}}{{getTime}}{{/with}}');
             const res = await templ();
             expect(res).toEqual('');
         });

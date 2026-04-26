@@ -8,7 +8,7 @@ can be recursive, can carry the current context, and — when standalone
 — must re-apply its caller's indentation to every line of its rendered
 body.
 
-Bigodon has no concept of partials.
+Bigodin has no concept of partials.
 
 ## Failing specs (12)
 
@@ -76,8 +76,8 @@ Bump `VERSION` in `src/parser/index.ts` to 4 and widen `MAX_VERSION` to
 Two questions to answer before coding:
 
 1. **Where do partials come from?** Two reasonable answers:
-   - **Caller-supplied map**: extend `RunOptions` (`src/runner/options.ts`) with `partials: Record<string, string | TemplateStatement>`. Strings get parsed lazily; pre-parsed ASTs are used as-is. This matches the Bigodon design: parsing and running can happen in different processes.
-   - **Bigodon-instance-scoped**: add `addPartial(name, source)` on the `Bigodon` class (`src/index.ts`), parallel to `addHelper`.
+   - **Caller-supplied map**: extend `RunOptions` (`src/runner/options.ts`) with `partials: Record<string, string | TemplateStatement>`. Strings get parsed lazily; pre-parsed ASTs are used as-is. This matches the Bigodin design: parsing and running can happen in different processes.
+   - **Bigodin-instance-scoped**: add `addPartial(name, source)` on the `Bigodin` class (`src/index.ts`), parallel to `addHelper`.
 
    Recommended: both — `addPartial` writes into a per-instance map that becomes the default `options.partials` value, but callers can override.
 
@@ -85,7 +85,7 @@ Two questions to answer before coding:
 
 In `runStatement`'s new `PARTIAL` case:
 
-- Look up `name` in `execution.options.partials` and `Bigodon` instance map.
+- Look up `name` in `execution.options.partials` and `Bigodin` instance map.
 - On miss, the spec wants empty output (not an error) — see the `Failed Lookup` test.
 - On hit:
   - If string, parse on demand (cache the resulting AST inside the execution to handle recursion fairly).
@@ -100,12 +100,12 @@ In `runStatement`'s new `PARTIAL` case:
 - `src/parser/index.ts` — new `>` branch, version bump.
 - `src/runner/index.ts` — version-window widen, new `PARTIAL` case.
 - `src/runner/options.ts` — `partials` option, optional `maxPartialDepth`.
-- `src/index.ts` — `addPartial` on the `Bigodon` class.
+- `src/index.ts` — `addPartial` on the `Bigodin` class.
 - `LIB.md`, `LANGUAGE.md` — document.
 
 ### Security
 
-Bigodon's headline claim is "safe to run on user input." Partials need
+Bigodin's headline claim is "safe to run on user input." Partials need
 the same scrutiny:
 
 - The partial *body* is parsed by the same trusted parser, so prototype-pollution / sandbox escapes are no worse than today's parser.

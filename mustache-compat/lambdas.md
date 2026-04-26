@@ -15,7 +15,7 @@ behaviors:
   argument; its return value is rendered as a template. Calls are
   *not* cached.
 
-Bigodon does have a function-call mechanism (helpers, registered via
+Bigodin does have a function-call mechanism (helpers, registered via
 `addHelper`), but its semantics differ from Mustache lambdas in two
 material ways:
 
@@ -23,7 +23,7 @@ material ways:
 2. Block helpers (`{{#helper …}}…{{/helper}}`) receive a structured
    call interface, not the raw template string.
 
-So the spec tests fail not because Bigodon can't run user code in
+So the spec tests fail not because Bigodin can't run user code in
 templates, but because its model is "helpers," not "lambdas."
 
 ## Failing specs (10)
@@ -44,21 +44,21 @@ From `~lambdas.json`:
 ## Why it fails today
 
 The spec runner in `test/spec.spec.js:44-47` evaluates each lambda's
-`js` source via `eval` and assigns it to `data.lambda`. Bigodon then
+`js` source via `eval` and assigns it to `data.lambda`. Bigodin then
 tries to compile and run the template. Two failure modes:
 
 - For interpolation: `{{lambda}}` resolves the path `lambda` to the
-  function value. Bigodon then *does not* call the function — it
+  function value. Bigodin then *does not* call the function — it
   stringifies it (likely to `"function() { return \"world\" }"` or
   similar). Even if it did call it, the spec wants the return value
-  *re-parsed*, which Bigodon's runtime does not do.
+  *re-parsed*, which Bigodin's runtime does not do.
 - For section: `{{#lambda}}…{{/lambda}}` enters `runBlock`
   (`src/runner/block.ts`) with `value` being a function, which is
   truthy and not an array/object, so it renders the body once with the
   function still on top of the context — definitely not the spec
   semantics.
 
-Bigodon's helpers (`src/runner/helper.ts`) are looked up in
+Bigodin's helpers (`src/runner/helper.ts`) are looked up in
 `execution.extraHelpers` and the bundled defaults, **not** in the
 `context` itself. So even if the user wraps the lambda as a helper,
 the call shape (positional arguments parsed by the template) doesn't
@@ -100,7 +100,7 @@ interpolation case but doesn't solve "section receives raw body."
 
 ### Option 3 — Skip
 
-Lambdas are optional; Bigodon's helper API is the documented way to
+Lambdas are optional; Bigodin's helper API is the documented way to
 inject computed values. Add `'~lambdas.json'` to `SKIPPED_SPECS` in
 `test/spec.spec.js`.
 
@@ -117,8 +117,8 @@ No AST shape change; no `VERSION` bump.
 
 ### Security
 
-- Lambdas execute caller-supplied JavaScript. This is **caller-controlled** code, not template-author code, so it doesn't violate Bigodon's "safe to run user templates" claim — but worth a docs note that lambda support means the template's *data* can run arbitrary JS, narrowing the trust boundary.
-- The re-parse step parses a string the lambda chose. If the lambda is itself derived from untrusted input, that string could be a hostile template. Re-running it through Bigodon's safe interpreter is fine in principle, but `maxExecutionMillis` must wrap the re-run.
+- Lambdas execute caller-supplied JavaScript. This is **caller-controlled** code, not template-author code, so it doesn't violate Bigodin's "safe to run user templates" claim — but worth a docs note that lambda support means the template's *data* can run arbitrary JS, narrowing the trust boundary.
+- The re-parse step parses a string the lambda chose. If the lambda is itself derived from untrusted input, that string could be a hostile template. Re-running it through Bigodin's safe interpreter is fine in principle, but `maxExecutionMillis` must wrap the re-run.
 
 ## Effort & risk
 
@@ -130,8 +130,8 @@ No AST shape change; no `VERSION` bump.
 
 ## Won't-fix rationale
 
-Strong candidate for "won't fix." Bigodon's helper API is its
+Strong candidate for "won't fix." Bigodin's helper API is its
 deliberate alternative to lambdas, and the security/perf cost of
-re-parsing inside the runtime cuts against Bigodon's "safely interpret
+re-parsing inside the runtime cuts against Bigodin's "safely interpret
 user templates" framing. Recommended: document the divergence and
 point users at `addHelper` for the same use cases.

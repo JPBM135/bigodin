@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { parse } from '../../src';
-import Bigodon from '../../src';
+import Bigodin from '../../src';
 import { VERSION } from '../../src/parser';
 
 function removeLoc(obj: any, stringMapper: (v: string) => string = v => v): any {
@@ -470,9 +470,9 @@ describe('parser', () => {
         });
 
         it('should allow as many nesting levels as needed', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('is', (a: any, b: any) => a == b);
-            const template = bigodon.compile(`
+            const bigodin = new Bigodin();
+            bigodin.addHelper('is', (a: any, b: any) => a == b);
+            const template = bigodin.compile(`
 {{#is $this.value 'one'}}
 first
 {{else is $this.value 'two'}}
@@ -494,9 +494,9 @@ fifth
         });
 
         it('should allow a simple else after nesting elses', async () => {
-            const bigodon = new Bigodon();
-            bigodon.addHelper('is', (a: any, b: any) => a == b);
-            const template = bigodon.compile(`
+            const bigodin = new Bigodin();
+            bigodin.addHelper('is', (a: any, b: any) => a == b);
+            const template = bigodin.compile(`
 {{#is $this.value 'one'}}
 first
 {{else is $this.value 'two'}}

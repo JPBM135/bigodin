@@ -11,7 +11,7 @@ inheritance/dynamic-name variants. When a line is standalone, the
 is consumed from the output. Variable interpolation tags
 (`{{x}}`, `{{{x}}}`, `{{&x}}`) are deliberately excluded.
 
-Bigodon emits each standalone tag's surrounding whitespace verbatim, so
+Bigodin emits each standalone tag's surrounding whitespace verbatim, so
 spec test outputs end up with extra blank lines and indentation.
 
 ## Failing specs (22)
@@ -120,11 +120,11 @@ to look across block boundaries — workable but a little fiddly.
   (`MUSTACHE.md` § "Standalone Tags") but boundary cases (first/last
   statement, nested blocks, `\r\n` vs `\n`) need careful handling.
 - Risk: low for new outputs (it can only remove whitespace, never add
-  it), but **could regress existing Bigodon tests** if a current test
+  it), but **could regress existing Bigodin tests** if a current test
   asserts on a template with whitespace that would now be stripped. Run
   the full `yarn test` suite, not just `test:spec`.
 
 ## Won't-fix rationale
 
 None — this is faithful to a clear Mustache rule and doesn't conflict
-with Bigodon's design.
+with Bigodin's design.

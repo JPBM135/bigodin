@@ -9,7 +9,7 @@ prefixed with `~`) that adds template inheritance:
 - `{{$blockName}}default{{/blockName}}` — declare a named block in the parent or override one when nested under `{{<parent}}`.
 - The parent template is rendered with each block's content replaced by any override the caller supplied; otherwise the block's default is used.
 
-Bigodon has neither parents nor named blocks.
+Bigodin has neither parents nor named blocks.
 
 ## Failing specs (27)
 
@@ -47,9 +47,9 @@ From `~inheritance.json`:
 Two distinct parse failures:
 
 - `{{<parent}}` — the `<` after `{{` is not a recognized sigil; falls into `$expression` which fails with `Expected literal, helper or context path`.
-- `{{$block}}` — Bigodon already uses `$` for *variables* (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
+- `{{$block}}` — Bigodin already uses `$` for *variables* (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
 
-The `$` collision is the awkward part — Bigodon and Mustache use the same character for different things.
+The `$` collision is the awkward part — Bigodin and Mustache use the same character for different things.
 
 ## Proposed implementation
 
@@ -85,12 +85,12 @@ Bump `VERSION` (e.g. to 6 once partials/dynamic-names land), widen
 In `src/parser/index.ts` `$template`, add two new branches:
 
 - `<` — opens a parent (`{{<name}}`); pushes a `ParentStatement` onto the parser stack. Until the matching `{{/name}}`, only `BLOCK_OVERRIDE` statements (and whitespace text) may appear at the top level of the parent body — anything else is an error per the spec.
-- `$` — currently routed to `$assignment` because Bigodon uses `{{= $foo expr}}` and `{{$this}}`. The new branch needs disambiguation:
+- `$` — currently routed to `$assignment` because Bigodin uses `{{= $foo expr}}` and `{{$this}}`. The new branch needs disambiguation:
   - If the immediate next token is `=` → assignment.
   - If the next token is a path that resolves to a variable (`$this`, `$parent`, `$root`) → variable reference (existing behavior).
   - Otherwise (a bare identifier following `$`) → block declaration: `{{$name}}…{{/name}}`.
 
-Disambiguation is tricky — current Bigodon code treats `$` as part of
+Disambiguation is tricky — current Bigodin code treats `$` as part of
 the variable name. To avoid breaking existing templates, prefer
 introducing the inheritance `$` syntax only **inside a `{{<parent}}` body**;
 outside of a parent body, `{{$x}}` keeps its current "variable
@@ -128,14 +128,14 @@ reuse.
 ## Effort & risk
 
 - **Large.** Touches parser disambiguation, AST, runner, partials integration, and indentation. Realistic ~3–4 days.
-- Risk: high for `$` disambiguation — easy to break existing Bigodon
+- Risk: high for `$` disambiguation — easy to break existing Bigodin
   templates. The "only inside `{{<parent}}` body" scoping mitigates
   this but adds parser state.
 
 ## Won't-fix rationale
 
 Reasonable to skip. Inheritance is *optional* in Mustache. The largest
-known consumer of Bigodon (Mocko, per the README) is unlikely to need
+known consumer of Bigodin (Mocko, per the README) is unlikely to need
 template inheritance for mock generation. If skipped, add
 `'~inheritance.json'` to `SKIPPED_SPECS` in `test/spec.spec.js` and
 note it in [README.md](../README.md). Inheritance is the strongest

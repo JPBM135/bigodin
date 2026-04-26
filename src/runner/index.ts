@@ -4,7 +4,7 @@ import { runBlock } from './block';
 import { Execution } from './execution';
 import { runHelperExpression } from './helper';
 import { helpers } from './helpers';
-import { BigodonOptions } from './options';
+import { BigodinOptions } from './options';
 import { runPathExpression } from './path-expression';
 import { runAssignment, runVariable } from './variables';
 
@@ -17,7 +17,7 @@ const MAX_VERSION = 3;
 export async function run(ast: TemplateStatement,
                           context: object = {},
                           extraHelpers: Map<string, Function>,
-                          options?: BigodonOptions): Promise<string> {
+                          options?: BigodinOptions): Promise<string> {
     if (ast.version < MIN_VERSION || ast.version > MAX_VERSION) {
         throw new Error(`Unsupported AST version ${ast.version}, parse it again to generate a new AST`);
     }

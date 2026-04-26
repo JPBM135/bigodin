@@ -5,7 +5,7 @@
 In Mustache, `{{.}}` resolves to the *current context* — useful when
 iterating a list of scalars: `{{#items}}{{.}}{{/items}}` over
 `["a", "b", "c"]` produces `"abc"`. The lone `.` is also called the
-"implicit iterator." Bigodon supports `$this` (its named equivalent)
+"implicit iterator." Bigodin supports `$this` (its named equivalent)
 but does not parse a bare `.`.
 
 ## Failing specs (13)
@@ -35,7 +35,7 @@ From `sections.json`:
 separated by `.`. A leading `.` with nothing before it is not accepted;
 the parser fails with `Expected literal, helper or context path`.
 
-At runtime, Bigodon already exposes `$this` for the same purpose
+At runtime, Bigodin already exposes `$this` for the same purpose
 (`src/runner/path-expression.ts` resolves the `$this` magic name to the
 top of the context stack). So the runtime already does the right thing
 — only the parse rule is missing.
@@ -52,7 +52,7 @@ ways:
 2. **Add a new path representation `'$current'`** and route it through the same code path as `$this` in `src/runner/path-expression.ts`.
 
 Approach 1 is strictly simpler and recommended. It also means `{{.foo}}`
-(dotted access from current context) works for free if Bigodon already
+(dotted access from current context) works for free if Bigodin already
 supports `{{$this.foo}}` (it does).
 
 ### Runtime
@@ -63,7 +63,7 @@ No change required if approach 1 is taken.
 
 Three of the failing tests (`Implicit Iterator - String`,
 `Implicit Iterator - Integer`, `Implicit Iterator - Decimal`) iterate
-over a single scalar. Bigodon's `runBlock`
+over a single scalar. Bigodin's `runBlock`
 (`src/runner/block.ts`) currently has this branch order:
 
 ```ts
@@ -83,7 +83,7 @@ execution.popContext();
 return result;
 ```
 
-This is a behavior change for any existing Bigodon templates that use
+This is a behavior change for any existing Bigodin templates that use
 `{{#scalar}}…{{/scalar}}` over a non-array, non-object value. Today
 those run with the parent context still on top; after the change,
 `$this` and `.` would resolve to the scalar. Risk is low because such

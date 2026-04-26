@@ -4,7 +4,7 @@
 
 Mustache lets a template change the open/close delimiters mid-stream:
 `{{=<% %>=}}` switches from `{{ }}` to `<% %>` for the rest of the
-template (or until the next set-delimiter tag). Bigodon's parser hard-codes
+template (or until the next set-delimiter tag). Bigodin's parser hard-codes
 `{{` / `}}` and provides no mechanism to switch.
 
 ## Failing specs (14)
@@ -38,7 +38,7 @@ isn't `{{`") capture the literal strings `{{` and `}}`. There is no
 parser state that could be mutated mid-parse to change those strings.
 
 Even the dispatch on `=` in `src/parser/index.ts` `$template` is
-*assignments* (`{{= $foo expr}}`) — Bigodon's variable-assignment
+*assignments* (`{{= $foo expr}}`) — Bigodin's variable-assignment
 syntax — not Mustache set-delimiters. The two share a leading `=` and
 will need to be disambiguated if set-delimiter support is added (e.g.,
 `{{= $foo …}}` is assignment; `{{=<% %>=}}` is set-delimiter).
@@ -87,7 +87,7 @@ Replace `pierrejs` for the top level. Out of scope for this category.
 
 ## Disambiguating from `{{= $var …}}` assignment
 
-Bigodon's existing `=` branch in `$template` handles assignments like
+Bigodin's existing `=` branch in `$template` handles assignments like
 `{{= $foo expr}}`. Set-delimiter tags also start with `=` after the
 leading `{{`. The disambiguation: if the next non-space character after
 `=` is `$`, it's an assignment; otherwise it's a set-delimiter (the
@@ -98,13 +98,13 @@ sequences per the spec — see Mustache's `delimiters.yml`).
 
 - Option 1 (recommended): **Medium-large.** ~1 day of careful work, mostly in delimiter rewrite + location-map plus tests for the location-map.
 - Option 2: **Large.** Touches the heart of the parser.
-- Risk: If location remapping is wrong, error messages mislocate, hurting Bigodon's "human-friendly errors" claim — that's a regression worth guarding with explicit tests.
+- Risk: If location remapping is wrong, error messages mislocate, hurting Bigodin's "human-friendly errors" claim — that's a regression worth guarding with explicit tests.
 
 ## Won't-fix rationale
 
 Worth considering. Set Delimiters is a feature with limited real-world
 demand for Handlebars-style templates (Handlebars itself doesn't ship
-it). If the user wants Bigodon to remain "Handlebars+", set-delimiters
+it). If the user wants Bigodin to remain "Handlebars+", set-delimiters
 is the most defensible "won't fix" of the eight. Document the
 divergence and add `'delimiters.json'` to `SKIPPED_SPECS` in
 `test/spec.spec.js`.
