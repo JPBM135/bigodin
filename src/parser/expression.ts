@@ -5,13 +5,13 @@ import { optionalSpaces } from './utils';
 import { $variable } from './variables';
 import { ensure } from '../utils';
 
-/* $lab:coverage:off$ */
+/* v8 ignore start */
 enum State {
     _START,
     GOT_LITERAL,
     GOT_PATH,
 }
-/* $lab:coverage:on$ */
+/* v8 ignore stop */
 
 const topOfStack = <T>(stack: T[]): T => stack[stack.length - 1];
 
@@ -62,9 +62,9 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         return stmt;
     };
 
-    /* $lab:coverage:off$ */
+    /* v8 ignore start */
     while (true) {
-    /* $lab:coverage:on$ */
+    /* v8 ignore stop */
         switch (state) {
             case State._START: {
                 yield optionalSpaces;
@@ -168,10 +168,10 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
                 yield Pr.fail('Expected expression parameters or "}}"');
             }
 
-            /* $lab:coverage:off$ */
+            /* v8 ignore start */
             default:
                 yield Pr.fail(`Unexpected state ${state} at expression parser`);
-            /* $lab:coverage:on$ */
+            /* v8 ignore stop */
         }
     }
 }).map(({ type, loc: _, ...v }, loc) => ({ type, loc, ...v }));
