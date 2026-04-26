@@ -16,7 +16,7 @@ Run on `feat/mustache-spec-tests` against the current `dist/` build:
 - **Passing: 103 / 110** attempted Mustache spec tests (94%)
 - **Failing: 3** — all `HTML Escaping` variants; deliberate divergence (Bigodon emits raw)
 - **Skipped: 84 + 4** — 84 tests in 5 unimplemented feature files (`partials.json`, `~dynamic-names.json`, `delimiters.json`, `~inheritance.json`, `~lambdas.json`), and 4 tests requiring auto context-stack walking (`Parent contexts`, `List Contexts`, `Deeply Nested Contexts`, `Variable test`) — Bigodon uses Handlebars-style strict scoping
-- Test runner: `npm run test:spec` (clones `mustache/spec` into `test/mustache/`, executes `test/spec.spec.js`)
+- Test runner: `yarn test:spec` (clones `mustache/spec` into `test/mustache/`, executes `test/spec.spec.js`)
 
 ### What's been implemented
 

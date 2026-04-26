@@ -27,7 +27,7 @@ Bigodon is used in production by [Mocko](https://mocko.dev/).
 
 Add the `bigodon` dependency to your project. Types included:
 ```shell
-npm install bigodon
+yarn add bigodon
 ```
 
 ## Usage
@@ -106,6 +106,6 @@ analysis, and proposed implementations — live in
 | Inheritance `{{<p}}{{$b}}…` (optional)   | Not planned   | `$` collides with Bigodon's variable syntax — see [inheritance.md](mustache-compat/inheritance.md) |
 | Lambdas (optional)                       | Not supported | Bigodon's helper API (`addHelper`) is the recommended alternative — see [lambdas.md](mustache-compat/lambdas.md) |
 
-Run `npm run test:spec` to execute the full Mustache spec suite locally
+Run `yarn test:spec` to execute the full Mustache spec suite locally
 (it clones [mustache/spec](https://github.com/mustache/spec) into
 `test/mustache/` on first run).

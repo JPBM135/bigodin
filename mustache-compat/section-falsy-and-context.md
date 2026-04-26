@@ -145,7 +145,7 @@ No AST change. No `VERSION` bump.
   but likely small once the cause is found.
 - Risk: medium. Patch B in particular changes behavior for any existing
   Bigodon template that uses `{{#scalar}}…{{/scalar}}`. Run all of
-  `npm test` and confirm `test/runner/block.spec.js` still passes.
+  `yarn test` and confirm `test/runner/block.spec.js` still passes.
 
 ## Won't-fix rationale
 

@@ -28,19 +28,19 @@ First, clone the repository and install the dependencies:
 ```bash
 git clone https://github.com/gabriel-pinheiro/bigodon.git
 cd bigodon
-npm install
+yarn install
 ```
 
 Now you're ready to code! After changing anything, make sure the tests still pass:
 ```bash
-npm test
+yarn test
 ```
 
-If you'd like to use your local version of Bigodon in your project, you can create a link with npm. Inside your `bigodon` folder:
+If you'd like to use your local version of Bigodon in your project, you can create a link with yarn. Inside your `bigodon` folder:
 ```bash
-npm link
+yarn link
 ```
 ...and inside the project you want to use it:
 ```bash
-npm link bigodon
+yarn link bigodon
 ```

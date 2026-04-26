@@ -122,7 +122,7 @@ to look across block boundaries — workable but a little fiddly.
 - Risk: low for new outputs (it can only remove whitespace, never add
   it), but **could regress existing Bigodon tests** if a current test
   asserts on a template with whitespace that would now be stripped. Run
-  the full `npm test` suite, not just `test:spec`.
+  the full `yarn test` suite, not just `test:spec`.
 
 ## Won't-fix rationale
 

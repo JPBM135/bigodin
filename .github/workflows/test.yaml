@@ -14,18 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: ['18', '20', '22', '24']
+        node-version: [ "18", "20", "22", "24" ]
     steps:
-    - uses: actions/checkout@v4
-      name: Repository checkout
-    - uses: actions/setup-node@v4
-      name: Node ${{ matrix.node-version }} Setup
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: npm install
-    - name: Build and test
-      run: npm test
+      - uses: actions/checkout@v4
+        name: Repository checkout
+      - uses: actions/setup-node@v4
+        name: Node ${{ matrix.node-version }} Setup
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: yarn install --immutable
 
-    - name: Run spec tests
-      run: npm run test:spec
+      - name: Setup mustache spec
+        run: yarn test:setup:mustache-spec
+
+      - name: Build and test
+        run: yarn test

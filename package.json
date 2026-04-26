@@ -25,12 +25,12 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc && tsc -p tsconfig.esm.json && node scripts/postbuild-esm.js",
-    "pretest": "npm run build",
+    "pretest": "yarn build",
     "test": "lab -v -t 100 -I require -a @hapi/code",
     "test:cov": "lab -I require -r html -o coverage.html",
-    "test:spec": "npm run test:setup:mustache-spec && lab -v -t 100 -I require -a @hapi/code test/spec.spec.js",
+    "test:spec": "yarn test:setup:mustache-spec && lab -v -t 100 -I require -a @hapi/code test/spec.spec.js",
     "test:setup:mustache-spec": "cd test && git clone https://github.com/mustache/spec.git mustache || true",
-    "prepublish": "npm run build",
+    "prepublish": "yarn build",
     "lint": "eslint -c eslint.js \"src/**/*.ts\"",
     "lint:fix": "eslint -c eslint.js \"src/**/*.ts\" --fix"
   },

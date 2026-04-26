@@ -18,7 +18,7 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: yarn install --immutable
 
       - name: Verify tag matches package version
         if: github.event_name == 'release'
@@ -31,7 +31,7 @@ jobs:
           fi
 
       - name: Build and test
-        run: npm test
+        run: yarn test
 
   publish-npm:
     needs: build-and-test
@@ -47,15 +47,15 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm install
+        run: yarn install --immutable
 
       - name: Build
-        run: npm run build
+        run: yarn build
 
       - name: Publish to npmjs
-        run: npm publish
+        run: yarn npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-github:
     needs: build-and-test
@@ -75,12 +75,12 @@ jobs:
           scope: '@jpbm135'
 
       - name: Install dependencies
-        run: npm install
+        run: yarn install --immutable
 
       - name: Build
-        run: npm run build
+        run: yarn build
 
       - name: Publish to GitHub Packages
-        run: npm publish
+        run: yarn npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

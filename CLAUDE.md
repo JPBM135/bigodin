@@ -10,13 +10,13 @@ User-facing docs: `README.md`, `LIB.md` (API), `LANGUAGE.md` (template syntax), 
 
 ## Common commands
 
-The package declares `packageManager: yarn@4.14.1` and ships `.yarn/`, `.yarnrc.yml`, `yarn.lock` — use Yarn locally. The npm scripts still work and are what CI runs.
+The package declares `packageManager: yarn@4.14.1` and ships `.yarn/`, `.yarnrc.yml`, `yarn.lock` — use Yarn locally. CI runs the same yarn scripts.
 
-- `npm run build` — compile `src/` → `dist/` via `tsc` (clears `dist/` first via `prebuild`).
-- `npm test` — runs `pretest` (build) then `lab -v -t 100 -I require -a @hapi/code` against `test/**/*.spec.js`. The `-t 100` enforces 100% coverage; tests run against the built `dist/`, so a stale build will mask source changes — run through `npm test` (which rebuilds), not `lab` directly.
-- `npm run test:cov` — same suite, emits `coverage.html`.
-- Run a single test file: `npm run build && npx lab -v -I require -a @hapi/code test/parser/parser.spec.js` (or use `--grep "<pattern>"` to filter cases).
-- `npm run lint` / `npm run lint:fix` — ESLint over `src/**/*.ts` using the flat config in `eslint.js`.
+- `yarn build` — compile `src/` → `dist/` via `tsc` (clears `dist/` first via `prebuild`).
+- `yarn test` — runs `pretest` (build) then `lab -v -t 100 -I require -a @hapi/code` against `test/**/*.spec.js`. The `-t 100` enforces 100% coverage; tests run against the built `dist/`, so a stale build will mask source changes — run through `yarn test` (which rebuilds), not `lab` directly.
+- `yarn test:cov` — same suite, emits `coverage.html`.
+- Run a single test file: `yarn build && yarn dlx lab -v -I require -a @hapi/code test/parser/parser.spec.js` (or use `--grep "<pattern>"` to filter cases).
+- `yarn lint` / `yarn lint:fix` — ESLint over `src/**/*.ts` using the flat config in `eslint.js`.
 
 Node ≥ 18 is required.
 
