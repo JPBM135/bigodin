@@ -142,4 +142,5 @@ export const { compile, compileExpression } = defaultBigodin;
 
 export { TemplateStatement } from './parser/statements';
 export { BigodinOptions } from './runner/options';
+export { Bigodin };
 export default Bigodin;
