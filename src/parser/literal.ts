@@ -1,6 +1,6 @@
-import Pr, { Parser } from 'pierrejs';
-import { LiteralStatement } from './statements';
-import { lString } from './string';
+import Pr, { Parser } from './pr.js';
+import { LiteralStatement } from './statements.js';
+import { lString } from './string.js';
 
 export const lNull = Pr.string('null')
     .map(() => null)
@@ -18,6 +18,6 @@ export const lNumber = Pr.regex('number', /^[+\-]?[0-9]+(\.[0-9]+)?/)
     .map(n => Number(n));
 
 export const $literal: Parser<LiteralStatement> =
-    Pr.either(lNull, lUndefined, lBoolean, lNumber, lString)
+    Pr.either<boolean | number | string | null | undefined>(lNull, lUndefined, lBoolean, lNumber, lString)
         .map((value, loc): LiteralStatement => ({ type: 'LITERAL', loc, value }))
         .withName('literal');

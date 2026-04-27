@@ -1,12 +1,12 @@
-import { ExpressionStatement, Statement, TemplateStatement } from '../parser/statements';
-import { deepCloneNullPrototype } from '../utils';
-import { runBlock } from './block';
-import { Execution } from './execution';
-import { runHelperExpression } from './helper';
-import { helpers } from './helpers';
-import { BigodinOptions } from './options';
-import { runPathExpression } from './path-expression';
-import { runAssignment, runVariable } from './variables';
+import { ExpressionStatement, Statement, TemplateStatement } from '../parser/statements.js';
+import { deepCloneNullPrototype } from '../utils.js';
+import { runBlock } from './block.js';
+import { Execution } from './execution.js';
+import { runHelperExpression } from './helper.js';
+import { helpers } from './helpers/index.js';
+import { BigodinOptions } from './options.js';
+import { runPathExpression } from './path-expression.js';
+import { runAssignment, runVariable } from './variables.js';
 
 export type LiteralValue =
     string | number | boolean | null | undefined | object;

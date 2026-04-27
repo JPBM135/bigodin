@@ -1,8 +1,8 @@
-import { LiteralValue, runStatement } from './index';
-import { ExpressionStatement } from '../parser/statements';
-import { helpers } from './helpers';
-import { UNSAFE_KEYS } from '../utils';
-import { Execution } from './execution';
+import { LiteralValue, runStatement } from './index.js';
+import { ExpressionStatement } from '../parser/statements.js';
+import { helpers } from './helpers/index.js';
+import { UNSAFE_KEYS } from '../utils.js';
+import { Execution } from './execution.js';
 
 async function runHelper(execution: Execution, expression: ExpressionStatement): Promise<LiteralValue> {
     const helperName = expression.path;
@@ -25,11 +25,12 @@ export async function runHelperExpression(execution: Execution, expression: Expr
     try {
         return await runHelper(execution, expression);
     } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
         if (expression.loc) {
-            e.message = `Error at helper ${expression.path}, position ${expression.loc.start}: ${e.message}`;
+            err.message = `Error at helper ${expression.path}, position ${expression.loc.start}: ${err.message}`;
         } else {
-            e.message = `Error at helper ${expression.path}: ${e.message}`;
+            err.message = `Error at helper ${expression.path}: ${err.message}`;
         }
-        throw e;
+        throw err;
     }
 }

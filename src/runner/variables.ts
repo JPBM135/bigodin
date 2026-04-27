@@ -1,7 +1,7 @@
-import { AssignmentStatement, VariableStatement } from '../parser/statements';
-import { Execution } from './execution';
-import { runStatement } from './index';
-import { LiteralValue } from './index';
+import { AssignmentStatement, VariableStatement } from '../parser/statements.js';
+import { Execution } from './execution.js';
+import { runStatement } from './index.js';
+import { LiteralValue } from './index.js';
 
 /**
  * Runs a variable assignment statement.

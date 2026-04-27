@@ -1,6 +1,6 @@
-import { runStatement, runStatements } from '.';
-import { BlockStatement } from '../parser/statements';
-import { Execution } from './execution';
+import { runStatement, runStatements } from './index.js';
+import { BlockStatement } from '../parser/statements.js';
+import { Execution } from './execution.js';
 
 const isFalsy = (value: unknown): boolean =>
     !value || (Array.isArray(value) && value.length === 0);
@@ -48,7 +48,7 @@ export async function runBlock(execution: Execution, block: BlockStatement): Pro
     }
 
     // Object
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
         execution.pushContext(value);
         const result = await runStatements(execution, block.statements);
         execution.popContext();

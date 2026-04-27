@@ -1,20 +1,20 @@
-import Pr, { Parser } from 'pierrejs';
-import { $expression } from './expression';
+import Pr, { Parser } from './pr.js';
+import { $expression } from './expression.js';
 import {
     BlockStatement, CommentStatement, ExpressionStatement,
     Location, MustacheStatement, Statement,
     TemplateStatement, TextStatement, ValueStatement,
-} from './statements';
+} from './statements.js';
 import {
     atPos, closeMustache, openMustache,
     optionalSpaces, peek, text, char,
-} from './utils';
-import { $assignment } from './variables';
+} from './utils.js';
+import { $assignment } from './variables.js';
 
 const topOfStack = <T>(stack: T[]): T => stack[stack.length - 1];
 const topOfStackStmts = (stack: (Omit<TemplateStatement, 'loc'> | BlockStatement)[]): Statement[] => {
     const top = stack[stack.length - 1];
-    if ('elseStatements' in top) {
+    if ('elseStatements' in top && top.elseStatements) {
         return top.elseStatements;
     }
     return top.statements;
@@ -355,4 +355,4 @@ export const $template = Pr.context('mustache', function* () {
 
     stripStandaloneLines(stack[0].statements, true, true);
     return stack[0];
-}).map(({ type, ...v }, loc) => ({ type, loc, ...v }));
+}).map((stmt, loc): TemplateStatement => ({ ...(stmt as Omit<TemplateStatement, 'loc'>), loc }));

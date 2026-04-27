@@ -1,10 +1,10 @@
-import { $template } from './parser';
-import { $expression } from './parser/expression';
-import { TemplateStatement, ValueStatement } from './parser/statements';
-import { LiteralValue, run as _run, runStatement } from './runner';
-import { Execution } from './runner/execution';
-import { BigodinOptions } from './runner/options';
-import { ensure } from './utils';
+import { $template } from './parser/index.js';
+import { $expression } from './parser/expression.js';
+import { TemplateStatement, ValueStatement } from './parser/statements.js';
+import { LiteralValue, run as _run, runStatement } from './runner/index.js';
+import { Execution } from './runner/execution.js';
+import { BigodinOptions } from './runner/options.js';
+import { ensure } from './utils.js';
 
 /**
  * @param {object?} context Context to be used when evaluating the template.
@@ -140,7 +140,7 @@ export const { run, runExpression } = defaultBigodin;
  */
 export const { compile, compileExpression } = defaultBigodin;
 
-export { TemplateStatement } from './parser/statements';
-export { BigodinOptions } from './runner/options';
+export { TemplateStatement } from './parser/statements.js';
+export { BigodinOptions } from './runner/options.js';
 export { Bigodin };
 export default Bigodin;

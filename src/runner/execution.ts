@@ -1,5 +1,5 @@
-import { LiteralValue } from '.';
-import { BigodinOptions } from './options';
+import { LiteralValue } from './index.js';
+import { BigodinOptions } from './options.js';
 
 /**
  * Template execution, holds contexts, extra helpers, data.
@@ -84,11 +84,11 @@ export class Execution {
      * @param {BigodinOptions} options Options for the current execution only
      * @return {Execution}
      */
-    static of(context: object, extraHelpers: Map<string, Function> = new Map(), options: BigodinOptions = {}): Execution {
+    static of(context: object | undefined, extraHelpers: Map<string, Function> = new Map(), options: BigodinOptions = {}): Execution {
         return new Execution(
-            [context],
+            [context ?? {}],
             extraHelpers,
-            options.data,
+            options.data ?? {},
             options.maxExecutionMillis || Infinity,
             options.allowDefaultHelpers ?? true,
         );

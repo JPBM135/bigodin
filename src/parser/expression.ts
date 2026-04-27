@@ -1,9 +1,9 @@
-import Pr, { Parser } from 'pierrejs';
-import { $literal } from './literal';
-import { ExpressionStatement, Location, Statement, ValueStatement } from './statements';
-import { optionalSpaces } from './utils';
-import { $variable } from './variables';
-import { ensure } from '../utils';
+import Pr, { Parser } from './pr.js';
+import { $literal } from './literal.js';
+import { ExpressionStatement, Location, Statement, ValueStatement } from './statements.js';
+import { optionalSpaces } from './utils.js';
+import { $variable } from './variables.js';
+import { ensure } from '../utils.js';
 
 /* v8 ignore start */
 enum State {
@@ -24,10 +24,10 @@ export const path: Parser<ExpressionStatement> = Pr.regex('context path', /^[a-z
 }));
 
 export const $expression: Parser<ValueStatement> = Pr.context('expression', function* () {
-    const stack = [[]];
+    const stack: ValueStatement[][] = [[]];
     let state: State = State._START;
 
-    const expressionFromStack = expr => {
+    const expressionFromStack = (expr: ValueStatement | ValueStatement[]): ValueStatement => {
         // Simple statement without parenthesis: variables, literals, path expressions
         if (!Array.isArray(expr)) {
             return expr;
@@ -117,7 +117,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
                         yield Pr.fail('Unexpected ")", this parenthesis wasn\'t opened');
                     }
 
-                    const expr = stack.pop();
+                    const expr = stack.pop()!;
                     topOfStack(stack).push(expressionFromStack(expr));
                     state = State.GOT_PATH;
                     break;
@@ -157,7 +157,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
                         yield Pr.fail('Unexpected ")", this parenthesis wasn\'t opened');
                     }
 
-                    const expr = stack.pop();
+                    const expr = stack.pop()!;
                     const processedExpr = expressionFromStack(expr);
                     processedExpr.loc.end = subExprEnd.start;
                     topOfStack(stack).push(processedExpr);
@@ -174,4 +174,4 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
             /* v8 ignore stop */
         }
     }
-}).map(({ type, loc: _, ...v }, loc) => ({ type, loc, ...v }));
+}).map((stmt, loc) => ({ ...stmt, loc }) as ValueStatement);

@@ -1,7 +1,7 @@
-import { LiteralValue } from '.';
-import { ExpressionStatement } from '../parser/statements';
-import { lookupOwnValue } from '../utils';
-import { Execution } from './execution';
+import { LiteralValue } from './index.js';
+import { ExpressionStatement } from '../parser/statements.js';
+import { lookupOwnValue } from '../utils.js';
+import { Execution } from './execution.js';
 
 export function runPathExpression(execution: Execution, expression: ExpressionStatement): LiteralValue {
     if (expression.path === '.' || expression.path === '$this') {

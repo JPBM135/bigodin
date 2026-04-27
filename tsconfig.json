@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": "node10",
+    "esModuleInterop": true,
+    "strict": true,
     "removeComments": false,
     "target": "es2019",
     "sourceMap": false,
     "declaration": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "./src",
     "incremental": true,
     "lib": ["es2019"],
     "types": []

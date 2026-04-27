@@ -1,5 +1,5 @@
-import Pr from 'pierrejs';
-import { char } from './utils';
+import Pr from './pr.js';
+import { char } from './utils.js';
 
 /* v8 ignore start */
 enum State {
@@ -8,7 +8,7 @@ enum State {
 }
 /* v8 ignore stop */
 
-const escapes = {
+const escapes: Record<string, string> = {
     '"': '"',
     '\'': '\'',
     '`': '`',

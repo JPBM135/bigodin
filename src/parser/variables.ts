@@ -1,8 +1,8 @@
-import Pr, { Parser } from 'pierrejs';
-import { AssignmentStatement, ValueStatement, VariableStatement } from './statements';
-import { char, optionalSpaces } from './utils';
-import { $expression, path } from './expression';
-import { $literal } from './literal';
+import Pr, { Parser } from './pr.js';
+import { AssignmentStatement, ValueStatement, VariableStatement } from './statements.js';
+import { char, optionalSpaces } from './utils.js';
+import { $expression, path } from './expression.js';
+import { $literal } from './literal.js';
 
 export const $variable: Parser<VariableStatement> = Pr.regex(
     'variable',

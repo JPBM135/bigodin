@@ -1,4 +1,4 @@
-import type { Execution } from '../execution';
+import type { Execution } from '../execution.js';
 
 const hIf = (a: any) => Boolean(a);
 const hUnless = (a: any) => !a;

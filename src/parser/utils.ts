@@ -1,4 +1,4 @@
-import Pr, { Parser } from 'pierrejs';
+import Pr, { Parser } from './pr.js';
 
 export const join = (arr: string[]) => arr.join('');
 export const atPos = (pos: number) => (arr: string[]) => arr[pos];

@@ -14,12 +14,13 @@ export function deepCloneNullPrototype(obj: object): object {
         return obj;
     }
 
-    const clone = Object.create(null);
-    for (const key of Object.keys(obj)) {
+    const clone: Record<string, unknown> = Object.create(null);
+    const source = obj as Record<string, object>;
+    for (const key of Object.keys(source)) {
         if (UNSAFE_KEYS.has(key)) {
             continue;
         }
-        clone[key] = deepCloneNullPrototype(obj[key]);
+        clone[key] = deepCloneNullPrototype(source[key]);
     }
 
     return clone;
