@@ -61,3 +61,5 @@ git push origin "$EXPECTED_BRANCH"
 git push origin "$TAG"
 
 echo "Pushed $TAG to origin. CI/CD will handle the npm publish."
+
+gh release create "$TAG" --title "$TAG" --generate-notes
