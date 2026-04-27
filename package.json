@@ -1,6 +1,6 @@
 {
   "name": "@jpbm135/bigodin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Secure Handlebars/Mustache templating for user-provided templates with async helpers support and human-friendly parsing errors",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
