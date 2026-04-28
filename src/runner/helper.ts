@@ -17,6 +17,21 @@ async function runHelper(execution: Execution, expression: ExpressionStatement):
 
     const paramsTasks = expression.params.map(p => runStatement(execution, p));
     const params = await Promise.all(paramsTasks);
+
+    if (expression.hash) {
+        const hashEntries = Object.entries(expression.hash);
+        const hashValues = await Promise.all(hashEntries.map(([, v]) => runStatement(execution, v)));
+        const hashObj: Record<string, LiteralValue> = Object.create(null);
+        for (let i = 0; i < hashEntries.length; i++) {
+            const key = hashEntries[i][0];
+            if (UNSAFE_KEYS.has(key)) {
+                throw new Error(`Hash key ${key} not allowed`);
+            }
+            hashObj[key] = hashValues[i];
+        }
+        params.push(hashObj);
+    }
+
     const result = await fn.apply(execution, params);
     return result;
 }

@@ -21,6 +21,14 @@ export class Execution {
     public readonly variables: Record<string, LiteralValue> = {};
 
     /**
+     * Per-iteration data frames populated by block iteration. Consumed by
+     * path expressions resolving `@index`, `@key`, `@first`, `@last`.
+     * Inner frames shadow outer frames (Handlebars uses `@../index` for
+     * outer access, which bigodin does not support).
+     */
+    private readonly dataFrames: Record<string, unknown>[] = [];
+
+    /**
      * Template execution, holds contexts, extra helpers, data.
      *
      * @param {object[]} contexts Contexts from which bigodin path expressions will evaluate
@@ -59,6 +67,32 @@ export class Execution {
      */
     popContext() {
         this.contexts.pop();
+    }
+
+    /**
+     * Push a data frame for the current iteration.
+     */
+    pushDataFrame(frame: Record<string, unknown>) {
+        this.dataFrames.push(frame);
+    }
+
+    /**
+     * Pop the current iteration's data frame.
+     */
+    popDataFrame() {
+        this.dataFrames.pop();
+    }
+
+    /**
+     * Resolve `@<name>` data variables (e.g., `index`, `key`, `first`, `last`).
+     * Returns `undefined` outside of an iteration.
+     */
+    getDataVar(name: string): unknown {
+        const top = this.dataFrames[this.dataFrames.length - 1];
+        if (!top) {
+            return undefined;
+        }
+        return Object.prototype.hasOwnProperty.call(top, name) ? top[name] : undefined;
     }
 
     /**

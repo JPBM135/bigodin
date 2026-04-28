@@ -119,6 +119,14 @@ describe('runner', () => {
             await expect(templ(bigodin as any)).rejects.toThrow('Error at helper fail, position 2: fail');
         });
 
+        it('should wrap non-Error throws into an Error', async () => {
+            const bigodin = new Bigodin();
+            bigodin.addHelper('failPlain', () => { throw 'plain string failure'; });
+
+            const templ = bigodin.compile('{{failPlain}}');
+            await expect(templ()).rejects.toThrow('Error at helper failPlain, position 2: plain string failure');
+        });
+
         it('should log helper when no location on error', async () => {
             const bigodin = new Bigodin();
             bigodin.addHelper('fail', () => { throw new Error('fail'); });

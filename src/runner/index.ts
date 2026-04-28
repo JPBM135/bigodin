@@ -12,7 +12,7 @@ export type LiteralValue =
     string | number | boolean | null | undefined | object;
 
 const MIN_VERSION = 1;
-const MAX_VERSION = 3;
+const MAX_VERSION = 4;
 
 export async function run(ast: TemplateStatement,
                           context: object = {},

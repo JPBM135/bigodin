@@ -81,4 +81,23 @@ await templ({ name: 'ana', count: 4 }); // "Hello, ANA! You have 5 messages."
 
 Helpers receive the `Execution` instance as `this` (use `this.data` for side-channel state, `this.halt()` to stop execution). Helpers can be `async`.
 
+### Hash arguments
+
+Helpers can also accept Handlebars-style **hash arguments** (`key=value` pairs after the positional parameters):
+
+```handlebars
+{{link "Sign up" target="_blank" rel="noopener"}}
+```
+
+When the call site uses any `key=value` pair, bigodin appends a single null-prototype object (`{ target: "_blank", rel: "noopener" }`) as the **final** argument to the helper, after the positional ones. When no hash arguments are present, no extra argument is passed and the helper signature is unchanged.
+
+```js
+bigodin.addHelper('link', (label, options = {}) => {
+    const attrs = Object.entries(options).map(([k, v]) => `${k}="${v}"`).join(' ');
+    return `<a ${attrs}>${label}</a>`;
+});
+```
+
+Hash values may be literals, paths, variables, or subexpressions, same as positional parameters. Positional parameters are not allowed after a hash argument, and duplicate keys are rejected at parse time.
+
 > **Note on the module-level helpers** — the convenience exports `compile`, `parse`, `run` etc. on the default singleton do not carry user-registered helpers. Use `new Bigodin()` whenever you need custom helpers.

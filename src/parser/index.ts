@@ -39,7 +39,7 @@ const buildBlock = (loc: Location,
     return block;
 };
 
-export const VERSION = 3;
+export const VERSION = 4;
 
 // Mustache spec compatibility: standalone-line whitespace stripping.
 // A "standalone tag" is one whose containing line has only the tag and

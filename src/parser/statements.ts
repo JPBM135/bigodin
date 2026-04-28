@@ -22,6 +22,7 @@ export type ExpressionStatement = {
     loc: Location;
     path: string;
     params: ValueStatement[];
+    hash?: Record<string, ValueStatement>;
 };
 
 export type MustacheStatement = {

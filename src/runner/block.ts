@@ -35,9 +35,16 @@ export async function runBlock(execution: Execution, block: BlockStatement): Pro
     if (Array.isArray(value)) {
         let result = '';
 
-        for (const item of value) {
-            execution.pushContext(item);
+        for (let i = 0; i < value.length; i++) {
+            execution.pushContext(value[i]);
+            execution.pushDataFrame({
+                index: i,
+                key: i,
+                first: i === 0,
+                last: i === value.length - 1,
+            });
             result += await runStatements(execution, block.statements);
+            execution.popDataFrame();
             execution.popContext();
             if (execution.isHalted) {
                 break;

@@ -393,13 +393,36 @@ You can use the current item of the loop with `$this` (or its short alias `.`):
 
 ---
 
-You can use `$parent` to point to the parent context (you can use multiple parents like `$parent.$parent.foo`) and `$root` to point to the main context:
+## Iteration data variables
+
+Inside a loop block, the following Handlebars-style `@`-data variables are available:
+
+- `{{@index}}`: zero-based index of the current iteration (number).
+- `{{@key}}`: same as `@index` for arrays (kept for Handlebars parity).
+- `{{@first}}`: `true` on the first iteration, `false` otherwise.
+- `{{@last}}`: `true` on the last iteration, `false` otherwise.
+
+Outside of a loop, all of these resolve to `undefined`. When loops are nested, the inner iteration shadows the outer one. There is no `@../index` syntax for reaching the outer loop.
+
+```hbs
+{{#items}}{{#if @first}}[{{/if}}{{@index}}:{{$this}}{{#if @last}}]{{else}}, {{/if}}{{/items}}
+```
+
+With context `{ "items": ["a", "b", "c"] }` the output is `[0:a, 1:b, 2:c]`.
+
+---
+
+You can use `$parent` to point to the parent context (you can use multiple parents like `$parent.$parent.foo`) and `$root` to point to the main context.
+
+For Handlebars compatibility, `../` is accepted as an alias for `$parent.`, `@root` is accepted as an alias for `$root`, and bare `this` is accepted as an alias for `$this`. The two forms are interchangeable: `{{../name}}` and `{{$parent.name}}` produce identical ASTs.
+
+> **Note**: because `this` is now an alias, `{{this}}` and `{{this.foo}}` resolve to the current context (or its `foo` field), not to context keys literally named `"this"`. If your data has a key called `this`, access it through a parent path (`{{$parent.this}}` after a block push) or rename the field. Templates that did not use `this` as a property name are unaffected.
 
 ```hbs
 {{name}}, your comments:
 
 {{#comments}}
-    From {{author}} to {{$parent.name}}:
+    From {{author}} to {{../name}}:
     {{comment}}
 {{/comments}}
 ```
