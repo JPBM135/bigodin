@@ -1,4 +1,5 @@
-import Pr, { Parser } from './pr.js';
+import type { Parser } from './pr.js';
+import Pr from './pr.js';
 
 export const join = (arr: string[]) => arr.join('');
 export const atPos = (pos: number) => (arr: string[]) => arr[pos];
@@ -13,9 +14,11 @@ export const optionalSpaces = Pr.optional(Pr.spaces());
 export const char = Pr.regex('char', /^./);
 export const peek = Pr.lookAhead(char);
 
-export const text: Parser<string> = Pr.oneOrMany(Pr.either(
+export const text: Parser<string> = Pr.oneOrMany(
+  Pr.either(
     escapedSlash,
     escapedOpenMustache,
     escapedCloseMustache,
     Pr.except(Pr.oneOf(closeMustache, openMustache)),
-)).map(join);
+  ),
+).map(join);

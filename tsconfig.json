@@ -1,21 +1,8 @@
 {
+  "extends": "./tsconfig.esm.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node10",
-    "esModuleInterop": true,
-    "strict": true,
-    "removeComments": false,
-    "target": "es2019",
-    "sourceMap": false,
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "lib": ["es2019"],
-    "types": []
+    "noEmit": true
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["website/**/*"]
 }

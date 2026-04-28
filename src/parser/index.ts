@@ -1,6 +1,7 @@
-import Pr, { Parser } from "./pr.js";
-import { $expression } from "./expression.js";
-import {
+import { $expression } from './expression.js';
+import type { Parser } from './pr.js';
+import Pr from './pr.js';
+import type {
   BlockStatement,
   CommentStatement,
   ExpressionStatement,
@@ -10,26 +11,19 @@ import {
   TemplateStatement,
   TextStatement,
   ValueStatement,
-} from "./statements.js";
-import {
-  atPos,
-  closeMustache,
-  openMustache,
-  optionalSpaces,
-  peek,
-  text,
-  char,
-} from "./utils.js";
-import { $assignment } from "./variables.js";
+} from './statements.js';
+import { atPos, closeMustache, openMustache, optionalSpaces, peek, text, char } from './utils.js';
+import { $assignment } from './variables.js';
 
 const topOfStack = <T>(stack: T[]): T => stack[stack.length - 1];
 const topOfStackStmts = (
-  stack: (Omit<TemplateStatement, "loc"> | BlockStatement)[],
+  stack: (BlockStatement | Omit<TemplateStatement, 'loc'>)[],
 ): Statement[] => {
   const top = stack[stack.length - 1];
-  if ("elseStatements" in top && top.elseStatements) {
+  if ('elseStatements' in top && top.elseStatements) {
     return top.elseStatements;
   }
+
   return top.statements;
 };
 
@@ -40,7 +34,7 @@ const buildBlock = (
   isNested = false,
 ): BlockStatement => {
   const block: BlockStatement = {
-    type: "BLOCK",
+    type: 'BLOCK',
     loc,
     isNegated,
     expression,
@@ -61,7 +55,7 @@ export const VERSION = 4;
 // surrounding whitespace; in that case the entire line (leading whitespace
 // and trailing newline) is consumed. Variable interpolation tags
 // ({{x}}, {{{x}}}, {{&x}}) are NOT standalone-eligible per spec.
-const isWsOnly = (s: string): boolean => /^[ \t]*$/.test(s);
+const isWsOnly = (string: string): boolean => /^[\t ]*$/.test(string);
 
 const tryStripStandalone = (
   prev: TextStatement | null,
@@ -71,13 +65,13 @@ const tryStripStandalone = (
 ): void => {
   let prevCut = 0;
   if (prev) {
-    const v = prev.value;
-    if (v !== "") {
+    const prevValue = prev.value;
+    if (prevValue !== '') {
       // Non-empty prev. An empty prev was either originally empty or
       // already stripped by an adjacent standalone sibling - either way,
       // the current tag is at line start, so prevCut stays 0.
-      const lastNL = v.lastIndexOf("\n");
-      const tail = lastNL === -1 ? v : v.slice(lastNL + 1);
+      const lastNL = prevValue.lastIndexOf('\n');
+      const tail = lastNL === -1 ? prevValue : prevValue.slice(lastNL + 1);
       if (!isWsOnly(tail)) return;
       if (lastNL === -1 && !atTemplateStart) return;
       prevCut = lastNL === -1 ? 0 : lastNL + 1;
@@ -86,14 +80,15 @@ const tryStripStandalone = (
 
   let nextCut = 0;
   if (next) {
-    const v = next.value;
-    const m = v.match(/^([ \t]*)(\r?\n)?/) as RegExpMatchArray;
-    const wsLen = m[1].length;
-    const nlLen = m[2] ? m[2].length : 0;
+    const nextValue = next.value;
+    const whitespaceLikeMatch = /^([\t ]*)(\r?\n)?/.exec(nextValue) as RegExpMatchArray;
+    const wsLen = whitespaceLikeMatch[1].length;
+    const nlLen = whitespaceLikeMatch[2] ? whitespaceLikeMatch[2].length : 0;
     if (nlLen === 0) {
       if (!atTemplateEnd) return;
-      if (wsLen !== v.length) return;
+      if (wsLen !== nextValue.length) return;
     }
+
     nextCut = wsLen + nlLen;
   }
 
@@ -101,37 +96,33 @@ const tryStripStandalone = (
   if (next) next.value = next.value.slice(nextCut);
 };
 
-const asTextOrNull = (s: Statement | undefined): TextStatement | null =>
-  s && s.type === "TEXT" ? s : null;
+const asTextOrNull = (statement: Statement | undefined): TextStatement | null =>
+  statement?.type === 'TEXT' ? statement : null;
 
 const stripStandaloneLines = (
   stmts: Statement[],
   atTemplateStart: boolean,
   atTemplateEnd: boolean,
 ): void => {
-  for (let i = 0; i < stmts.length; i++) {
-    const stmt = stmts[i];
-    const prev = asTextOrNull(stmts[i - 1]);
-    const next = asTextOrNull(stmts[i + 1]);
+  for (let idx = 0; idx < stmts.length; idx++) {
+    const stmt = stmts[idx];
+    const prev = asTextOrNull(stmts[idx - 1]);
+    const next = asTextOrNull(stmts[idx + 1]);
     // A position "feels like" the template start if it's the first stmt
     // in this list AND this list is itself at the template start.
-    const slotAtStart =
-      atTemplateStart && (i === 0 || (i === 1 && prev !== null));
+    const slotAtStart = atTemplateStart && (idx === 0 || (idx === 1 && prev !== null));
     const slotAtEnd =
-      atTemplateEnd &&
-      (i === stmts.length - 1 || (i === stmts.length - 2 && next !== null));
+      atTemplateEnd && (idx === stmts.length - 1 || (idx === stmts.length - 2 && next !== null));
 
-    if (stmt.type === "COMMENT") {
+    if (stmt.type === 'COMMENT') {
       tryStripStandalone(prev, next, slotAtStart, slotAtEnd);
-    } else if (stmt.type === "BLOCK") {
+    } else if (stmt.type === 'BLOCK') {
       const innerFirstText = asTextOrNull(stmt.statements[0]);
       const innerCloseList =
         stmt.elseStatements && stmt.elseStatements.length > 0
           ? stmt.elseStatements
           : stmt.statements;
-      const innerLastText = asTextOrNull(
-        innerCloseList[innerCloseList.length - 1],
-      );
+      const innerLastText = asTextOrNull(innerCloseList[innerCloseList.length - 1]);
 
       // Opener: prev = parent-list previous TEXT, next = first TEXT inside block
       tryStripStandalone(prev, innerFirstText, slotAtStart, false);
@@ -141,7 +132,7 @@ const stripStandaloneLines = (
   }
 
   for (const stmt of stmts) {
-    if (stmt.type === "BLOCK") {
+    if (stmt.type === 'BLOCK') {
       stripStandaloneLines(stmt.statements, false, false);
       if (stmt.elseStatements) {
         stripStandaloneLines(stmt.elseStatements, false, false);
@@ -151,57 +142,54 @@ const stripStandaloneLines = (
 };
 
 export const $text: Parser<Statement> = text
-  .map((value, loc): TextStatement => ({ type: "TEXT", loc, value }))
-  .withName("text");
+  .map((value, loc): TextStatement => ({ type: 'TEXT', loc, value }))
+  .withName('text');
 
 export const $comment: Parser<Statement> = Pr.all(char, text)
   .map(atPos(1))
   .map(
     (value, { start, end }): CommentStatement => ({
-      type: "COMMENT",
+      type: 'COMMENT',
       loc: { start: start - 2, end: end + 2 },
       value,
     }),
   )
-  .withName("comment");
+  .withName('comment');
 
-const $mustache: Parser<Statement> = $expression.map(
-  (expression, { start, end }) => ({
-    type: "MUSTACHE",
-    loc: { start: start - 2, end: end + 2 },
-    expression,
-  }),
-);
+const $mustache: Parser<Statement> = $expression.map((expression, { start, end }) => ({
+  type: 'MUSTACHE',
+  loc: { start: start - 2, end: end + 2 },
+  expression,
+}));
 
 // Mustache spec compatibility: `{{#null}}` / `{{#true}}` / `{{#false}}` /
 // `{{#undefined}}` look up the matching key in context rather than meaning
 // the literal value (Bigodin's normal interpretation). Only applied as a
 // block head; expression contexts still treat these names as literals.
 const $literalKeyBlockHead: Parser<ExpressionStatement> = Pr.context(
-  "literal-key-block-head",
+  'literal-key-block-head',
+  // eslint-disable-next-line func-names
   function* () {
     yield optionalSpaces;
-    const name = yield Pr.regex(
-      "literal-key-block-head",
-      /^(null|true|false|undefined)/,
-    );
+    const name = yield Pr.regex('literal-key-block-head', /^(null|true|false|undefined)/);
     yield optionalSpaces;
     yield Pr.lookAhead(closeMustache);
     return name;
   },
 ).map(
   (name, loc): ExpressionStatement => ({
-    type: "EXPRESSION",
+    type: 'EXPRESSION',
     loc,
     path: name,
     params: [],
   }),
 );
 
-export const $template = Pr.context("mustache", function* () {
-  const stack: [Omit<TemplateStatement, "loc">, ...BlockStatement[]] = [
+// eslint-disable-next-line func-names
+export const $template = Pr.context('mustache', function* () {
+  const stack: [Omit<TemplateStatement, 'loc'>, ...BlockStatement[]] = [
     {
-      type: "TEMPLATE",
+      type: 'TEMPLATE',
       version: VERSION,
       statements: [],
     },
@@ -216,41 +204,38 @@ export const $template = Pr.context("mustache", function* () {
       // no need to `continue`, two texts in a row aren't possible
     }
 
-    const open = yield Pr.optional(openMustache).map((v, loc) =>
-      v ? loc : null,
-    );
+    const open = yield Pr.optional(openMustache).map((v, loc) => (v ? loc : null));
     if (open) {
       switch (yield peek) {
-        case "!": {
+        case '!': {
           topOfStackStmts(stack).push(yield $comment);
           break;
         }
 
-        case "=": {
+        case '=': {
           topOfStackStmts(stack).push(yield $assignment);
           break;
         }
 
-        case "&": {
+        case '&': {
           yield char;
           topOfStackStmts(stack).push(yield $mustache);
           break;
         }
 
-        case "{": {
+        case '{': {
           yield char;
           topOfStackStmts(stack).push(yield $mustache);
-          yield Pr.string("}");
+          yield Pr.string('}');
           break;
         }
 
-        case "#":
-        case "^": {
+        case '#':
+        case '^': {
           const typeChar = yield char;
           const literalNamed = yield Pr.optional($literalKeyBlockHead);
-          const expression: ValueStatement =
-            literalNamed || (yield $expression);
-          if (expression.type === "LITERAL") {
+          const expression: ValueStatement = literalNamed || (yield $expression);
+          if (expression.type === 'LITERAL') {
             yield Pr.fail(
               `Blocks must receive path expressions or helpers. Literal blocks are not allowed.`,
             );
@@ -260,7 +245,7 @@ export const $template = Pr.context("mustache", function* () {
             /* v8 ignore stop */
           }
 
-          if (expression.type === "VARIABLE") {
+          if (expression.type === 'VARIABLE') {
             yield Pr.fail(
               `Variable blocks are not allowed, use '{{#if $var}}' for conditionals or '{{#each $var}}' for loops instead.`,
             );
@@ -270,16 +255,15 @@ export const $template = Pr.context("mustache", function* () {
             /* v8 ignore stop */
           }
 
-          stack.push(buildBlock(open, expression, typeChar === "^"));
+          stack.push(buildBlock(open, expression, typeChar === '^'));
           break;
         }
 
-        case "/": {
+        case '/': {
           yield char; // Consuming '/'
           const literalNamed = yield Pr.optional($literalKeyBlockHead);
-          const expression: ValueStatement =
-            literalNamed || (yield $expression);
-          if (expression.type === "LITERAL") {
+          const expression: ValueStatement = literalNamed || (yield $expression);
+          if (expression.type === 'LITERAL') {
             yield Pr.fail(
               `Unexpected {{/${expression.value}}}. Literal blocks are not allowed to be closed.`,
             );
@@ -288,10 +272,9 @@ export const $template = Pr.context("mustache", function* () {
             return;
             /* v8 ignore stop */
           }
-          if (expression.type === "VARIABLE") {
-            yield Pr.fail(
-              `Unexpected {{/${expression.name}}}. Variable blocks are not allowed.`,
-            );
+
+          if (expression.type === 'VARIABLE') {
+            yield Pr.fail(`Unexpected {{/${expression.name}}}. Variable blocks are not allowed.`);
             // Never happens, just for typescript to know that below here, expression is not VariableStatement
             /* v8 ignore start */
             return;
@@ -301,6 +284,7 @@ export const $template = Pr.context("mustache", function* () {
           if (expression.params.length > 0) {
             yield Pr.fail(`Closing blocks cannot have parameters`);
           }
+
           const name = expression.path;
           if (stack.length <= 1) {
             yield Pr.fail(`Unexpected {{/${name}}}, this block wasn't opened`);
@@ -331,8 +315,8 @@ export const $template = Pr.context("mustache", function* () {
           const isElseBlock = yield Pr.optional(
             Pr.all(
               optionalSpaces,
-              Pr.string("else"),
-              Pr.oneOf(Pr.string(" "), Pr.lookAhead(Pr.string("}}"))),
+              Pr.string('else'),
+              Pr.oneOf(Pr.string(' '), Pr.lookAhead(Pr.string('}}'))),
             ),
           );
 
@@ -345,7 +329,7 @@ export const $template = Pr.context("mustache", function* () {
 
           // Else outside blocks
           if (stack.length <= 1) {
-            yield Pr.fail("{{else}} can only exist inside blocks");
+            yield Pr.fail('{{else}} can only exist inside blocks');
           }
 
           const top = topOfStack(stack) as BlockStatement;
@@ -366,8 +350,8 @@ export const $template = Pr.context("mustache", function* () {
           }
 
           // Else followed by literal
-          if (stmt.expression.type === "LITERAL") {
-            yield Pr.fail("{{else}} blocks cannot have parameters");
+          if (stmt.expression.type === 'LITERAL') {
+            yield Pr.fail('{{else}} blocks cannot have parameters');
             // Never happens, just for typescript to know that below here, expression is not LiteralStatement
             /* v8 ignore start */
             break;
@@ -375,7 +359,7 @@ export const $template = Pr.context("mustache", function* () {
           }
 
           // Else followed by variable
-          if (stmt.expression.type === "VARIABLE") {
+          if (stmt.expression.type === 'VARIABLE') {
             yield Pr.fail(
               '{{else}} blocks cannot have variable parameters. Use "{{else if $var}}" instead.',
             );
@@ -402,21 +386,19 @@ export const $template = Pr.context("mustache", function* () {
       break;
     }
 
-    yield Pr.fail("Unexpected end of file");
+    yield Pr.fail('Unexpected end of file');
   }
 
   if (stack.length > 1) {
     const block = topOfStack(stack) as BlockStatement;
-    yield Pr.fail(
-      `Expected {{/${block.expression.path}}}, make sure this block was closed`,
-    );
+    yield Pr.fail(`Expected {{/${block.expression.path}}}, make sure this block was closed`);
   }
 
   stripStandaloneLines(stack[0].statements, true, true);
   return stack[0];
 }).map(
   (stmt, loc): TemplateStatement => ({
-    ...(stmt as Omit<TemplateStatement, "loc">),
+    ...(stmt as Omit<TemplateStatement, 'loc'>),
     loc,
   }),
 );

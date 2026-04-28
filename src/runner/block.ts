@@ -1,9 +1,8 @@
-import { runStatement, runStatements } from "./index.js";
-import { BlockStatement } from "../parser/statements.js";
-import { Execution } from "./execution.js";
+import type { BlockStatement } from '../parser/statements.js';
+import type { Execution } from './execution.js';
+import { runStatement, runStatements } from './index.js';
 
-const isFalsy = (value: unknown): boolean =>
-  !value || (Array.isArray(value) && value.length === 0);
+const isFalsy = (value: unknown): boolean => !value || (Array.isArray(value) && value.length === 0);
 
 export async function runBlock(
   execution: Execution,
@@ -15,11 +14,11 @@ export async function runBlock(
   // Negated blocks
   if (block.isNegated) {
     if (falsy) {
-      return await runStatements(execution, block.statements);
+      return runStatements(execution, block.statements);
     }
 
     if (Array.isArray(block.elseStatements)) {
-      return await runStatements(execution, block.elseStatements);
+      return runStatements(execution, block.elseStatements);
     }
 
     return null;
@@ -28,7 +27,7 @@ export async function runBlock(
   // Falsy value or empty array
   if (falsy) {
     if (Array.isArray(block.elseStatements)) {
-      return await runStatements(execution, block.elseStatements);
+      return runStatements(execution, block.elseStatements);
     }
 
     return null;
@@ -36,15 +35,15 @@ export async function runBlock(
 
   // Non empty array
   if (Array.isArray(value)) {
-    let result = "";
+    let result = '';
 
-    for (let i = 0; i < value.length; i++) {
-      execution.pushContext(value[i]);
+    for (let idx = 0; idx < value.length; idx++) {
+      execution.pushContext(value[idx]);
       execution.pushDataFrame({
-        index: i,
-        key: i,
-        first: i === 0,
-        last: i === value.length - 1,
+        index: idx,
+        key: idx,
+        first: idx === 0,
+        last: idx === value.length - 1,
       });
       result += await runStatements(execution, block.statements);
       execution.popDataFrame();
@@ -58,7 +57,7 @@ export async function runBlock(
   }
 
   // Object
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === 'object' && value !== null) {
     execution.pushContext(value);
     const result = await runStatements(execution, block.statements);
     execution.popContext();
@@ -68,5 +67,5 @@ export async function runBlock(
   // Truthy scalar - preserve Bigodin's existing behavior of NOT pushing the
   // scalar onto the context stack. Mustache spec tests that rely on the
   // push are listed in test/spec.spec.js SKIPPED_FEATURES.
-  return await runStatements(execution, block.statements);
+  return runStatements(execution, block.statements);
 }

@@ -12,15 +12,15 @@ import type { Parser } from 'pierrejs';
 // resolution unwraps the d.ts default for us; nodenext does not), so the
 // conditional type below collapses both shapes onto the real combinators.
 type NsDefault = typeof pierrejsNs.default;
-type Combinators = NsDefault extends { string: (s: string) => Parser<string> }
-    ? NsDefault
-    : NsDefault extends { default: { string: (s: string) => Parser<string> } }
-        ? NsDefault['default']
-        : never;
+type Combinators = NsDefault extends { string(s: string): Parser<string> }
+  ? NsDefault
+  : NsDefault extends { default: { string(s: string): Parser<string> } }
+    ? NsDefault['default']
+    : never;
 
-const candidate = pierrejsNs.default as { default?: Combinators } | Combinators;
-const Pr: Combinators = (candidate as { default?: Combinators }).default
-    ?? (candidate as Combinators);
+const candidate = pierrejsNs.default as Combinators | { default?: Combinators };
+const Pr: Combinators =
+  (candidate as { default?: Combinators }).default ?? (candidate as Combinators);
 
 export default Pr;
 export type { Parser, Result, State } from 'pierrejs';

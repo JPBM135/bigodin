@@ -1,7 +1,7 @@
-import { AssignmentStatement, VariableStatement } from '../parser/statements.js';
-import { Execution } from './execution.js';
+import type { AssignmentStatement, VariableStatement } from '../parser/statements.js';
+import type { Execution } from './execution.js';
+import type { LiteralValue } from './index.js';
 import { runStatement } from './index.js';
-import { LiteralValue } from './index.js';
 
 /**
  * Runs a variable assignment statement.
@@ -11,13 +11,17 @@ import { LiteralValue } from './index.js';
  * @param statement The assignment statement to execute
  * @returns null (assignments don't produce output)
  */
-export async function runAssignment(execution: Execution, statement: AssignmentStatement): Promise<LiteralValue> {
-    const variableName = statement.variable.name;
-    const value = await runStatement(execution, statement.expression);
+export async function runAssignment(
+  execution: Execution,
+  statement: AssignmentStatement,
+): Promise<LiteralValue> {
+  const variableName = statement.variable.name;
+  const value = await runStatement(execution, statement.expression);
 
-    execution.variables[variableName] = value;
+  // eslint-disable-next-line require-atomic-updates
+  execution.variables[variableName] = value;
 
-    return null;
+  return null;
 }
 
 /**
@@ -28,6 +32,9 @@ export async function runAssignment(execution: Execution, statement: AssignmentS
  * @param statement The variable statement to execute
  * @returns The value of the variable, or undefined if not found
  */
-export async function runVariable(execution: Execution, statement: VariableStatement): Promise<LiteralValue> {
-    return execution.variables[statement.name];
+export async function runVariable(
+  execution: Execution,
+  statement: VariableStatement,
+): Promise<LiteralValue> {
+  return execution.variables[statement.name];
 }

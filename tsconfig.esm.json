@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.cjs.json",
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -7,7 +7,5 @@
     "declaration": false,
     "tsBuildInfoFile": "./dist/esm/.tsbuildinfo"
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }

@@ -1,79 +1,79 @@
-export type Location = {
-    start: number;
-    end: number;
-};
+export interface Location {
+  end: number;
+  start: number;
+}
 
-export type TextStatement = {
-    type: 'TEXT';
-    loc: Location;
-    value: string;
-};
+export interface TextStatement {
+  loc: Location;
+  type: 'TEXT';
+  value: string;
+}
 
-export type CommentStatement = {
-    type: 'COMMENT';
-    loc: Location;
-    value: string;
-};
+export interface CommentStatement {
+  loc: Location;
+  type: 'COMMENT';
+  value: string;
+}
 
 export type ValueStatement = ExpressionStatement | LiteralStatement | VariableStatement;
 
-export type ExpressionStatement = {
-    type: 'EXPRESSION';
-    loc: Location;
-    path: string;
-    params: ValueStatement[];
-    hash?: Record<string, ValueStatement>;
-};
+export interface ExpressionStatement {
+  hash?: Record<string, ValueStatement>;
+  loc: Location;
+  params: ValueStatement[];
+  path: string;
+  type: 'EXPRESSION';
+}
 
-export type MustacheStatement = {
-    type: 'MUSTACHE';
-    loc: Location;
-    expression: ValueStatement;
-};
+export interface MustacheStatement {
+  expression: ValueStatement;
+  loc: Location;
+  type: 'MUSTACHE';
+}
 
-export type BlockStatement = {
-    type: 'BLOCK';
-    loc: Location;
-    isNegated: boolean;
-    isNested?: boolean;
-    expression: ExpressionStatement;
-    statements: Statement[];
-    elseStatements?: Statement[];
-};
+export interface BlockStatement {
+  elseStatements?: Statement[];
+  expression: ExpressionStatement;
+  isNegated: boolean;
+  isNested?: boolean;
+  loc: Location;
+  statements: Statement[];
+  type: 'BLOCK';
+}
 
-export type TemplateStatement = {
-    type: 'TEMPLATE';
-    loc: Location;
-    version: number;
-    statements: Statement[];
-};
+export interface TemplateStatement {
+  loc: Location;
+  statements: Statement[];
+  type: 'TEMPLATE';
+  version: number;
+}
 
-export type LiteralStatement = {
-    type: 'LITERAL';
-    loc: Location;
-    value: string | number | boolean | null | undefined;
-};
+export interface LiteralStatement {
+  loc: Location;
+  type: 'LITERAL';
+  value: boolean | number | string | null | undefined;
+}
 
-export type VariableStatement = {
-    type: 'VARIABLE';
-    loc: Location;
-    name: string;
-};
+export interface VariableStatement {
+  loc: Location;
+  name: string;
+  type: 'VARIABLE';
+}
 
-export type AssignmentStatement = {
-    type: 'ASSIGNMENT';
-    loc: Location;
-    variable: VariableStatement;
-    expression: ValueStatement;
-};
+export interface AssignmentStatement {
+  expression: ValueStatement;
+  loc: Location;
+  type: 'ASSIGNMENT';
+  variable: VariableStatement;
+}
 
 export type Statement =
-    | TextStatement
-    | LiteralStatement
-    | CommentStatement
-    | BlockStatement
-    | ExpressionStatement
-    | MustacheStatement
-    | TemplateStatement
-    | VariableStatement
-    | AssignmentStatement;
+  | AssignmentStatement
+  | BlockStatement
+  | CommentStatement
+  | ExpressionStatement
+  | LiteralStatement
+  | MustacheStatement
+  | TemplateStatement
+  | TextStatement
+  | VariableStatement;

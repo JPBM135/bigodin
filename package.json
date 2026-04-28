@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "tsc && tsc -p tsconfig.esm.json && node scripts/postbuild-esm.js",
+    "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node scripts/postbuild-esm.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
@@ -38,8 +38,8 @@
     "test:setup:mustache-spec": "cd test && git clone https://github.com/mustache/spec.git mustache || true",
     "typecheck:test": "tsc -p tsconfig.test.json",
     "prepublish": "yarn build",
-    "lint": "eslint -c eslint.js \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint:fix": "eslint -c eslint.js \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "lint": "TIMING=1 DEBUG=\"eslint:eslint,eslint:cli*,eslint:linter\" eslint --cache --cache-location node_modules/.cache/eslint/ --cache-strategy content && prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint:fix": "TIMING=1 DEBUG=\"eslint:eslint,eslint:cli*,eslint:linter\" eslint --cache --cache-location node_modules/.cache/eslint/ --cache-strategy content --fix && prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "docs:dev": "yarn build && yarn workspace bigodin-website start",
     "docs:build": "yarn build && yarn workspace bigodin-website build",
     "docs:serve": "yarn workspace bigodin-website serve"
@@ -66,8 +66,11 @@
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
     "@vitest/coverage-v8": "^4.1.0",
-    "eslint": "^9.33.0",
-    "eslint-config-google": "^0.14.0",
+    "eslint": "9.39.2",
+    "eslint-config-neon": "^0.3.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.5",
+    "prettier": "3.8.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2",
     "vitest": "^4.1.0"
