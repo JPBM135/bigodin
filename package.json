@@ -15,6 +15,12 @@
     "./package.json": "./package.json"
   },
   "sideEffects": false,
+  "workspaces": [
+    "website"
+  ],
+  "resolutions": {
+    "webpack": "5.97.1"
+  },
   "files": [
     "dist",
     "LIB.md",
@@ -33,7 +39,10 @@
     "typecheck:test": "tsc -p tsconfig.test.json",
     "prepublish": "yarn build",
     "lint": "eslint -c eslint.js \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint:fix": "eslint -c eslint.js \"src/**/*.ts\" \"test/**/*.ts\" --fix"
+    "lint:fix": "eslint -c eslint.js \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "docs:dev": "yarn build && yarn workspace bigodin-website start",
+    "docs:build": "yarn build && yarn workspace bigodin-website build",
+    "docs:serve": "yarn workspace bigodin-website serve"
   },
   "repository": {
     "type": "git",

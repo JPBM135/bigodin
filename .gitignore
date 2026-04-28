@@ -5,3 +5,10 @@ coverage.html
 
 .yarn/cache
 .yarn/install-state.gz
+
+# Docusaurus site
+website/.docusaurus
+website/build
+website/docs
+website/node_modules
+

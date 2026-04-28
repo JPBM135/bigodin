@@ -1,0 +1,115 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.autoRun {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+.status {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.75rem;
+  min-height: 60vh;
+}
+
+.grid > .pane:nth-child(1) {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+}
+.grid > .pane:nth-child(2) {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+.grid > .pane:nth-child(3) {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+@media (max-width: 996px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .grid > .pane:nth-child(1),
+  .grid > .pane:nth-child(2),
+  .grid > .pane:nth-child(3) {
+    grid-column: 1 / 2;
+    grid-row: auto;
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.paneLabel {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-700);
+  background: var(--ifm-color-emphasis-100);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.editor,
+.output {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  border: 0;
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  resize: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+}
+
+.editor:focus {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: -2px;
+}
+
+.outputError {
+  color: var(--ifm-color-danger-darker);
+  background: var(--ifm-color-danger-contrast-background);
+}
+
+.footnote {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-top: 0.5rem;
+}
