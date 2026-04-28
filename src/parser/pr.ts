@@ -1,3 +1,4 @@
+// eslint-disable-next-line import-x/no-extraneous-dependencies
 import * as pierrejsNs from 'pierrejs';
 import type { Parser } from 'pierrejs';
 
