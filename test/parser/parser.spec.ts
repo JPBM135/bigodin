@@ -303,6 +303,34 @@ describe('parser', () => {
     });
   });
 
+  it('should parse raw interpolation with ampersand', () => {
+    const text = '{{&foo}}';
+    const result = parse(text);
+    expect(result.statements).toHaveLength(1);
+    const stmt = result.statements[0] as any;
+    expect(stmt.type).toEqual('MUSTACHE');
+    expect(stmt.expression).toEqual({
+      type: 'EXPRESSION',
+      loc: { start: 3, end: 6 },
+      path: 'foo',
+      params: [],
+    });
+  });
+
+  it('should parse triple-mustache raw interpolation', () => {
+    const text = '{{{ foo }}}';
+    const result = parse(text);
+    expect(result.statements).toHaveLength(1);
+    const stmt = result.statements[0] as any;
+    expect(stmt.type).toEqual('MUSTACHE');
+    expect(stmt.expression).toEqual({
+      type: 'EXPRESSION',
+      loc: { start: 3, end: 8 },
+      path: 'foo',
+      params: [],
+    });
+  });
+
   it('should fail on unexpected end block', () => {
     const text = '{{/foo}}';
     expect(() => parse(text)).toThrow(/this block wasn.t opened/i);

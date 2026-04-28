@@ -182,6 +182,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         }
 
         yield Pr.fail('Expected literal, helper or context path');
+        /* v8 ignore next */
         break;
       }
 
@@ -219,6 +220,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         }
 
         yield Pr.fail('Expected "}}". Literal mustaches cannot have parameters.');
+        /* v8 ignore next */
         break;
       }
 
@@ -297,6 +299,7 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
         }
 
         yield Pr.fail('Expected expression parameters or "}}"');
+        /* v8 ignore next */
         break;
       }
 
