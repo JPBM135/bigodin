@@ -7,7 +7,7 @@ content is a single tag from a specific set: comments (`{{! …}}`),
 section openers/closers (`{{#x}}`, `{{/x}}`, `{{^x}}`), partials
 (`{{>p}}`), set-delimiters (`{{=<% %>=}}`), and
 inheritance/dynamic-name variants. When a line is standalone, the
-*entire line* — leading whitespace, the tag, and the trailing newline —
+*entire line* - leading whitespace, the tag, and the trailing newline -
 is consumed from the output. Variable interpolation tags
 (`{{x}}`, `{{{x}}}`, `{{&x}}`) are deliberately excluded.
 
@@ -42,7 +42,7 @@ From `inverted.json`:
 - `Standalone Without Previous Line`
 - `Standalone Without Newline`
 
-From `delimiters.json` (only the standalone-related ones — the rest are
+From `delimiters.json` (only the standalone-related ones - the rest are
 covered by [set-delimiters.md](set-delimiters.md)):
 
 - `Standalone Tag`
@@ -92,14 +92,14 @@ For each statement list (top-level and every block's `statements` /
 3. If standalone, strip:
    - From `prev` TEXT: drop the trailing whitespace after the last `\n` (keep the newline).
    - From `next` TEXT: drop the leading whitespace and the first `\n`.
-4. Indented partials are an extra wrinkle (the indentation is supposed to be re-applied to every line of the partial output) — only relevant once partials land.
+4. Indented partials are an extra wrinkle (the indentation is supposed to be re-applied to every line of the partial output) - only relevant once partials land.
 
 ### Files to touch
 
-- `src/parser/index.ts` — add a post-walk function `stripStandaloneLines(template)` that mutates `statements` recursively. Call it once before `$template`'s `.map(({ type, ...v }, loc) => ({ type, loc, ...v }))`.
-- `src/parser/statements.ts` — no shape change needed; whitespace lives inside existing TEXT values.
+- `src/parser/index.ts` - add a post-walk function `stripStandaloneLines(template)` that mutates `statements` recursively. Call it once before `$template`'s `.map(({ type, ...v }, loc) => ({ type, loc, ...v }))`.
+- `src/parser/statements.ts` - no shape change needed; whitespace lives inside existing TEXT values.
 
-No AST `version` bump is required — the AST is the same shape, only
+No AST `version` bump is required - the AST is the same shape, only
 text contents differ.
 
 ### Block opener/closer subtlety
@@ -112,7 +112,7 @@ closer), so the opener's surrounding text is the `prev` text **outside**
 the block plus the **first** TEXT inside `block.statements`. The
 closer's surrounding text is the **last** TEXT inside `block.statements`
 plus the next TEXT **outside** the block. That requires the transform
-to look across block boundaries — workable but a little fiddly.
+to look across block boundaries - workable but a little fiddly.
 
 ## Effort & risk
 
@@ -126,5 +126,5 @@ to look across block boundaries — workable but a little fiddly.
 
 ## Won't-fix rationale
 
-None — this is faithful to a clear Mustache rule and doesn't conflict
+None - this is faithful to a clear Mustache rule and doesn't conflict
 with Bigodin's design.

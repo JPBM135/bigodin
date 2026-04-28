@@ -60,7 +60,7 @@
   "bugs": {
     "url": "https://github.com/JPBM135/bigodin/issues"
   },
-  "homepage": "https://github.com/JPBM135/bigodin#readme",
+  "homepage": "https://jpbm135.github.io/bigodin",
   "devDependencies": {
     "@types/node": "^24.2.1",
     "@typescript-eslint/eslint-plugin": "^8.39.1",

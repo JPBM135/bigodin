@@ -38,8 +38,8 @@ isn't `{{`") capture the literal strings `{{` and `}}`. There is no
 parser state that could be mutated mid-parse to change those strings.
 
 Even the dispatch on `=` in `src/parser/index.ts` `$template` is
-*assignments* (`{{= $foo expr}}`) — Bigodin's variable-assignment
-syntax — not Mustache set-delimiters. The two share a leading `=` and
+*assignments* (`{{= $foo expr}}`) - Bigodin's variable-assignment
+syntax - not Mustache set-delimiters. The two share a leading `=` and
 will need to be disambiguated if set-delimiter support is added (e.g.,
 `{{= $foo …}}` is assignment; `{{=<% %>=}}` is set-delimiter).
 
@@ -49,7 +49,7 @@ This is the **most invasive** of the eight categories. `pierrejs` is a
 combinator library where parsers are pure functions; there is no
 built-in mutable parser state. Three options, increasingly drastic:
 
-### Option 1 — Post-process by re-tokenizing (**recommended**)
+### Option 1 - Post-process by re-tokenizing (**recommended**)
 
 Instead of teaching the parser combinators about delimiter changes, do a
 **preprocessing pass** that rewrites the template string *before* it
@@ -67,13 +67,14 @@ original source so error messages still point at the right column. A
 small lookup table built during the rewrite handles that.
 
 **Files to touch:**
-- New `src/parser/delimiters.ts` — the rewrite + location-map.
-- `src/parser/index.ts` — call `rewriteDelimiters(source)` before `Pr.parse(source)`; rewrap errors with the inverse map.
-- `src/index.ts` — `parse`/`compile` entry points pass through.
+
+- New `src/parser/delimiters.ts` - the rewrite + location-map.
+- `src/parser/index.ts` - call `rewriteDelimiters(source)` before `Pr.parse(source)`; rewrap errors with the inverse map.
+- `src/index.ts` - `parse`/`compile` entry points pass through.
 
 No AST shape change → no `VERSION` bump.
 
-### Option 2 — Stateful parser context
+### Option 2 - Stateful parser context
 
 Use `Pr.context` (already used for `mustache` in `$template`) to carry
 delimiter state. This requires writing custom replacements for
@@ -81,7 +82,7 @@ delimiter state. This requires writing custom replacements for
 delimiters from context. More invasive in the parser; harder to keep
 the existing combinators readable.
 
-### Option 3 — Hand-rolled lexer
+### Option 3 - Hand-rolled lexer
 
 Replace `pierrejs` for the top level. Out of scope for this category.
 
@@ -92,13 +93,13 @@ Bigodin's existing `=` branch in `$template` handles assignments like
 leading `{{`. The disambiguation: if the next non-space character after
 `=` is `$`, it's an assignment; otherwise it's a set-delimiter (the
 delimiter chars are restricted to non-whitespace, non-`=`, non-`$`
-sequences per the spec — see Mustache's `delimiters.yml`).
+sequences per the spec - see Mustache's `delimiters.yml`).
 
 ## Effort & risk
 
 - Option 1 (recommended): **Medium-large.** ~1 day of careful work, mostly in delimiter rewrite + location-map plus tests for the location-map.
 - Option 2: **Large.** Touches the heart of the parser.
-- Risk: If location remapping is wrong, error messages mislocate, hurting Bigodin's "human-friendly errors" claim — that's a regression worth guarding with explicit tests.
+- Risk: If location remapping is wrong, error messages mislocate, hurting Bigodin's "human-friendly errors" claim - that's a regression worth guarding with explicit tests.
 
 ## Won't-fix rationale
 

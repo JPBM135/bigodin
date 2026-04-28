@@ -1,10 +1,10 @@
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
-import Layout from '@theme/Layout';
-import Heading from '@theme/Heading';
-import BrowserOnly from '@docusaurus/BrowserOnly';
-import {Bigodin} from '@jpbm135/bigodin';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import Layout from "@theme/Layout";
+import Heading from "@theme/Heading";
+import BrowserOnly from "@docusaurus/BrowserOnly";
+import { Bigodin } from "@jpbm135/bigodin";
 
-import styles from './playground.module.css';
+import styles from "./playground.module.css";
 
 const DEFAULT_TEMPLATE = `Hello, {{shout name}}!
 
@@ -30,31 +30,34 @@ const DEFAULT_CONTEXT = `{
 }`;
 
 type RunResult =
-  | {status: 'idle'}
-  | {status: 'running'}
-  | {status: 'ok'; output: string; durationMs: number}
-  | {status: 'error'; message: string};
+  | { status: "idle" }
+  | { status: "running" }
+  | { status: "ok"; output: string; durationMs: number }
+  | { status: "error"; message: string };
 
 function PlaygroundClient(): ReactNode {
   const [template, setTemplate] = useState<string>(() => {
-    return loadDraft('template') ?? DEFAULT_TEMPLATE;
+    return loadDraft("template") ?? DEFAULT_TEMPLATE;
   });
   const [contextSource, setContextSource] = useState<string>(() => {
-    return loadDraft('context') ?? DEFAULT_CONTEXT;
+    return loadDraft("context") ?? DEFAULT_CONTEXT;
   });
   const [autoRun, setAutoRun] = useState<boolean>(true);
-  const [result, setResult] = useState<RunResult>({status: 'idle'});
+  const [result, setResult] = useState<RunResult>({ status: "idle" });
 
   const bigodin = useMemo(() => {
     const instance = new Bigodin();
-    instance.addHelper('shout', (s: unknown) => String(s ?? '').toUpperCase());
-    instance.addHelper('json', (v: unknown) => JSON.stringify(v, null, 2));
-    instance.addHelper('len', (v: unknown) => {
-      if (Array.isArray(v) || typeof v === 'string') return v.length;
-      if (v && typeof v === 'object') return Object.keys(v).length;
+    instance.addHelper("shout", (s: unknown) => String(s ?? "").toUpperCase());
+    instance.addHelper("json", (v: unknown) => JSON.stringify(v, null, 2));
+    instance.addHelper("len", (v: unknown) => {
+      if (Array.isArray(v) || typeof v === "string") return v.length;
+      if (v && typeof v === "object") return Object.keys(v).length;
       return 0;
     });
-    instance.addHelper('add', (a: unknown, b: unknown) => Number(a) + Number(b));
+    instance.addHelper(
+      "add",
+      (a: unknown, b: unknown) => Number(a) + Number(b),
+    );
     return instance;
   }, []);
 
@@ -62,14 +65,14 @@ function PlaygroundClient(): ReactNode {
 
   async function run() {
     const id = ++runIdRef.current;
-    setResult({status: 'running'});
+    setResult({ status: "running" });
 
     let context: unknown;
     try {
-      context = contextSource.trim() === '' ? {} : JSON.parse(contextSource);
+      context = contextSource.trim() === "" ? {} : JSON.parse(contextSource);
     } catch (err) {
       setResult({
-        status: 'error',
+        status: "error",
         message: `Invalid JSON context: ${(err as Error).message}`,
       });
       return;
@@ -81,19 +84,19 @@ function PlaygroundClient(): ReactNode {
       const output = await bigodin.run(ast, context as object);
       const durationMs = performance.now() - start;
       if (runIdRef.current !== id) return;
-      setResult({status: 'ok', output, durationMs});
+      setResult({ status: "ok", output, durationMs });
     } catch (err) {
       if (runIdRef.current !== id) return;
       setResult({
-        status: 'error',
+        status: "error",
         message: (err as Error).message ?? String(err),
       });
     }
   }
 
   useEffect(() => {
-    saveDraft('template', template);
-    saveDraft('context', contextSource);
+    saveDraft("template", template);
+    saveDraft("context", contextSource);
     if (!autoRun) return;
     const t = setTimeout(run, 200);
     return () => clearTimeout(t);
@@ -120,14 +123,15 @@ function PlaygroundClient(): ReactNode {
         </label>
         <button
           className="button button--secondary button--outline"
-          onClick={reset}>
+          onClick={reset}
+        >
           Reset to example
         </button>
         <span className={styles.status}>
-          {result.status === 'running' && 'Running…'}
-          {result.status === 'ok' &&
+          {result.status === "running" && "Running…"}
+          {result.status === "ok" &&
             `Rendered in ${result.durationMs.toFixed(1)}ms`}
-          {result.status === 'error' && 'Error'}
+          {result.status === "error" && "Error"}
         </span>
       </div>
 
@@ -162,23 +166,24 @@ function PlaygroundClient(): ReactNode {
           <span className={styles.paneLabel}>Output</span>
           <pre
             className={
-              result.status === 'error'
+              result.status === "error"
                 ? `${styles.output} ${styles.outputError}`
                 : styles.output
-            }>
-            {result.status === 'ok' && (result.output || '(empty output)')}
-            {result.status === 'error' && result.message}
-            {result.status === 'running' && '…'}
-            {result.status === 'idle' && 'Press Run.'}
+            }
+          >
+            {result.status === "ok" && (result.output || "(empty output)")}
+            {result.status === "error" && result.message}
+            {result.status === "running" && "…"}
+            {result.status === "idle" && "Press Run."}
           </pre>
         </div>
       </div>
 
       <p className={styles.footnote}>
-        Pre-registered helpers: <code>{'{{shout x}}'}</code> uppercases,{' '}
-        <code>{'{{len x}}'}</code> returns the length of an array / string /
-        object, <code>{'{{add a b}}'}</code> sums two numbers, and{' '}
-        <code>{'{{json x}}'}</code> serializes any value. Templates run with a
+        Pre-registered helpers: <code>{"{{shout x}}"}</code> uppercases,{" "}
+        <code>{"{{len x}}"}</code> returns the length of an array / string /
+        object, <code>{"{{add a b}}"}</code> sums two numbers, and{" "}
+        <code>{"{{json x}}"}</code> serializes any value. Templates run with a
         100ms execution budget by default.
       </p>
     </div>
@@ -205,7 +210,8 @@ export default function PlaygroundPage(): ReactNode {
   return (
     <Layout
       title="Playground"
-      description="Try Bigodin templates in the browser.">
+      description="Try Bigodin templates in the browser."
+    >
       <main className="container margin-vert--lg">
         <Heading as="h1">Playground</Heading>
         <p>

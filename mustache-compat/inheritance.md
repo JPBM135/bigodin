@@ -5,8 +5,8 @@
 An *optional* Mustache feature (the `~inheritance.json` filename is
 prefixed with `~`) that adds template inheritance:
 
-- `{{<parent}}…{{/parent}}` — invoke `parent` as the layout, with overrides inside.
-- `{{$blockName}}default{{/blockName}}` — declare a named block in the parent or override one when nested under `{{<parent}}`.
+- `{{<parent}}…{{/parent}}` - invoke `parent` as the layout, with overrides inside.
+- `{{$blockName}}default{{/blockName}}` - declare a named block in the parent or override one when nested under `{{<parent}}`.
 - The parent template is rendered with each block's content replaced by any override the caller supplied; otherwise the block's default is used.
 
 Bigodin has neither parents nor named blocks.
@@ -34,7 +34,7 @@ From `~inheritance.json`:
 - `Recursion`
 - `Multi-level inheritance`
 - `Multi-level inheritance, no sub child`
-- `Text inside parent` (×2 — there are two tests with this name in the spec file)
+- `Text inside parent` (×2 - there are two tests with this name in the spec file)
 - `Block scope`
 - `Standalone parent`
 - `Standalone block`
@@ -46,10 +46,10 @@ From `~inheritance.json`:
 
 Two distinct parse failures:
 
-- `{{<parent}}` — the `<` after `{{` is not a recognized sigil; falls into `$expression` which fails with `Expected literal, helper or context path`.
-- `{{$block}}` — Bigodin already uses `$` for *variables* (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
+- `{{<parent}}` - the `<` after `{{` is not a recognized sigil; falls into `$expression` which fails with `Expected literal, helper or context path`.
+- `{{$block}}` - Bigodin already uses `$` for *variables* (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
 
-The `$` collision is the awkward part — Bigodin and Mustache use the same character for different things.
+The `$` collision is the awkward part - Bigodin and Mustache use the same character for different things.
 
 ## Proposed implementation
 
@@ -84,13 +84,13 @@ Bump `VERSION` (e.g. to 6 once partials/dynamic-names land), widen
 
 In `src/parser/index.ts` `$template`, add two new branches:
 
-- `<` — opens a parent (`{{<name}}`); pushes a `ParentStatement` onto the parser stack. Until the matching `{{/name}}`, only `BLOCK_OVERRIDE` statements (and whitespace text) may appear at the top level of the parent body — anything else is an error per the spec.
-- `$` — currently routed to `$assignment` because Bigodin uses `{{= $foo expr}}` and `{{$this}}`. The new branch needs disambiguation:
+- `<` - opens a parent (`{{<name}}`); pushes a `ParentStatement` onto the parser stack. Until the matching `{{/name}}`, only `BLOCK_OVERRIDE` statements (and whitespace text) may appear at the top level of the parent body - anything else is an error per the spec.
+- `$` - currently routed to `$assignment` because Bigodin uses `{{= $foo expr}}` and `{{$this}}`. The new branch needs disambiguation:
   - If the immediate next token is `=` → assignment.
   - If the next token is a path that resolves to a variable (`$this`, `$parent`, `$root`) → variable reference (existing behavior).
   - Otherwise (a bare identifier following `$`) → block declaration: `{{$name}}…{{/name}}`.
 
-Disambiguation is tricky — current Bigodin code treats `$` as part of
+Disambiguation is tricky - current Bigodin code treats `$` as part of
 the variable name. To avoid breaking existing templates, prefer
 introducing the inheritance `$` syntax only **inside a `{{<parent}}` body**;
 outside of a parent body, `{{$x}}` keeps its current "variable
@@ -105,7 +105,7 @@ In `runStatement` (`src/runner/index.ts`):
 - New `BLOCK_OVERRIDE` case: when running inside a parent context, look up its name in the active overrides; render the override's statements if present, otherwise render the default.
 
 Multi-level inheritance (a parent inheriting from another parent)
-requires a stack of override scopes — child overrides take priority.
+requires a stack of override scopes - child overrides take priority.
 The spec includes recursion tests; the same `maxExecutionMillis` /
 `maxPartialDepth` guards from [partials.md](partials.md) cover them.
 
@@ -114,21 +114,21 @@ The spec includes recursion tests; the same `maxExecutionMillis` /
 `Inherit indentation`, `Block reindentation`, and `Intrinsic
 indentation` require that when a block is overridden inside a
 standalone parent invocation, the override's lines pick up the parent's
-indentation. Same machinery as partial indentation — implement once and
+indentation. Same machinery as partial indentation - implement once and
 reuse.
 
 ### Files to touch
 
-- `src/parser/statements.ts` — `ParentStatement`, `BlockOverrideStatement`.
-- `src/parser/index.ts` — new `<` branch, contextual `$` branch, version bump.
-- `src/runner/index.ts` — version-window widen, two new switch cases.
-- `src/index.ts` — overrides probably reuse the partials map registered via `addPartial`.
-- `LANGUAGE.md`, `LIB.md` — document.
+- `src/parser/statements.ts` - `ParentStatement`, `BlockOverrideStatement`.
+- `src/parser/index.ts` - new `<` branch, contextual `$` branch, version bump.
+- `src/runner/index.ts` - version-window widen, two new switch cases.
+- `src/index.ts` - overrides probably reuse the partials map registered via `addPartial`.
+- `LANGUAGE.md`, `LIB.md` - document.
 
 ## Effort & risk
 
 - **Large.** Touches parser disambiguation, AST, runner, partials integration, and indentation. Realistic ~3–4 days.
-- Risk: high for `$` disambiguation — easy to break existing Bigodin
+- Risk: high for `$` disambiguation - easy to break existing Bigodin
   templates. The "only inside `{{<parent}}` body" scoping mitigates
   this but adds parser state.
 

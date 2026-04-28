@@ -8,7 +8,7 @@ than a literal: `{{>*foo}}` looks up `foo` in the current context and
 uses its string value as the partial name. Combined with dotted names
 (`{{>*foo.bar}}`), it enables registry-style template selection.
 
-This category is entirely on top of [partials.md](partials.md) — if
+This category is entirely on top of [partials.md](partials.md) - if
 partials are not implemented, dynamic names cannot be either.
 
 ## Failing specs (21)
@@ -70,10 +70,10 @@ In the new `PARTIAL` case (introduced by the partials work), if
 
 ### Files to touch
 
-- `src/parser/statements.ts` — add `dynamic` to `PartialStatement`.
-- `src/parser/index.ts` — accept optional `*`, version bump.
-- `src/runner/index.ts` — version-window widen, dynamic resolution in `PARTIAL` case.
-- `LANGUAGE.md` — document.
+- `src/parser/statements.ts` - add `dynamic` to `PartialStatement`.
+- `src/parser/index.ts` - accept optional `*`, version bump.
+- `src/runner/index.ts` - version-window widen, dynamic resolution in `PARTIAL` case.
+- `LANGUAGE.md` - document.
 
 ## Effort & risk
 

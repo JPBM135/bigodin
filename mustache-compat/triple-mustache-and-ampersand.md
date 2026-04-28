@@ -3,8 +3,8 @@
 ## Summary
 
 In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}`
-emit it raw. Bigodin does not HTML-escape by default — it treats every
-`{{x}}` as raw output — so the *behavior* the tests want already
+emit it raw. Bigodin does not HTML-escape by default - it treats every
+`{{x}}` as raw output - so the *behavior* the tests want already
 happens. The gap is purely syntactic: Bigodin's parser does not
 recognize the triple-brace or ampersand forms and rejects them at
 parse time.
@@ -36,7 +36,7 @@ From `interpolation.json`:
 
 From `interpolation.json` (escaping):
 
-- `HTML Escaping` — fails because Bigodin does *not* HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
+- `HTML Escaping` - fails because Bigodin does *not* HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
 
 From `sections.json`:
 
@@ -58,7 +58,7 @@ path`.
 
 `HTML Escaping` is a different shape: the template parses fine, but
 runtime output isn't escaped. Search for "escape" in `src/runner/`
-returns no hits — there is no escaping pipeline at all.
+returns no hits - there is no escaping pipeline at all.
 
 ## Proposed implementation
 
@@ -71,20 +71,20 @@ Bigodin already emits raw, so semantically these become aliases of
 
 - In `src/parser/index.ts` `$template`, add two new branches inside the
   `peek` switch:
-  - `&` — consume the `&`, parse `$expression`, push a `MustacheStatement` (no AST shape change).
-  - `{` — consume the `{`, parse `$expression`, then require an extra closing `}` *before* `optionalSpaces` and the standard `closeMustache`.
+  - `&` - consume the `&`, parse `$expression`, push a `MustacheStatement` (no AST shape change).
+  - `{` - consume the `{`, parse `$expression`, then require an extra closing `}` *before* `optionalSpaces` and the standard `closeMustache`.
 - No new statement type needed; no AST `version` bump needed.
 - Existing `MustacheStatement` already covers the runtime path.
 
 ### B. Add HTML escaping for `{{x}}`
 
-This is a behavioral change with broad blast radius — every existing
+This is a behavioral change with broad blast radius - every existing
 template that emits HTML-bearing data would change output. Recommended
 **only behind an option**:
 
 - Add `htmlEscape: boolean` to `RunOptions` (`src/runner/options.ts`), default `false` for backwards compatibility.
 - In the `MUSTACHE` case of `runStatement` (`src/runner/index.ts`), if `options.htmlEscape` is true and the source statement is plain `{{x}}` (not triple/ampersand), pass the result through an escape helper.
-- Distinguishing `{{x}}` from `{{{x}}}`/`{{&x}}` requires a flag on `MustacheStatement` (`isRaw: true`) — that **is** an AST shape change, so bump `VERSION` to 4 and widen `MAX_VERSION` to 4 in `src/runner/index.ts`.
+- Distinguishing `{{x}}` from `{{{x}}}`/`{{&x}}` requires a flag on `MustacheStatement` (`isRaw: true`) - that **is** an AST shape change, so bump `VERSION` to 4 and widen `MAX_VERSION` to 4 in `src/runner/index.ts`.
 
 Recommended split: ship A first (zero-risk, fixes ~21 tests), then
 decide on B separately. Without B, `HTML Escaping` keeps failing.

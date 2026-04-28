@@ -4,7 +4,7 @@ Secure Handlebars/Mustache templating for user-provided templates, with async he
 
 Bigodin is a fork of [Bigodon](https://github.com/gabriel-pinheiro/bigodon) that drops unnecessary features and grows the supported subset of the Mustache spec, aiming to be a drop-in replacement for Mustache in user-provided template scenarios.
 
-- 📚 [Library API](LIB.md) · [Template language](LANGUAGE.md) · [Built-in helpers](HELPERS.md)
+- 📚 [Official Documentation](https://jpbm135.github.io/bigodin)
 - 🧪 Mustache spec coverage: 103 / 110 attempted tests pass (see [compatibility table](#mustache-spec-compatibility))
 
 ## Installation

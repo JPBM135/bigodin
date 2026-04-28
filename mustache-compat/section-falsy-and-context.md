@@ -6,11 +6,11 @@ A small handful of section/inverted tests fail not because of missing
 syntax but because Bigodin's runtime semantics for `{{#x}}…{{/x}}` and
 `{{^x}}…{{/x}}` differ from Mustache in narrow ways:
 
-- Behavior over scalar values (string, number) — Bigodin does not push
+- Behavior over scalar values (string, number) - Bigodin does not push
   them onto the context stack, so `{{.}}` and parent-context lookup
   inside the section don't work.
 - Whitespace produced by repeated standalone tags
-  (`Doubled` tests) — overlaps with
+  (`Doubled` tests) - overlaps with
   [standalone-line-whitespace.md](standalone-line-whitespace.md).
 
 Most of these are *also* affected by other categories
@@ -22,21 +22,21 @@ need a runtime-level fix that doesn't fit either of those docs cleanly.
 
 From `sections.json`:
 
-- `Null is falsey` — `{{#null}}…{{/null}}` over an explicit `null`
+- `Null is falsey` - `{{#null}}…{{/null}}` over an explicit `null`
   value should render nothing; today Bigodin's check is `!value`, which
-  *should* handle `null` — needs verification (could be a
+  *should* handle `null` - needs verification (could be a
   null-prototype lookup quirk).
-- `Parent contexts` — names missing in the current context must be looked up in the parent stack.
-- `Variable test` — depends on [implicit-iterator](implicit-iterator.md) (`{{.}}`).
-- `List Contexts` — deeply nested list iteration with parent-context lookups.
-- `Deeply Nested Contexts` — same, with object contexts.
-- `Doubled` — two sections separated by text on standalone lines (overlaps with [standalone-line-whitespace](standalone-line-whitespace.md)).
+- `Parent contexts` - names missing in the current context must be looked up in the parent stack.
+- `Variable test` - depends on [implicit-iterator](implicit-iterator.md) (`{{.}}`).
+- `List Contexts` - deeply nested list iteration with parent-context lookups.
+- `Deeply Nested Contexts` - same, with object contexts.
+- `Doubled` - two sections separated by text on standalone lines (overlaps with [standalone-line-whitespace](standalone-line-whitespace.md)).
 
 From `inverted.json`:
 
-- `Null is falsey` — same as the sections version, on the inverted path.
-- `Empty List` — `{{^list}}…{{/list}}` with `list: []` should render the body. Bigodin's `runBlock` already guards `Array.isArray(value) && value.length === 0` on the *positive* path; the negation in `block.isNegated` may or may not symmetrically include this — needs confirmation.
-- `Doubled` — same standalone-line overlap.
+- `Null is falsey` - same as the sections version, on the inverted path.
+- `Empty List` - `{{^list}}…{{/list}}` with `list: []` should render the body. Bigodin's `runBlock` already guards `Array.isArray(value) && value.length === 0` on the *positive* path; the negation in `block.isNegated` may or may not symmetrically include this - needs confirmation.
+- `Doubled` - same standalone-line overlap.
 
 ## Why it fails today
 
@@ -53,13 +53,13 @@ if (block.isNegated) {
 // Falsy or empty array
 if (!value || (Array.isArray(value) && value.length === 0)) { … return null; }
 
-// Non-empty array — push each item, render
+// Non-empty array - push each item, render
 if (Array.isArray(value)) { … pushContext / popContext / runStatements … }
 
-// Object — push, render
+// Object - push, render
 if (typeof value === 'object') { … pushContext / popContext / runStatements … }
 
-// Truthy scalar — render WITHOUT pushing context
+// Truthy scalar - render WITHOUT pushing context
 return await runStatements(execution, block.statements);
 ```
 
@@ -73,14 +73,14 @@ context stack when a name isn't found in the current frame. Bigodin's
 `src/runner/path-expression.ts` already implements lookup; the failing
 test specifically uses dotted paths whose first segment is missing in
 the current frame. Whether walking happens correctly for that shape
-needs to be confirmed — likely a small bug rather than a missing
+needs to be confirmed - likely a small bug rather than a missing
 feature.
 
 ## Proposed implementation
 
 Three small, surgical patches:
 
-### Patch A — Empty list under inverted block
+### Patch A - Empty list under inverted block
 
 In `src/runner/block.ts`, change the `if (block.isNegated)` branch to
 treat empty arrays as falsy:
@@ -99,7 +99,7 @@ if (block.isNegated) {
 }
 ```
 
-### Patch B — Push truthy scalars
+### Patch B - Push truthy scalars
 
 Replace the final `return await runStatements(execution, block.statements);` with:
 
@@ -111,10 +111,10 @@ return result;
 ```
 
 This is the same change recommended in
-[implicit-iterator.md](implicit-iterator.md) — pick one place to land
+[implicit-iterator.md](implicit-iterator.md) - pick one place to land
 it.
 
-### Patch C — Verify parent-context lookup
+### Patch C - Verify parent-context lookup
 
 Read `src/runner/path-expression.ts` carefully against the `Parent
 contexts`, `List Contexts`, and `Deeply Nested Contexts` failing data.
@@ -126,7 +126,7 @@ The fix may be:
 This is investigation, not a pre-specced patch. Run the failing test
 under a debugger to confirm.
 
-### Patch D — `Doubled` (both files)
+### Patch D - `Doubled` (both files)
 
 Wait until [standalone-line-whitespace.md](standalone-line-whitespace.md) is implemented, then re-run.
 
@@ -136,8 +136,8 @@ No AST change. No `VERSION` bump.
 
 ### Files to touch
 
-- `src/runner/block.ts` — Patches A and B.
-- `src/runner/path-expression.ts` — Patch C (if confirmed).
+- `src/runner/block.ts` - Patches A and B.
+- `src/runner/path-expression.ts` - Patch C (if confirmed).
 
 ## Effort & risk
 
@@ -149,5 +149,5 @@ No AST change. No `VERSION` bump.
 
 ## Won't-fix rationale
 
-None — these are conformance bugs against a feature Bigodin already
+None - these are conformance bugs against a feature Bigodin already
 claims to support. Worth fixing.

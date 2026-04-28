@@ -4,8 +4,9 @@
 
 A Mustache partial expands an inline reference to another named
 template into the current template at parse/render time. The partial
-can be recursive, can carry the current context, and — when standalone
-— must re-apply its caller's indentation to every line of its rendered
+can be recursive, can carry the current context, and - when standalone
+
+- must re-apply its caller's indentation to every line of its rendered
 body.
 
 Bigodin has no concept of partials.
@@ -59,12 +60,13 @@ guard (`statement satisfies never` in `src/runner/index.ts`).
 
 In `src/parser/index.ts` `$template`, add a `>` branch in the `peek`
 switch:
+
 - Consume `>`.
-- Parse the partial name (alphanumeric / dotted identifier — same rules as `$expression` paths but without parameters).
+- Parse the partial name (alphanumeric / dotted identifier - same rules as `$expression` paths but without parameters).
 - Push a `PartialStatement`.
 
 The `indent` field is filled by the standalone-line transform (see
-[standalone-line-whitespace.md](standalone-line-whitespace.md)) — when
+[standalone-line-whitespace.md](standalone-line-whitespace.md)) - when
 a partial tag is on a standalone line, capture the leading whitespace
 on that line into `indent`.
 
@@ -79,14 +81,14 @@ Two questions to answer before coding:
    - **Caller-supplied map**: extend `RunOptions` (`src/runner/options.ts`) with `partials: Record<string, string | TemplateStatement>`. Strings get parsed lazily; pre-parsed ASTs are used as-is. This matches the Bigodin design: parsing and running can happen in different processes.
    - **Bigodin-instance-scoped**: add `addPartial(name, source)` on the `Bigodin` class (`src/index.ts`), parallel to `addHelper`.
 
-   Recommended: both — `addPartial` writes into a per-instance map that becomes the default `options.partials` value, but callers can override.
+   Recommended: both - `addPartial` writes into a per-instance map that becomes the default `options.partials` value, but callers can override.
 
 2. **How is recursion bounded?** The existing `Execution.maxExecutionMillis` already covers infinite recursion, but the `runStatement` switch has to be careful not to blow the call stack. Add a soft `maxPartialDepth` (default e.g. 64) for clearer errors.
 
 In `runStatement`'s new `PARTIAL` case:
 
 - Look up `name` in `execution.options.partials` and `Bigodin` instance map.
-- On miss, the spec wants empty output (not an error) — see the `Failed Lookup` test.
+- On miss, the spec wants empty output (not an error) - see the `Failed Lookup` test.
 - On hit:
   - If string, parse on demand (cache the resulting AST inside the execution to handle recursion fairly).
   - Push current context unchanged (partials inherit context).
@@ -96,12 +98,12 @@ In `runStatement`'s new `PARTIAL` case:
 
 ### Files to touch
 
-- `src/parser/statements.ts` — new `PartialStatement` type.
-- `src/parser/index.ts` — new `>` branch, version bump.
-- `src/runner/index.ts` — version-window widen, new `PARTIAL` case.
-- `src/runner/options.ts` — `partials` option, optional `maxPartialDepth`.
-- `src/index.ts` — `addPartial` on the `Bigodin` class.
-- `LIB.md`, `LANGUAGE.md` — document.
+- `src/parser/statements.ts` - new `PartialStatement` type.
+- `src/parser/index.ts` - new `>` branch, version bump.
+- `src/runner/index.ts` - version-window widen, new `PARTIAL` case.
+- `src/runner/options.ts` - `partials` option, optional `maxPartialDepth`.
+- `src/index.ts` - `addPartial` on the `Bigodin` class.
+- `LIB.md`, `LANGUAGE.md` - document.
 
 ### Security
 

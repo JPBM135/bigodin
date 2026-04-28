@@ -2,7 +2,7 @@
 
 ## Summary
 
-In Mustache, `{{.}}` resolves to the *current context* — useful when
+In Mustache, `{{.}}` resolves to the *current context* - useful when
 iterating a list of scalars: `{{#items}}{{.}}{{/items}}` over
 `["a", "b", "c"]` produces `"abc"`. The lone `.` is also called the
 "implicit iterator." Bigodin supports `$this` (its named equivalent)
@@ -38,7 +38,8 @@ the parser fails with `Expected literal, helper or context path`.
 At runtime, Bigodin already exposes `$this` for the same purpose
 (`src/runner/path-expression.ts` resolves the `$this` magic name to the
 top of the context stack). So the runtime already does the right thing
-— only the parse rule is missing.
+
+- only the parse rule is missing.
 
 ## Proposed implementation
 
@@ -69,7 +70,7 @@ over a single scalar. Bigodin's `runBlock`
 ```ts
 if (Array.isArray(value)) { /* push each item, render */ }
 if (typeof value === 'object') { /* push, render */ }
-return await runStatements(execution, block.statements); // truthy scalar — does NOT push
+return await runStatements(execution, block.statements); // truthy scalar - does NOT push
 ```
 
 For Mustache compatibility, a truthy scalar block also needs to push
@@ -96,9 +97,9 @@ No. `.` parses to an existing expression shape. No `VERSION` bump.
 
 ### Files to touch
 
-- `src/parser/expression.ts` — accept `.` as a path expression.
-- `src/runner/block.ts` — push truthy scalars onto the context stack.
-- `LANGUAGE.md` — document `{{.}}` as an alias of `{{$this}}`.
+- `src/parser/expression.ts` - accept `.` as a path expression.
+- `src/runner/block.ts` - push truthy scalars onto the context stack.
+- `LANGUAGE.md` - document `{{.}}` as an alias of `{{$this}}`.
 
 ## Effort & risk
 
