@@ -8,14 +8,6 @@
 .docusaurus
 .cache-loader
 
-# Synced from repo-root markdown by scripts/sync-docs.js
-/docs/intro.md
-/docs/lib.md
-/docs/language.md
-/docs/helpers.md
-/docs/contributing.md
-/docs/mustache-compat/
-
 # Misc
 .DS_Store
 .env.local

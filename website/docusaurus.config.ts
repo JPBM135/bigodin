@@ -1,6 +1,6 @@
-import { themes as prismThemes } from "prism-react-renderer";
-import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import type { Config } from "@docusaurus/types";
+import { themes as prismThemes } from "prism-react-renderer";
 
 const ORG = "JPBM135";
 const REPO = "bigodin";
@@ -38,10 +38,11 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           editUrl: ({ docPath }) => {
-            const autoGen = /mustache-compat\//.test(docPath);
+            const autoGen = docPath.includes('mustache-compat/');
             if (autoGen) {
               return `${REPO_URL}/edit/main/mustache-compat/${docPath.replace(/^mustache-compat\//, "").replace(/index\.md$/, "README.md")}`;
             }
+
             const map: Record<string, string> = {
               "intro.md": "README.md",
               "lib.md": "LIB.md",
@@ -53,6 +54,7 @@ const config: Config = {
             if (source) {
               return `${REPO_URL}/edit/main/${source}`;
             }
+
             return `${REPO_URL}/edit/main/website/docs/${docPath}`;
           },
         },

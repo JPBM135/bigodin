@@ -1,12 +1,11 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
 import CodeBlock from '@theme/CodeBlock';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
-
+import Layout from '@theme/Layout';
+import clsx from 'clsx';
+import type { ReactNode } from 'react';
+import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import styles from './index.module.css';
 
 const QUICK_START = `import {Bigodin} from 'bigodin';
@@ -19,7 +18,7 @@ const out = await bigodin.run(ast, {name: 'world'});
 // "Hello, WORLD!"`;
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
@@ -36,7 +35,8 @@ function HomepageHeader() {
               'button button--outline button--secondary button--lg',
               styles.secondaryButton,
             )}
-            to="/docs/lib">
+            to="/docs/lib"
+          >
             API reference
           </Link>
           <Link
@@ -44,7 +44,8 @@ function HomepageHeader() {
               'button button--outline button--secondary button--lg',
               styles.secondaryButton,
             )}
-            href="https://github.com/JPBM135/bigodin">
+            href="https://github.com/JPBM135/bigodin"
+          >
             GitHub
           </Link>
         </div>
@@ -62,8 +63,8 @@ function HomepageQuickStart() {
             <Heading as="h2">Install</Heading>
             <CodeBlock language="bash">{`yarn add bigodin\n# or\nnpm install bigodin`}</CodeBlock>
             <p>
-              Use the singleton with built-in helpers, or{' '}
-              <code>new Bigodin()</code> when you want to register your own.
+              Use the singleton with built-in helpers, or <code>new Bigodin()</code> when you want
+              to register your own.
             </p>
           </div>
           <div className="col col--6">
@@ -77,9 +78,9 @@ function HomepageQuickStart() {
 }
 
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+    <Layout description={siteConfig.tagline} title={siteConfig.title}>
       <HomepageHeader />
       <main>
         <HomepageFeatures />

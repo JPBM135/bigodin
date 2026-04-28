@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Layout from "@theme/Layout";
-import Heading from "@theme/Heading";
-import BrowserOnly from "@docusaurus/BrowserOnly";
-import { Bigodin } from "@jpbm135/bigodin";
-
-import styles from "./playground.module.css";
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import { Bigodin } from '@jpbm135/bigodin';
+import Heading from '@theme/Heading';
+import Layout from '@theme/Layout';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import styles from './playground.module.css';
 
 const DEFAULT_TEMPLATE = `Hello, {{shout name}}!
 
@@ -30,34 +29,30 @@ const DEFAULT_CONTEXT = `{
 }`;
 
 type RunResult =
-  | { status: "idle" }
-  | { status: "running" }
-  | { status: "ok"; output: string; durationMs: number }
-  | { status: "error"; message: string };
+  | { durationMs: number; output: string; status: 'ok' }
+  | { message: string; status: 'error' }
+  | { status: 'idle' }
+  | { status: 'running' };
 
 function PlaygroundClient(): ReactNode {
-  const [template, setTemplate] = useState<string>(() => {
-    return loadDraft("template") ?? DEFAULT_TEMPLATE;
-  });
-  const [contextSource, setContextSource] = useState<string>(() => {
-    return loadDraft("context") ?? DEFAULT_CONTEXT;
-  });
+  const [template, setTemplate] = useState<string>(() => loadDraft('template') ?? DEFAULT_TEMPLATE);
+  const [contextSource, setContextSource] = useState<string>(
+    () => loadDraft('context') ?? DEFAULT_CONTEXT,
+  );
   const [autoRun, setAutoRun] = useState<boolean>(true);
-  const [result, setResult] = useState<RunResult>({ status: "idle" });
+  const [result, setResult] = useState<RunResult>({ status: 'idle' });
 
   const bigodin = useMemo(() => {
     const instance = new Bigodin();
-    instance.addHelper("shout", (s: unknown) => String(s ?? "").toUpperCase());
-    instance.addHelper("json", (v: unknown) => JSON.stringify(v, null, 2));
-    instance.addHelper("len", (v: unknown) => {
-      if (Array.isArray(v) || typeof v === "string") return v.length;
-      if (v && typeof v === "object") return Object.keys(v).length;
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    instance.addHelper('shout', (str: unknown) => String(str ?? '').toUpperCase());
+    instance.addHelper('json', (val: unknown) => JSON.stringify(val, null, 2));
+    instance.addHelper('len', (val: unknown) => {
+      if (Array.isArray(val) || typeof val === 'string') return val.length;
+      if (val && typeof val === 'object') return Object.keys(val).length;
       return 0;
     });
-    instance.addHelper(
-      "add",
-      (a: unknown, b: unknown) => Number(a) + Number(b),
-    );
+    instance.addHelper('add', (a: unknown, b: unknown) => Number(a) + Number(b));
     return instance;
   }, []);
 
@@ -65,15 +60,15 @@ function PlaygroundClient(): ReactNode {
 
   async function run() {
     const id = ++runIdRef.current;
-    setResult({ status: "running" });
+    setResult({ status: 'running' });
 
     let context: unknown;
     try {
-      context = contextSource.trim() === "" ? {} : JSON.parse(contextSource);
-    } catch (err) {
+      context = contextSource.trim() === '' ? {} : JSON.parse(contextSource);
+    } catch (error) {
       setResult({
-        status: "error",
-        message: `Invalid JSON context: ${(err as Error).message}`,
+        status: 'error',
+        message: `Invalid JSON context: ${(error as Error).message}`,
       });
       return;
     }
@@ -84,22 +79,23 @@ function PlaygroundClient(): ReactNode {
       const output = await bigodin.run(ast, context as object);
       const durationMs = performance.now() - start;
       if (runIdRef.current !== id) return;
-      setResult({ status: "ok", output, durationMs });
-    } catch (err) {
+      setResult({ status: 'ok', output, durationMs });
+    } catch (error) {
       if (runIdRef.current !== id) return;
       setResult({
-        status: "error",
-        message: (err as Error).message ?? String(err),
+        status: 'error',
+        message: (error as Error).message ?? String(error),
       });
     }
   }
 
   useEffect(() => {
-    saveDraft("template", template);
-    saveDraft("context", contextSource);
+    saveDraft('template', template);
+    saveDraft('context', contextSource);
     if (!autoRun) return;
-    const t = setTimeout(run, 200);
-    return () => clearTimeout(t);
+    const timeout = setTimeout(run, 200);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [template, contextSource, autoRun]);
 
   function reset() {
@@ -110,28 +106,28 @@ function PlaygroundClient(): ReactNode {
   return (
     <div className={styles.layout}>
       <div className={styles.controls}>
-        <button className="button button--primary" onClick={run}>
+        <button className="button button--primary" onClick={async () => run()} type="button">
           Run
         </button>
         <label className={styles.autoRun}>
           <input
-            type="checkbox"
             checked={autoRun}
-            onChange={(e) => setAutoRun(e.target.checked)}
+            onChange={(evt) => setAutoRun(evt.target.checked)}
+            type="checkbox"
           />
           Auto-run
         </label>
         <button
           className="button button--secondary button--outline"
-          onClick={reset}
+          onClick={() => reset()}
+          type="button"
         >
           Reset to example
         </button>
         <span className={styles.status}>
-          {result.status === "running" && "Running…"}
-          {result.status === "ok" &&
-            `Rendered in ${result.durationMs.toFixed(1)}ms`}
-          {result.status === "error" && "Error"}
+          {result.status === 'running' && 'Running…'}
+          {result.status === 'ok' && `Rendered in ${result.durationMs.toFixed(1)}ms`}
+          {result.status === 'error' && 'Error'}
         </span>
       </div>
 
@@ -141,11 +137,11 @@ function PlaygroundClient(): ReactNode {
             Template
           </label>
           <textarea
-            id="bigodin-template"
             className={styles.editor}
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
+            id="bigodin-template"
+            onChange={(evt) => setTemplate(evt.target.value)}
             spellCheck={false}
+            value={template}
           />
         </div>
 
@@ -154,11 +150,11 @@ function PlaygroundClient(): ReactNode {
             Context (JSON)
           </label>
           <textarea
-            id="bigodin-context"
             className={styles.editor}
-            value={contextSource}
-            onChange={(e) => setContextSource(e.target.value)}
+            id="bigodin-context"
+            onChange={(evt) => setContextSource(evt.target.value)}
             spellCheck={false}
+            value={contextSource}
           />
         </div>
 
@@ -166,25 +162,22 @@ function PlaygroundClient(): ReactNode {
           <span className={styles.paneLabel}>Output</span>
           <pre
             className={
-              result.status === "error"
-                ? `${styles.output} ${styles.outputError}`
-                : styles.output
+              result.status === 'error' ? `${styles.output} ${styles.outputError}` : styles.output
             }
           >
-            {result.status === "ok" && (result.output || "(empty output)")}
-            {result.status === "error" && result.message}
-            {result.status === "running" && "…"}
-            {result.status === "idle" && "Press Run."}
+            {result.status === 'ok' && (result.output || '(empty output)')}
+            {result.status === 'error' && result.message}
+            {result.status === 'running' && '…'}
+            {result.status === 'idle' && 'Press Run.'}
           </pre>
         </div>
       </div>
 
       <p className={styles.footnote}>
-        Pre-registered helpers: <code>{"{{shout x}}"}</code> uppercases,{" "}
-        <code>{"{{len x}}"}</code> returns the length of an array / string /
-        object, <code>{"{{add a b}}"}</code> sums two numbers, and{" "}
-        <code>{"{{json x}}"}</code> serializes any value. Templates run with a
-        100ms execution budget by default.
+        Pre-registered helpers: <code>{'{{shout x}}'}</code> uppercases, <code>{'{{len x}}'}</code>{' '}
+        returns the length of an array / string / object, <code>{'{{add a b}}'}</code> sums two
+        numbers, and <code>{'{{json x}}'}</code> serializes any value. Templates run with a 100ms
+        execution budget by default.
       </p>
     </div>
   );
@@ -208,16 +201,12 @@ function saveDraft(key: string, value: string): void {
 
 export default function PlaygroundPage(): ReactNode {
   return (
-    <Layout
-      title="Playground"
-      description="Try Bigodin templates in the browser."
-    >
+    <Layout description="Try Bigodin templates in the browser." title="Playground">
       <main className="container margin-vert--lg">
         <Heading as="h1">Playground</Heading>
         <p>
-          Edit the template and context, then hit <strong>Run</strong> (or
-          enable auto-run). Everything executes locally in your browser, no
-          server involved.
+          Edit the template and context, then hit <strong>Run</strong> (or enable auto-run).
+          Everything executes locally in your browser, no server involved.
         </p>
         <BrowserOnly fallback={<p>Loading playground…</p>}>
           {() => <PlaygroundClient />}
