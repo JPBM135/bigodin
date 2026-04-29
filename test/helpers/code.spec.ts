@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compile } from '../../src';
+import Bigodin, { compile } from '../../src';
 
 describe('helpers', () => {
   describe('code', () => {
@@ -67,6 +67,86 @@ describe('helpers', () => {
       it('should run only once for arrays', async () => {
         const templ = compile('{{#with foo}}bar{{/with}}');
         expect(await templ({ foo: [1, 2, 3] })).toEqual('bar');
+      });
+
+      it('should push each truthy argument as its own frame and run the body once', async () => {
+        const templ = compile('{{#with user company}}{{name}} @ {{$parent.name}}{{/with}}');
+        expect(
+          await templ({
+            user: { name: 'Alice' },
+            company: { name: 'Acme' },
+          }),
+        ).toEqual('Acme @ Alice');
+      });
+
+      it('should let inner frames shadow outer frames', async () => {
+        const templ = compile('{{#with outer inner}}{{label}}|{{$parent.label}}{{/with}}');
+        expect(
+          await templ({
+            outer: { label: 'O' },
+            inner: { label: 'I' },
+          }),
+        ).toEqual('I|O');
+      });
+
+      it('should skip falsy arguments and still push the truthy ones', async () => {
+        const templ = compile('{{#with maybe user}}{{name}}{{/with}}');
+        expect(
+          await templ({
+            maybe: null,
+            user: { name: 'Alice' },
+          }),
+        ).toEqual('Alice');
+      });
+
+      it('should render the else branch when every argument is falsy', async () => {
+        const templ = compile(
+          '{{#with maybe other}}body{{else}}fallback{{/with}}',
+        );
+        expect(await templ({ maybe: null, other: undefined })).toEqual('fallback');
+      });
+
+      it('should pop every pushed frame after the body runs', async () => {
+        const templ = compile(
+          '{{#with one two three}}in{{/with}}{{name}}',
+        );
+        expect(
+          await templ({
+            one: { x: 1 },
+            two: { x: 2 },
+            three: { x: 3 },
+            name: 'after',
+          }),
+        ).toEqual('inafter');
+      });
+
+      it('should let user-registered with helper override the native behavior', async () => {
+        const bigodin = new Bigodin();
+        bigodin.addHelper('with', () => 'custom');
+        const templ = bigodin.compile('{{#with foo bar}}body{{/with}}');
+        expect(await templ({ foo: { x: 1 }, bar: { x: 2 } })).toEqual('body');
+      });
+
+      it('should treat negated with as truthy when every argument is falsy', async () => {
+        const templ = compile('{{^with maybe other}}none{{/with}}');
+        expect(await templ({ maybe: null, other: false })).toEqual('none');
+      });
+
+      it('should render the else branch on negated with when at least one argument is truthy', async () => {
+        const templ = compile(
+          '{{^with maybe user}}none{{else}}some{{/with}}',
+        );
+        expect(await templ({ maybe: null, user: { name: 'Alice' } })).toEqual('some');
+      });
+
+      it('should render nothing on negated with without an else when at least one argument is truthy', async () => {
+        const templ = compile('{{^with user}}none{{/with}}');
+        expect(await templ({ user: { name: 'Alice' } })).toEqual('');
+      });
+
+      it('should ignore inline with calls (returns undefined)', async () => {
+        const templ = compile('a{{with foo}}b');
+        expect(await templ({ foo: { x: 1 } })).toEqual('ab');
       });
     });
 

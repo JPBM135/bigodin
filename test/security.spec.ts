@@ -491,9 +491,12 @@ describe('security', () => {
     });
 
     it('compileExpression preserves helper return types (non-string)', async () => {
-      const expr = compileExpression('with foo');
+      const bigodin = new Bigodin();
+      bigodin.addHelper('arrify', (x) => [x]);
+      const expr = bigodin.compileExpression('arrify foo');
       const res = await expr({ foo: 'bar' });
-      // `with` returns [ctx]; expression mode does NOT stringify like full render.
+      // Helpers can return non-string values; expression mode does NOT
+      // stringify like a full render.
       expect(res).toEqual(['bar']);
     });
 

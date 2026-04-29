@@ -71,6 +71,13 @@ export class Execution {
   }
 
   /**
+   * Pop the top `count` contexts from the stack.
+   */
+  public popContexts(count: number) {
+    this.contexts.length = Math.max(0, this.contexts.length - count);
+  }
+
+  /**
    * Push a data frame for the current iteration.
    */
   public pushDataFrame(frame: Record<string, unknown>) {

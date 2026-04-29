@@ -63,7 +63,27 @@ Inverse of `if`. The body runs when the argument is falsy.
 {{/with}}
 ```
 
-Pushes the argument as the current context for the duration of the block. Inside, `{{$this}}` and bare paths resolve against the new context. The block runs exactly once. Falsy values render nothing.
+Pushes the argument as the current context for the duration of the block. Inside, `{{$this}}` and bare paths resolve against the new context. The block runs exactly once. Falsy values render the `{{else}}` branch (if any), otherwise nothing.
+
+### Multiple arguments
+
+`with` accepts more than one argument and pushes each truthy argument onto the context stack as its own frame. The body still runs exactly once. Inside the body, bare paths resolve against the **innermost** frame (the rightmost argument); reach the outer frames with `$parent`, `$parent.$parent`, and so on, or with `$root` for the original context.
+
+```handlebars
+{{#with user company}}
+  {{name}} works at {{$parent.name}}
+{{/with}}
+```
+
+over `{ user: { name: 'Alice' }, company: { name: 'Acme' } }` renders `Acme works at Alice` (the rightmost `company` is on top, so bare `name` resolves to `Acme`; `$parent.name` walks down one frame to `user`).
+
+Falsy arguments are skipped: `{{#with maybe user}}...{{/with}}` over `{ maybe: null, user: {...} }` pushes only `user`. If **every** argument is falsy, the block falls through to its `{{else}}` branch (if any), otherwise renders nothing.
+
+Negated form (`{{^with ...}}`) renders its body when every argument is falsy.
+
+### Overriding `with`
+
+`with` is implemented natively at the block level. Registering your own helper named `with` via `addHelper('with', fn)` overrides the native behavior - the user-supplied function is called with the resolved arguments and its return value drives the block exactly like any other helper (truthy renders the body once, arrays iterate, etc.).
 
 ## `each`
 

@@ -8,7 +8,7 @@ A "context block" is a block whose body sees a different context than the one ou
 
 1. The block's value is an **object** — the object becomes the new context.
 2. The block's value is an **array** — each element becomes the new context for one iteration (see [Loop blocks](/docs/language/loop-blocks)).
-3. The block uses the bundled `with` helper — its argument becomes the new context, even if it is not an object.
+3. The block uses the bundled `with` helper — each truthy argument becomes a new frame on the context stack, even if it is not an object. Multiple arguments are supported; see [Block helpers reference](/docs/helpers#with).
 
 Inside the block you can still reach the outer context with `$parent` or `$root`.
 
