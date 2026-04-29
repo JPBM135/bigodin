@@ -1,157 +1,53 @@
 ---
 title: 'Section Context & Falsy Edge Cases'
 sidebar_position: 6
-# Auto-generated from mustache-compat/section-falsy-and-context.md; edit the source file in the repo root.
 ---
+
+**Status: Mostly supported, with two documented divergences from the spec.**
 
 ## Summary
 
-A small handful of section/inverted tests fail not because of missing
-syntax but because Bigodin's runtime semantics for `{{#x}}…{{/x}}` and
-`{{^x}}…{{/x}}` differ from Mustache in narrow ways:
+Bigodin's runtime semantics for `{{#x}}...{{/x}}` and `{{^x}}...{{/x}}` match the Mustache spec for the common cases:
 
-- Behavior over scalar values (string, number) - Bigodin does not push
-  them onto the context stack, so `{{.}}` and parent-context lookup
-  inside the section don't work.
-- Whitespace produced by repeated standalone tags
-  (`Doubled` tests) - overlaps with
-  [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace).
+- `null`, `undefined`, `false`, `0`, `""`, and empty arrays are falsy on both the positive and inverted branches.
+- Non-empty arrays iterate, pushing each item onto the context stack.
+- Object values push as the new context.
+- Truthy scalars (strings, numbers, `true`) render the body once.
 
-Most of these are _also_ affected by other categories
-([implicit-iterator](/docs/mustache-compat/implicit-iterator),
-[standalone-line-whitespace](/docs/mustache-compat/standalone-line-whitespace)) but they
-need a runtime-level fix that doesn't fit either of those docs cleanly.
+The `Falsey`, `Truthy`, `Null is falsey`, `Context`, `Empty List`, `List`, `Doubled`, and similar tests in `sections.json` and `inverted.json` all pass.
 
-## Failing specs (~10)
+## Documented divergences
 
-From `sections.json`:
+The following spec tests are deliberately skipped (`SKIPPED_FEATURES` in `test/spec.spec.ts`):
 
-- `Null is falsey` - `{{#null}}…{{/null}}` over an explicit `null`
-  value should render nothing; today Bigodin's check is `!value`, which
-  _should_ handle `null` - needs verification (could be a
-  null-prototype lookup quirk).
-- `Parent contexts` - names missing in the current context must be looked up in the parent stack.
-- `Variable test` - depends on [implicit-iterator](/docs/mustache-compat/implicit-iterator) (`{{.}}`).
-- `List Contexts` - deeply nested list iteration with parent-context lookups.
-- `Deeply Nested Contexts` - same, with object contexts.
-- `Doubled` - two sections separated by text on standalone lines (overlaps with [standalone-line-whitespace](/docs/mustache-compat/standalone-line-whitespace)).
+- `Parent contexts`
+- `List Contexts`
+- `Deeply Nested Contexts`
+- `Variable test`
 
-From `inverted.json`:
+All four require **automatic context-stack walk** on a missing key: when a name isn't found in the current frame, Mustache walks up the stack to find it. Bigodin uses Handlebars-style strict scoping; you must walk explicitly with `$parent` and `$root`:
 
-- `Null is falsey` - same as the sections version, on the inverted path.
-- `Empty List` - `{{^list}}…{{/list}}` with `list: []` should render the body. Bigodin's `runBlock` already guards `Array.isArray(value) && value.length === 0` on the _positive_ path; the negation in `block.isNegated` may or may not symmetrically include this - needs confirmation.
-- `Doubled` - same standalone-line overlap.
-
-## Why it fails today
-
-`src/runner/block.ts` `runBlock` is the relevant code:
-
-```ts
-// Negated blocks
-if (block.isNegated) {
-    if (value && Array.isArray(block.elseStatements)) { … }
-    if (value) return null;
-    return await runStatements(execution, block.statements);
-}
-
-// Falsy or empty array
-if (!value || (Array.isArray(value) && value.length === 0)) { … return null; }
-
-// Non-empty array - push each item, render
-if (Array.isArray(value)) { … pushContext / popContext / runStatements … }
-
-// Object - push, render
-if (typeof value === 'object') { … pushContext / popContext / runStatements … }
-
-// Truthy scalar - render WITHOUT pushing context
-return await runStatements(execution, block.statements);
+```handlebars
+{{#post}}{{$parent.author.name}}{{/post}}
 ```
 
-Two gaps relative to the spec:
+A second divergence (not currently exercised by an active spec test, but worth flagging) is **truthy-scalar context push**:
 
-1. **Inverted + empty list:** The negated branch checks `if (value)`, but `value` for `[]` is truthy in JavaScript (`Boolean([]) === true`), so an empty list takes the "value is true → render nothing" branch. Mustache wants empty lists to be falsy, so the negated body **should** render. Fix: the negated branch needs the same `Array.isArray(value) && value.length === 0` guard the positive branch has.
-2. **Truthy scalar context:** The final branch renders the body but does not push the scalar value onto the context stack. Mustache wants `{{#foo}}` over `foo: "bar"` to push `"bar"` so `{{.}}` resolves to it. (Same fix is recommended in [implicit-iterator.md](/docs/mustache-compat/implicit-iterator); this doc is the place to track the _runtime_ change while implicit-iterator covers the _parser_ change.)
-
-`Parent contexts` requires that the path resolver walk _up_ the
-context stack when a name isn't found in the current frame. Bigodin's
-`src/runner/path-expression.ts` already implements lookup; the failing
-test specifically uses dotted paths whose first segment is missing in
-the current frame. Whether walking happens correctly for that shape
-needs to be confirmed - likely a small bug rather than a missing
-feature.
-
-## Proposed implementation
-
-Three small, surgical patches:
-
-### Patch A - Empty list under inverted block
-
-In `src/runner/block.ts`, change the `if (block.isNegated)` branch to
-treat empty arrays as falsy:
-
-```ts
-const isFalsy = !value || (Array.isArray(value) && value.length === 0);
-
-if (block.isNegated) {
-  if (isFalsy) {
-    return await runStatements(execution, block.statements);
-  }
-  if (Array.isArray(block.elseStatements)) {
-    return await runStatements(execution, block.elseStatements);
-  }
-  return null;
-}
+```handlebars
+{{#name}}Hello, {{.}}{{/name}}     name: "Alice"
 ```
 
-### Patch B - Push truthy scalars
+In Mustache, the section pushes `"Alice"` onto the context stack so `{{.}}` resolves to it. In Bigodin, truthy scalars render the body but do **not** push: `{{.}}` resolves to whatever was on top of the stack before the section opened. This matches Handlebars' "use `{{#if}}` for truthiness, `{{#each}}` for iteration" idiom.
 
-Replace the final `return await runStatements(execution, block.statements);` with:
+## Why the divergence
 
-```ts
-execution.pushContext(value);
-const result = await runStatements(execution, block.statements);
-execution.popContext();
-return result;
-```
+Both rules trade a small amount of spec conformance for clearer scoping rules:
 
-This is the same change recommended in
-[implicit-iterator.md](/docs/mustache-compat/implicit-iterator) - pick one place to land
-it.
+- Strict scoping (no auto-walk) makes it impossible for a deeply-nested template to accidentally pick up a name from an outer frame, which is a common source of bugs in Handlebars-style templates that grow over time.
+- Not pushing scalars keeps the context stack "shape-stable" - the top frame is always an object or an array element, never an opaque scalar - which simplifies reasoning about `{{$parent}}` and `{{$root}}`.
 
-### Patch C - Verify parent-context lookup
+If your templates require Mustache's auto-walk behavior, prefer using explicit `$parent.foo` / `$root.foo` paths or restructure the data so the relevant key lives in the current frame.
 
-Read `src/runner/path-expression.ts` carefully against the `Parent
-contexts`, `List Contexts`, and `Deeply Nested Contexts` failing data.
-The fix may be:
+## Implementation note
 
-- The path resolver short-circuits to the current frame instead of walking up when the _first_ segment is missing.
-- Or it walks correctly but the segment matcher returns `undefined` vs `null` inconsistently, causing later segments to fail.
-
-This is investigation, not a pre-specced patch. Run the failing test
-under a debugger to confirm.
-
-### Patch D - `Doubled` (both files)
-
-Wait until [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace) is implemented, then re-run.
-
-### AST / version
-
-No AST change. No `VERSION` bump.
-
-### Files to touch
-
-- `src/runner/block.ts` - Patches A and B.
-- `src/runner/path-expression.ts` - Patch C (if confirmed).
-
-## Effort & risk
-
-- **Small.** Patches A and B are ~5 lines each. Patch C is investigative
-  but likely small once the cause is found.
-- Risk: medium. Patch B in particular changes behavior for any existing
-  Bigodin template that uses `{{#scalar}}…{{/scalar}}`. Run all of
-  `yarn test` and confirm `test/runner/block.spec.js` still passes.
-
-## Won't-fix rationale
-
-None - these are conformance bugs against a feature Bigodin already
-claims to support. Worth fixing.
+The relevant runtime is `src/runner/block.ts` `runBlock`. The negated branch and the empty-array guard share the same falsy check, so `{{^list}}...{{/list}}` over `list: []` correctly renders the body. Path resolution lives in `src/runner/path-expression.ts`; it does **not** walk up the context stack on a miss - `$parent`, `$root`, and `$this` are the explicit walkers.

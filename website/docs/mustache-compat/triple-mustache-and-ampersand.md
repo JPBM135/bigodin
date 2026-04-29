@@ -1,111 +1,45 @@
 ---
 title: 'Triple Mustache `{{{x}}}` and Ampersand `{{&x}}`'
 sidebar_position: 9
-# Auto-generated from mustache-compat/triple-mustache-and-ampersand.md; edit the source file in the repo root.
 ---
+
+**Status: Supported as raw-emit aliases of `{{x}}`.**
 
 ## Summary
 
-In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}`
-emit it raw. Bigodin does not HTML-escape by default - it treats every
-`{{x}}` as raw output - so the _behavior_ the tests want already
-happens. The gap is purely syntactic: Bigodin's parser does not
-recognize the triple-brace or ampersand forms and rejects them at
-parse time.
+In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}` emit it raw. Bigodin does not HTML-escape by default; it treats every `{{x}}` as raw output. The triple-brace and ampersand forms are accepted by the parser purely for spec compatibility and behave identically to the standard `{{x}}` form.
 
-## Failing specs (22)
+```handlebars
+{{x}}     => raw value
+{{{x}}}   => raw value (same as {{x}})
+{{&x}}    => raw value (same as {{x}})
+```
 
-From `interpolation.json`:
+All three forms accept the same right-hand side: paths, dotted access, helpers, literals, and variables.
 
-- `Triple Mustache`
-- `Ampersand`
-- `Triple Mustache Integer Interpolation`
-- `Ampersand Integer Interpolation`
-- `Triple Mustache Decimal Interpolation`
-- `Ampersand Decimal Interpolation`
-- `Triple Mustache Null Interpolation`
-- `Ampersand Null Interpolation`
-- `Triple Mustache Context Miss Interpolation`
-- `Ampersand Context Miss Interpolation`
-- `Dotted Names - Triple Mustache Interpolation`
-- `Dotted Names - Ampersand Interpolation`
-- `Implicit Iterators - Triple Mustache` (also blocked by category 5)
-- `Implicit Iterators - Ampersand` (also blocked by category 5)
-- `Triple Mustache - Surrounding Whitespace`
-- `Ampersand - Surrounding Whitespace`
-- `Triple Mustache - Standalone`
-- `Ampersand - Standalone`
-- `Triple Mustache With Padding`
-- `Ampersand With Padding`
+## Spec coverage
 
-From `interpolation.json` (escaping):
+All `Triple Mustache`, `Ampersand`, and dotted/integer/null/whitespace variants in `interpolation.json` and `sections.json` pass.
 
-- `HTML Escaping` - fails because Bigodin does _not_ HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
+## What is _not_ supported: HTML escaping for `{{x}}`
 
-From `sections.json`:
+The Mustache spec's `HTML Escaping` test expects `{{x}}` to escape `& < > " '`. Bigodin's headline behavior is "emit raw," so the three `HTML Escaping` variants are deliberately skipped (`SKIPPED_FEATURES` in `test/spec.spec.ts`). If you need escaping, register an escape helper and apply it explicitly:
 
-- `Implicit Iterator - HTML Escaping` (also blocked by category 5)
+```handlebars
+{{escape user.bio}}
+```
 
-> Note: the `~inheritance.json` `Triple Mustache` test fails for the
-> same syntax reason but is double-counted in
-> [inheritance.md](/docs/mustache-compat/inheritance) since the test template also uses
-> inheritance syntax.
+See [Render HTML safely](/docs/how-to/render-html-safely) for a worked example.
 
-## Why it fails today
+## Why this divergence
 
-`src/parser/index.ts` `$template` opens a mustache with `openMustache`
-(matching `{{`) and then dispatches based on the first character:
-`!`, `=`, `#`, `^`, `/`, or default. Neither `{` (the second `{` of
-`{{{`) nor `&` is a recognized branch, so the inner `$expression`
-parser is invoked and fails with `Expected literal, helper or context
-path`.
+Bigodin is positioned as a Handlebars-flavored superset, and a lot of real templates are used to build non-HTML output (JSON, plain text, markdown). Defaulting to raw output keeps that path simple. The opt-in escape-helper approach also keeps the escape policy in one place that callers control, instead of baking a single HTML-escape table into the runtime.
 
-`HTML Escaping` is a different shape: the template parses fine, but
-runtime output isn't escaped. Search for "escape" in `src/runner/`
-returns no hits - there is no escaping pipeline at all.
+## Parser implementation note
 
-## Proposed implementation
+Both forms are dispatched in `src/parser/index.ts` `$template` based on the character immediately after `{{`:
 
-Two independent sub-tasks:
+- `&` consumes the `&` and parses the inner expression as a normal `MustacheStatement`.
+- `{` consumes the second `{`, parses the inner expression, and then requires an extra closing `}` before the standard `}}`.
 
-### A. Accept `{{{x}}}` and `{{&x}}` as raw-emit syntax
-
-Bigodin already emits raw, so semantically these become aliases of
-`{{x}}`. The change is parser-only:
-
-- In `src/parser/index.ts` `$template`, add two new branches inside the
-  `peek` switch:
-  - `&` - consume the `&`, parse `$expression`, push a `MustacheStatement` (no AST shape change).
-  - `{` - consume the `{`, parse `$expression`, then require an extra closing `}` _before_ `optionalSpaces` and the standard `closeMustache`.
-- No new statement type needed; no AST `version` bump needed.
-- Existing `MustacheStatement` already covers the runtime path.
-
-### B. Add HTML escaping for `{{x}}`
-
-This is a behavioral change with broad blast radius - every existing
-template that emits HTML-bearing data would change output. Recommended
-**only behind an option**:
-
-- Add `htmlEscape: boolean` to `RunOptions` (`src/runner/options.ts`), default `false` for backwards compatibility.
-- In the `MUSTACHE` case of `runStatement` (`src/runner/index.ts`), if `options.htmlEscape` is true and the source statement is plain `{{x}}` (not triple/ampersand), pass the result through an escape helper.
-- Distinguishing `{{x}}` from `{{{x}}}`/`{{&x}}` requires a flag on `MustacheStatement` (`isRaw: true`) - that **is** an AST shape change, so bump `VERSION` to 4 and widen `MAX_VERSION` to 4 in `src/runner/index.ts`.
-
-Recommended split: ship A first (zero-risk, fixes ~21 tests), then
-decide on B separately. Without B, `HTML Escaping` keeps failing.
-
-## Effort & risk
-
-- A: **Small.** Parser-only, no AST change, no version bump.
-- B: **Medium.** AST change, version bump, behavior change, plus
-  a security review angle (escaping must cover `& < > " '` per the
-  spec's escape table).
-- Risk for A: low; the new branches are additive and disjoint from
-  existing parsing.
-- Risk for B: medium. Default-off mitigates regressions, but adding
-  escaping at all opens questions about consistency (helpers that
-  produce HTML, etc.).
-
-## Won't-fix rationale
-
-None. A is cheap and fixes most of the category. B is optional but
-defensible.
+Neither form introduces a new AST shape; both produce `MustacheStatement`. No `VERSION` bump was needed for this feature.

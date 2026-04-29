@@ -1,92 +1,18 @@
 ---
 title: 'Dynamic Names `{{*name}}` (optional)'
 sidebar_position: 1
-# Auto-generated from mustache-compat/dynamic-names.md; edit the source file in the repo root.
 ---
+
+**Status: Not supported. Depends on partials, which are also not implemented.**
 
 ## Summary
 
-Dynamic Names is an _optional_ Mustache feature (filename starts with
-`~`) that lets a partial's name come from a runtime variable rather
-than a literal: `{{>*foo}}` looks up `foo` in the current context and
-uses its string value as the partial name. Combined with dotted names
-(`{{>*foo.bar}}`), it enables registry-style template selection.
+Dynamic Names is an _optional_ Mustache feature (the `~dynamic-names.json` filename is prefixed with `~`) that lets a partial's name come from a runtime variable rather than a literal: `{{>*foo}}` looks up `foo` in the current context and uses its string value as the partial name. Combined with dotted names (`{{>*foo.bar}}`), it enables registry-style template selection.
 
-This category is entirely on top of [partials.md](/docs/mustache-compat/partials) - if
-partials are not implemented, dynamic names cannot be either.
+Bigodin does not implement partials (see [partials.md](/docs/mustache-compat/partials)), so dynamic names cannot work either. `~dynamic-names.json` is in `SKIPPED_SPECS` (`test/spec.spec.ts`); its 21 tests count toward the file-level skip total in the [overview](/docs/mustache-compat).
 
-## Failing specs (21)
+## Why not implemented
 
-From `~dynamic-names.json`:
+This category is entirely a layer on top of partials. If partials land in the future, dynamic names is a small follow-up: extend the partial-name parser to optionally accept a leading `*` and add a `dynamic: boolean` field to the partial AST node; at runtime, resolve the name as a path expression against the current context and proceed as for a static partial.
 
-- `Basic Behavior - Partial`
-- `Basic Behavior - Name Resolution`
-- `Context Misses - Partial`
-- `Failed Lookup - Partial`
-- `Context`
-- `Dotted Names`
-- `Dotted Names - Operator Precedence`
-- `Dotted Names - Failed Lookup`
-- `Dotted names - Context Stacking`
-- `Dotted names - Context Stacking Under Repetition`
-- `Dotted names - Context Stacking Failed Lookup`
-- `Recursion`
-- `Dynamic Names - Double Dereferencing`
-- `Dynamic Names - Composed Dereferencing`
-- `Surrounding Whitespace`
-- `Inline Indentation`
-- `Standalone Line Endings`
-- `Standalone Without Previous Line`
-- `Standalone Without Newline`
-- `Standalone Indentation`
-- `Padding Whitespace`
-
-## Why it fails today
-
-The parser doesn't recognize `*` after `>`. Templates like `{{>*foo}}`
-are rejected by `$expression` with `Expected literal, helper or context
-path` since `*` isn't a path character.
-
-## Proposed implementation
-
-Prerequisite: [partials](/docs/mustache-compat/partials) must land first.
-
-### Parser
-
-Extend the partial-name parser added in
-[partials.md](/docs/mustache-compat/partials) to optionally accept a leading `*`:
-
-- `{{>name}}` → `PartialStatement { name: 'name', dynamic: false }`
-- `{{>*name}}` → `PartialStatement { name: 'name', dynamic: true }`
-
-Add a `dynamic: boolean` field to `PartialStatement`. AST shape change
-→ bump `VERSION` (e.g. to 5 if partials are version 4) and widen
-`MAX_VERSION` accordingly.
-
-### Runner
-
-In the new `PARTIAL` case (introduced by the partials work), if
-`dynamic` is true:
-
-1. Resolve `name` as a path expression against the current context (use the existing path resolver in `src/runner/path-expression.ts`).
-2. The resolved value must be a string; otherwise the spec says the lookup fails silently → emit empty.
-3. Use the resolved string as the partial name and proceed as for static partials.
-
-### Files to touch
-
-- `src/parser/statements.ts` - add `dynamic` to `PartialStatement`.
-- `src/parser/index.ts` - accept optional `*`, version bump.
-- `src/runner/index.ts` - version-window widen, dynamic resolution in `PARTIAL` case.
-- `/docs/language` - document.
-
-## Effort & risk
-
-- **Small (after partials).** ~half a day on top of the partials work.
-- Risk: low. The hard parts (recursion, indentation) are already in partials.
-
-## Won't-fix rationale
-
-Acceptable to skip. Dynamic Names is _optional_ in the Mustache spec
-and the use case (data-driven partial selection) is uncommon for
-Handlebars-style usage. If skipped, add `'~dynamic-names.json'` to
-`SKIPPED_SPECS` in `test/spec.spec.js`.
+Until partials exist, there is nothing to extend. Open an issue if you have a concrete use case (the parent partials feature is the actual blocker).
