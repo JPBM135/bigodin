@@ -1,8 +1,9 @@
 ---
-title: "Set Delimiters `{{=<% %>=}}`"
+title: 'Set Delimiters `{{=<% %>=}}`'
 sidebar_position: 7
 # Auto-generated from mustache-compat/set-delimiters.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
 Mustache lets a template change the open/close delimiters mid-stream:
@@ -41,7 +42,7 @@ isn't `{{`") capture the literal strings `{{` and `}}`. There is no
 parser state that could be mutated mid-parse to change those strings.
 
 Even the dispatch on `=` in `src/parser/index.ts` `$template` is
-*assignments* (`{{= $foo expr}}`) - Bigodin's variable-assignment
+_assignments_ (`{{= $foo expr}}`) - Bigodin's variable-assignment
 syntax - not Mustache set-delimiters. The two share a leading `=` and
 will need to be disambiguated if set-delimiter support is added (e.g.,
 `{{= $foo …}}` is assignment; `{{=<% %>=}}` is set-delimiter).
@@ -55,7 +56,7 @@ built-in mutable parser state. Three options, increasingly drastic:
 ### Option 1 - Post-process by re-tokenizing (**recommended**)
 
 Instead of teaching the parser combinators about delimiter changes, do a
-**preprocessing pass** that rewrites the template string *before* it
+**preprocessing pass** that rewrites the template string _before_ it
 hits `$template`:
 
 1. Scan the source character-by-character, tracking the current open/close delimiters.

@@ -1,4 +1,5 @@
 import type * as Preset from "@docusaurus/preset-classic";
+import npm2yarn from "@docusaurus/remark-plugin-npm2yarn";
 import type { Config } from "@docusaurus/types";
 import { themes as prismThemes } from "prism-react-renderer";
 
@@ -37,26 +38,9 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          editUrl: ({ docPath }) => {
-            const autoGen = docPath.includes('mustache-compat/');
-            if (autoGen) {
-              return `${REPO_URL}/edit/main/mustache-compat/${docPath.replace(/^mustache-compat\//, "").replace(/index\.md$/, "README.md")}`;
-            }
-
-            const map: Record<string, string> = {
-              "intro.md": "README.md",
-              "lib.md": "LIB.md",
-              "language.md": "LANGUAGE.md",
-              "helpers.md": "HELPERS.md",
-              "contributing.md": "CONTRIBUTING.md",
-            };
-            const source = map[docPath];
-            if (source) {
-              return `${REPO_URL}/edit/main/${source}`;
-            }
-
-            return `${REPO_URL}/edit/main/website/docs/${docPath}`;
-          },
+          editUrl: ({ docPath }) =>
+            `${REPO_URL}/edit/main/website/docs/${docPath}`,
+          remarkPlugins: [[npm2yarn, { sync: true }]],
         },
         blog: false,
         theme: {
@@ -89,6 +73,11 @@ const config: Config = {
           sidebarId: "tutorialSidebar",
           position: "left",
           label: "Docs",
+        },
+        {
+          to: "/docs/tutorial/first-template",
+          label: "Tutorial",
+          position: "left",
         },
         {
           to: "/docs/lib",
@@ -129,9 +118,11 @@ const config: Config = {
           title: "Docs",
           items: [
             { label: "Introduction", to: "/docs/" },
+            { label: "Tutorial", to: "/docs/tutorial/first-template" },
+            { label: "How-to guides", to: "/docs/how-to/render-html-safely" },
             { label: "Library API", to: "/docs/lib" },
             { label: "Template language", to: "/docs/language" },
-            { label: "Built-in helpers", to: "/docs/helpers" },
+            { label: "Block helpers", to: "/docs/helpers" },
             {
               label: "Mustache spec compatibility",
               to: "/docs/mustache-compat",

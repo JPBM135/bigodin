@@ -1,13 +1,14 @@
 ---
-title: "Triple Mustache `{{{x}}}` and Ampersand `{{&x}}`"
+title: 'Triple Mustache `{{{x}}}` and Ampersand `{{&x}}`'
 sidebar_position: 9
 # Auto-generated from mustache-compat/triple-mustache-and-ampersand.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
 In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}`
 emit it raw. Bigodin does not HTML-escape by default - it treats every
-`{{x}}` as raw output - so the *behavior* the tests want already
+`{{x}}` as raw output - so the _behavior_ the tests want already
 happens. The gap is purely syntactic: Bigodin's parser does not
 recognize the triple-brace or ampersand forms and rejects them at
 parse time.
@@ -39,7 +40,7 @@ From `interpolation.json`:
 
 From `interpolation.json` (escaping):
 
-- `HTML Escaping` - fails because Bigodin does *not* HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
+- `HTML Escaping` - fails because Bigodin does _not_ HTML-escape `{{x}}`. This is the inverse of the others: spec expects escaping, Bigodin emits raw.
 
 From `sections.json`:
 
@@ -75,7 +76,7 @@ Bigodin already emits raw, so semantically these become aliases of
 - In `src/parser/index.ts` `$template`, add two new branches inside the
   `peek` switch:
   - `&` - consume the `&`, parse `$expression`, push a `MustacheStatement` (no AST shape change).
-  - `{` - consume the `{`, parse `$expression`, then require an extra closing `}` *before* `optionalSpaces` and the standard `closeMustache`.
+  - `{` - consume the `{`, parse `$expression`, then require an extra closing `}` _before_ `optionalSpaces` and the standard `closeMustache`.
 - No new statement type needed; no AST `version` bump needed.
 - Existing `MustacheStatement` already covers the runtime path.
 

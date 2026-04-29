@@ -2660,6 +2660,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@docusaurus/remark-plugin-npm2yarn@npm:^3.10.0":
+  version: 3.10.0
+  resolution: "@docusaurus/remark-plugin-npm2yarn@npm:3.10.0"
+  dependencies:
+    mdast-util-mdx: "npm:^3.0.0"
+    npm-to-yarn: "npm:^3.0.0"
+    tslib: "npm:^2.6.0"
+    unified: "npm:^11.0.3"
+    unist-util-visit: "npm:^5.0.0"
+  checksum: 10c0/015a9bb2c28a911b060d0c9f3cd869547b7c3bb3f3e13b0fb9fc36016339ca48b2c4590d99ebfb66d866194cd1e8ab4092bd37bb329f42e3448669a48bb9ef35
+  languageName: node
+  linkType: hard
+
 "@docusaurus/theme-classic@npm:3.10.0":
   version: 3.10.0
   resolution: "@docusaurus/theme-classic@npm:3.10.0"
@@ -6761,6 +6774,7 @@ __metadata:
     "@docusaurus/faster": "npm:3.10.0"
     "@docusaurus/module-type-aliases": "npm:3.10.0"
     "@docusaurus/preset-classic": "npm:3.10.0"
+    "@docusaurus/remark-plugin-npm2yarn": "npm:^3.10.0"
     "@docusaurus/tsconfig": "npm:3.10.0"
     "@docusaurus/types": "npm:3.10.0"
     "@jpbm135/bigodin": "workspace:^"
@@ -13274,6 +13288,13 @@ __metadata:
   dependencies:
     path-key: "npm:^3.0.0"
   checksum: 10c0/6f9353a95288f8455cf64cbeb707b28826a7f29690244c1e4bb61ec573256e021b6ad6651b394eb1ccfd00d6ec50147253aba2c5fe58a57ceb111fad62c519ac
+  languageName: node
+  linkType: hard
+
+"npm-to-yarn@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "npm-to-yarn@npm:3.0.1"
+  checksum: 10c0/f0a72bfc0ed2ad50c5995511ff6442520d259aee5a58e1b0914572a33d29c07090a684a1d8ce95d2399dfe9bc51e649e8d029b0118ecf941f40212053693caca
   languageName: node
   linkType: hard
 

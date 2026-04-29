@@ -1,11 +1,12 @@
 ---
-title: "Lambdas (optional)"
+title: 'Lambdas (optional)'
 sidebar_position: 4
 # Auto-generated from mustache-compat/lambdas.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
-Mustache lambdas are *optional* per-language extensions where the
+Mustache lambdas are _optional_ per-language extensions where the
 template data contains a function. The spec defines two distinct
 behaviors:
 
@@ -16,7 +17,7 @@ behaviors:
 - **Section lambda** (`{{#lambda}}…{{/lambda}}`): the function is
   called with the **raw (unrendered) section body** as a string
   argument; its return value is rendered as a template. Calls are
-  *not* cached.
+  _not_ cached.
 
 Bigodin does have a function-call mechanism (helpers, registered via
 `addHelper`), but its semantics differ from Mustache lambdas in two
@@ -51,10 +52,10 @@ The spec runner in `test/spec.spec.js:44-47` evaluates each lambda's
 tries to compile and run the template. Two failure modes:
 
 - For interpolation: `{{lambda}}` resolves the path `lambda` to the
-  function value. Bigodin then *does not* call the function - it
+  function value. Bigodin then _does not_ call the function - it
   stringifies it (likely to `"function() { return \"world\" }"` or
   similar). Even if it did call it, the spec wants the return value
-  *re-parsed*, which Bigodin's runtime does not do.
+  _re-parsed_, which Bigodin's runtime does not do.
 - For section: `{{#lambda}}…{{/lambda}}` enters `runBlock`
   (`src/runner/block.ts`) with `value` being a function, which is
   truthy and not an array/object, so it renders the body once with the
@@ -83,7 +84,7 @@ returned to the consumer), if the resolved value is a function:
   function's source if performance matters; the spec's "Multiple
   Calls" test specifically asserts caching.
 - For block (`runBlock` in `src/runner/block.ts`): if `value` is a
-  function, capture the *raw template substring* covered by the block
+  function, capture the _raw template substring_ covered by the block
   body (using `block.statements[0].loc.start` and
   `block.statements[block.statements.length - 1].loc.end`, plus the
   source string). Call the function with that raw string. Re-parse and
@@ -120,7 +121,7 @@ No AST shape change; no `VERSION` bump.
 
 ### Security
 
-- Lambdas execute caller-supplied JavaScript. This is **caller-controlled** code, not template-author code, so it doesn't violate Bigodin's "safe to run user templates" claim - but worth a docs note that lambda support means the template's *data* can run arbitrary JS, narrowing the trust boundary.
+- Lambdas execute caller-supplied JavaScript. This is **caller-controlled** code, not template-author code, so it doesn't violate Bigodin's "safe to run user templates" claim - but worth a docs note that lambda support means the template's _data_ can run arbitrary JS, narrowing the trust boundary.
 - The re-parse step parses a string the lambda chose. If the lambda is itself derived from untrusted input, that string could be a hostile template. Re-running it through Bigodin's safe interpreter is fine in principle, but `maxExecutionMillis` must wrap the re-run.
 
 ## Effort & risk

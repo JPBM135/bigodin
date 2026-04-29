@@ -1,0 +1,9 @@
+{
+  "label": "Template language",
+  "position": 2,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "reference/language/index"
+  }
+}

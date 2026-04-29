@@ -1,8 +1,8 @@
 ---
-title: "Contributing"
-sidebar_position: 5
-# Auto-generated from CONTRIBUTING.md; edit the source file in the repo root.
+title: 'Contributing'
+sidebar_position: 7
 ---
+
 ## Suggesting helpers/features
 
 If you're using Bigodin and you found something that wasn't easy to template, we'd love to hear it from you! Open a [feature request](https://github.com/JPBM135/bigodin/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=) or a [helper idea](https://github.com/JPBM135/bigodin/issues/new?assignees=&labels=enhancement&template=helper-idea.md&title=).

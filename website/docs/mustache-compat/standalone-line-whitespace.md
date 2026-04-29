@@ -1,8 +1,9 @@
 ---
-title: "Standalone-Line Whitespace Stripping"
+title: 'Standalone-Line Whitespace Stripping'
 sidebar_position: 8
 # Auto-generated from mustache-compat/standalone-line-whitespace.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
 Mustache defines a "standalone line" as any line whose only non-whitespace
@@ -10,7 +11,7 @@ content is a single tag from a specific set: comments (`{{! …}}`),
 section openers/closers (`{{#x}}`, `{{/x}}`, `{{^x}}`), partials
 (`{{>p}}`), set-delimiters (`{{=<% %>=}}`), and
 inheritance/dynamic-name variants. When a line is standalone, the
-*entire line* - leading whitespace, the tag, and the trailing newline -
+_entire line_ - leading whitespace, the tag, and the trailing newline -
 is consumed from the output. Variable interpolation tags
 (`{{x}}`, `{{{x}}}`, `{{&x}}`) are deliberately excluded.
 
@@ -73,7 +74,7 @@ whitespace."
 
 ## Proposed implementation
 
-This is a *post-parse* transform on the statement list. Best done in
+This is a _post-parse_ transform on the statement list. Best done in
 `src/parser/index.ts` after `$template` returns, before the result is
 returned to the caller.
 
@@ -107,7 +108,7 @@ text contents differ.
 
 ### Block opener/closer subtlety
 
-A `BlockStatement` represents both `{{#x}}` *and* `{{/x}}`. The
+A `BlockStatement` represents both `{{#x}}` _and_ `{{/x}}`. The
 "standalone" check needs to be applied independently to the line
 containing the opener and the line containing the closer. The current
 AST records `BlockStatement.loc` (start = `{{#`, end = `}}` of the

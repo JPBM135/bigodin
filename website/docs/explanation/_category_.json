@@ -1,0 +1,10 @@
+{
+  "label": "Explanation",
+  "position": 5,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Explanation",
+    "description": "Background on Bigodin's design choices: the security model, the AST contract, and what makes the library safe for user-provided templates."
+  }
+}

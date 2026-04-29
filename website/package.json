@@ -20,6 +20,7 @@
     "@docusaurus/core": "3.10.0",
     "@docusaurus/faster": "3.10.0",
     "@docusaurus/preset-classic": "3.10.0",
+    "@docusaurus/remark-plugin-npm2yarn": "^3.10.0",
     "@jpbm135/bigodin": "workspace:^",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",

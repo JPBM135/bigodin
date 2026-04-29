@@ -1,17 +1,35 @@
 ---
-title: "Overview"
-slug: "/mustache-compat"
+title: 'Overview'
+slug: '/mustache-compat'
 sidebar_position: 0
-# Auto-generated from mustache-compat/README.md; edit the source file in the repo root.
 ---
-This directory documents Bigodin's compatibility against the official
-[mustache/spec](https://github.com/mustache/spec) test suite, broken down
-by feature category. Each file is self-contained: it lists the failing
-specs, explains why Bigodin fails them today, and proposes an
-implementation (or a "won't fix" rationale).
 
-The user-facing summary lives in [`/docs/`](/docs/) under
-**Mustache spec compatibility**.
+Bigodin is a Handlebars-flavored superset and is **not** a drop-in Mustache implementation. Against the official [mustache/spec](https://github.com/mustache/spec) suite, **103 / 110** attempted tests currently pass (94%); the remaining 84 spec tests live in 5 deliberately-skipped feature files (partials, dynamic-names, set-delimiters, inheritance, lambdas) and 4 individual tests are skipped because they require auto-walking the context stack. Bigodin uses Handlebars-style strict scoping (use `$parent` / `$root` to walk up explicitly).
+
+This directory documents Bigodin's per-feature compatibility. Each sub-doc lists the failing specs, explains why Bigodin fails them today, and proposes an implementation (or a "won't fix" rationale).
+
+## At a glance
+
+| Feature                                  | Status        | Notes                                                                                                                                                 |
+| ---------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable interpolation `{{x}}`           | Supported     | Output is **never HTML-escaped** by default; register an escape helper if needed (see [Render HTML safely](/docs/how-to/render-html-safely))          |
+| Sections `{{#x}}...{{/x}}`               | Supported     | Empty arrays falsy on negated branch; truthy scalars do **not** push as context (Handlebars-style); use `$parent` / `$root` to walk the context stack |
+| Inverted sections `{{^x}}...{{/x}}`      | Supported     | Empty arrays correctly treated as falsy                                                                                                               |
+| Comments `{{! ... }}`                    | Supported     | Standalone-line whitespace is stripped                                                                                                                |
+| Triple mustache `{{{x}}}`                | Supported     | Output is identical to `{{x}}` (Bigodin never HTML-escapes by default)                                                                                |
+| Ampersand `{{&x}}`                       | Supported     | Output is identical to `{{x}}`                                                                                                                        |
+| Standalone-line whitespace stripping     | Supported     | Applied to comments and section open / close tags; see [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)              |
+| Implicit iterator `{{.}}`                | Supported     | Resolves to current context (alias of `{{$this}}`); see [implicit-iterator.md](/docs/mustache-compat/implicit-iterator)                               |
+| Block heads with literal-named keys      | Supported     | `{{#null}}` / `{{#true}}` / `{{#false}}` / `{{#undefined}}` look up the matching key in context                                                       |
+| HTML escaping for `{{x}}`                | Not supported | Bigodin emits raw output; register an escape helper if needed                                                                                         |
+| Auto context-stack walk on missing keys  | Not supported | Bigodin uses strict scoping; use `$parent` / `$root` to walk explicitly                                                                               |
+| Set Delimiters `{{=<% %>=}}`             | Not planned   | See [set-delimiters.md](/docs/mustache-compat/set-delimiters)                                                                                         |
+| Partials `{{>name}}`                     | Not planned   | See [partials.md](/docs/mustache-compat/partials)                                                                                                     |
+| Dynamic names `{{*name}}` (optional)     | Not planned   | Depends on partials; see [dynamic-names.md](/docs/mustache-compat/dynamic-names)                                                                      |
+| Inheritance `{{<p}}{{$b}}...` (optional) | Not planned   | `$` collides with Bigodin's variable syntax; see [inheritance.md](/docs/mustache-compat/inheritance)                                                  |
+| Lambdas (optional)                       | Not supported | Bigodin's helper API (`addHelper`) is the recommended alternative; see [lambdas.md](/docs/mustache-compat/lambdas)                                    |
+
+Run `yarn test:spec` to execute the full Mustache spec suite locally (it clones [mustache/spec](https://github.com/mustache/spec) into `test/mustache/` on first run).
 
 ## Status snapshot
 
@@ -38,20 +56,20 @@ Run on `feat/mustache-spec-tests` against the current `dist/` build:
 
 ## Categories
 
-| # | Category | Failures | Spec file(s) | Doc |
-|---|----------|---------:|--------------|-----|
-| 1 | Triple mustache `{{{x}}}` and ampersand `{{&x}}` | 22 | `interpolation.json`, `sections.json`, `~inheritance.json` | [triple-mustache-and-ampersand.md](/docs/mustache-compat/triple-mustache-and-ampersand) |
-| 2 | Standalone-line whitespace stripping | 22 | `comments.json`, `sections.json`, `inverted.json`, `delimiters.json`, `partials.json` | [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace) |
-| 3 | Set Delimiters `{{=<% %>=}}` | 14 | `delimiters.json` | [set-delimiters.md](/docs/mustache-compat/set-delimiters) |
-| 4 | Partials `{{>name}}` | 12 | `partials.json` | [partials.md](/docs/mustache-compat/partials) |
-| 5 | Implicit iterator `{{.}}` | 13 | `interpolation.json`, `sections.json` | [implicit-iterator.md](/docs/mustache-compat/implicit-iterator) |
-| 6 | Dynamic names `{{*name}}` (optional) | 21 | `~dynamic-names.json` | [dynamic-names.md](/docs/mustache-compat/dynamic-names) |
-| 7 | Inheritance `{{<parent}}{{$block}}{{/parent}}` (optional) | 27 | `~inheritance.json` | [inheritance.md](/docs/mustache-compat/inheritance) |
-| 8 | Lambdas (optional) | 10 | `~lambdas.json` | [lambdas.md](/docs/mustache-compat/lambdas) |
-| 9 | Section context & falsy edge cases | ~10 | `sections.json`, `inverted.json` | [section-falsy-and-context.md](/docs/mustache-compat/section-falsy-and-context) |
+| #   | Category                                                  | Failures | Spec file(s)                                                                          | Doc                                                                                     |
+| --- | --------------------------------------------------------- | -------: | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | Triple mustache `{{{x}}}` and ampersand `{{&x}}`          |       22 | `interpolation.json`, `sections.json`, `~inheritance.json`                            | [triple-mustache-and-ampersand.md](/docs/mustache-compat/triple-mustache-and-ampersand) |
+| 2   | Standalone-line whitespace stripping                      |       22 | `comments.json`, `sections.json`, `inverted.json`, `delimiters.json`, `partials.json` | [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)       |
+| 3   | Set Delimiters `{{=<% %>=}}`                              |       14 | `delimiters.json`                                                                     | [set-delimiters.md](/docs/mustache-compat/set-delimiters)                               |
+| 4   | Partials `{{>name}}`                                      |       12 | `partials.json`                                                                       | [partials.md](/docs/mustache-compat/partials)                                           |
+| 5   | Implicit iterator `{{.}}`                                 |       13 | `interpolation.json`, `sections.json`                                                 | [implicit-iterator.md](/docs/mustache-compat/implicit-iterator)                         |
+| 6   | Dynamic names `{{*name}}` (optional)                      |       21 | `~dynamic-names.json`                                                                 | [dynamic-names.md](/docs/mustache-compat/dynamic-names)                                 |
+| 7   | Inheritance `{{<parent}}{{$block}}{{/parent}}` (optional) |       27 | `~inheritance.json`                                                                   | [inheritance.md](/docs/mustache-compat/inheritance)                                     |
+| 8   | Lambdas (optional)                                        |       10 | `~lambdas.json`                                                                       | [lambdas.md](/docs/mustache-compat/lambdas)                                             |
+| 9   | Section context & falsy edge cases                        |      ~10 | `sections.json`, `inverted.json`                                                      | [section-falsy-and-context.md](/docs/mustache-compat/section-falsy-and-context)         |
 
-Categories 1–2 and 9 are *behavioral* gaps in features Bigodin already
-parses. Categories 3–8 are *new features* not currently in Bigodin's
+Categories 1–2 and 9 are _behavioral_ gaps in features Bigodin already
+parses. Categories 3–8 are _new features_ not currently in Bigodin's
 language. The "optional" tag follows the Mustache convention of
 prefixing optional spec files with `~`.
 
@@ -66,7 +84,7 @@ other categories depend on, (c) is the feature optional in the spec,
 
 1. **[section-falsy-and-context.md](/docs/mustache-compat/section-falsy-and-context)** - conformance bugs in features Bigodin already advertises. Empty array under `{{^x}}` not rendering the body is plainly wrong. ~5-line fix in `src/runner/block.ts`. Highest value-per-line of code in the list.
 2. **[implicit-iterator.md](/docs/mustache-compat/implicit-iterator)** - `{{.}}` is heavily used in real templates and is a small parser change plus a 3-line runtime change. Pairs naturally with the truthy-scalar push from category 1.
-3. **[standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)** - affects every standalone tag (comments, sections, inverted sections, and later partials/inheritance). Without it, multi-line templates render with extra blank lines that look broken. Also a *foundation*: partials and inheritance need it before they're useful. Medium effort but clearly spec-faithful.
+3. **[standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)** - affects every standalone tag (comments, sections, inverted sections, and later partials/inheritance). Without it, multi-line templates render with extra blank lines that look broken. Also a _foundation_: partials and inheritance need it before they're useful. Medium effort but clearly spec-faithful.
 
 ### Tier 2 - Should have (commonly requested, foundational)
 

@@ -1,8 +1,9 @@
 ---
-title: "Partials `{{>name}}`"
+title: 'Partials `{{>name}}`'
 sidebar_position: 5
 # Auto-generated from mustache-compat/partials.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
 A Mustache partial expands an inline reference to another named
@@ -10,7 +11,7 @@ template into the current template at parse/render time. The partial
 can be recursive, can carry the current context, and - when standalone
 
 - must re-apply its caller's indentation to every line of its rendered
-body.
+  body.
 
 Bigodin has no concept of partials.
 
@@ -49,10 +50,10 @@ Add a new statement type to `src/parser/statements.ts`:
 
 ```ts
 export type PartialStatement = {
-    type: 'PARTIAL';
-    loc: Location;
-    name: string;
-    indent: string; // captured leading whitespace if standalone, '' otherwise
+  type: 'PARTIAL';
+  loc: Location;
+  name: string;
+  indent: string; // captured leading whitespace if standalone, '' otherwise
 };
 ```
 
@@ -113,7 +114,7 @@ In `runStatement`'s new `PARTIAL` case:
 Bigodin's headline claim is "safe to run on user input." Partials need
 the same scrutiny:
 
-- The partial *body* is parsed by the same trusted parser, so prototype-pollution / sandbox escapes are no worse than today's parser.
+- The partial _body_ is parsed by the same trusted parser, so prototype-pollution / sandbox escapes are no worse than today's parser.
 - A user-controlled partial **name** that hits a caller-supplied map could leak templates the caller didn't intend to expose. Document explicitly that the partials map should be a closed allowlist, not a function that resolves arbitrary paths.
 - Re-run `test/security.spec.js` after the change.
 

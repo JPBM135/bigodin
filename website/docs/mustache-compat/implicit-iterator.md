@@ -1,11 +1,12 @@
 ---
-title: "Implicit Iterator `{{.}}`"
+title: 'Implicit Iterator `{{.}}`'
 sidebar_position: 2
 # Auto-generated from mustache-compat/implicit-iterator.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
-In Mustache, `{{.}}` resolves to the *current context* - useful when
+In Mustache, `{{.}}` resolves to the _current context_ - useful when
 iterating a list of scalars: `{{#items}}{{.}}{{/items}}` over
 `["a", "b", "c"]` produces `"abc"`. The lone `.` is also called the
 "implicit iterator." Bigodin supports `$this` (its named equivalent)
@@ -71,8 +72,12 @@ over a single scalar. Bigodin's `runBlock`
 (`src/runner/block.ts`) currently has this branch order:
 
 ```ts
-if (Array.isArray(value)) { /* push each item, render */ }
-if (typeof value === 'object') { /* push, render */ }
+if (Array.isArray(value)) {
+  /* push each item, render */
+}
+if (typeof value === 'object') {
+  /* push, render */
+}
 return await runStatements(execution, block.statements); // truthy scalar - does NOT push
 ```
 

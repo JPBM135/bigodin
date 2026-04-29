@@ -1,11 +1,12 @@
 ---
-title: "Dynamic Names `{{*name}}` (optional)"
+title: 'Dynamic Names `{{*name}}` (optional)'
 sidebar_position: 1
 # Auto-generated from mustache-compat/dynamic-names.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
-Dynamic Names is an *optional* Mustache feature (filename starts with
+Dynamic Names is an _optional_ Mustache feature (filename starts with
 `~`) that lets a partial's name come from a runtime variable rather
 than a literal: `{{>*foo}}` looks up `foo` in the current context and
 uses its string value as the partial name. Combined with dotted names
@@ -85,7 +86,7 @@ In the new `PARTIAL` case (introduced by the partials work), if
 
 ## Won't-fix rationale
 
-Acceptable to skip. Dynamic Names is *optional* in the Mustache spec
+Acceptable to skip. Dynamic Names is _optional_ in the Mustache spec
 and the use case (data-driven partial selection) is uncommon for
 Handlebars-style usage. If skipped, add `'~dynamic-names.json'` to
 `SKIPPED_SPECS` in `test/spec.spec.js`.

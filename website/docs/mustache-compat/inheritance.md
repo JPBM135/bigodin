@@ -1,11 +1,12 @@
 ---
-title: "Inheritance `{{<parent}}{{$block}}…{{/parent}}` (optional)"
+title: 'Inheritance `{{<parent}}{{$block}}…{{/parent}}` (optional)'
 sidebar_position: 3
 # Auto-generated from mustache-compat/inheritance.md; edit the source file in the repo root.
 ---
+
 ## Summary
 
-An *optional* Mustache feature (the `~inheritance.json` filename is
+An _optional_ Mustache feature (the `~inheritance.json` filename is
 prefixed with `~`) that adds template inheritance:
 
 - `{{<parent}}…{{/parent}}` - invoke `parent` as the layout, with overrides inside.
@@ -50,7 +51,7 @@ From `~inheritance.json`:
 Two distinct parse failures:
 
 - `{{<parent}}` - the `<` after `{{` is not a recognized sigil; falls into `$expression` which fails with `Expected literal, helper or context path`.
-- `{{$block}}` - Bigodin already uses `$` for *variables* (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
+- `{{$block}}` - Bigodin already uses `$` for _variables_ (e.g. `{{$this}}`, `{{$parent}}`). The parser interprets `{{$block}}` as a variable reference, then `{{/block}}` is encountered without an open block and fails with `Unexpected {{/block}}, this block wasn't opened`.
 
 The `$` collision is the awkward part - Bigodin and Mustache use the same character for different things.
 
@@ -65,18 +66,18 @@ Two new statement types in `src/parser/statements.ts`:
 
 ```ts
 export type ParentStatement = {
-    type: 'PARENT';
-    loc: Location;
-    name: string;
-    indent: string;
-    overrides: BlockOverrideStatement[];
+  type: 'PARENT';
+  loc: Location;
+  name: string;
+  indent: string;
+  overrides: BlockOverrideStatement[];
 };
 
 export type BlockOverrideStatement = {
-    type: 'BLOCK_OVERRIDE';
-    loc: Location;
-    name: string;
-    statements: Statement[];
+  type: 'BLOCK_OVERRIDE';
+  loc: Location;
+  name: string;
+  statements: Statement[];
 };
 ```
 
@@ -137,7 +138,7 @@ reuse.
 
 ## Won't-fix rationale
 
-Reasonable to skip. Inheritance is *optional* in Mustache. The largest
+Reasonable to skip. Inheritance is _optional_ in Mustache. The largest
 known consumer of Bigodin (Mocko, per the README) is unlikely to need
 template inheritance for mock generation. If skipped, add
 `'~inheritance.json'` to `SKIPPED_SPECS` in `test/spec.spec.js` and

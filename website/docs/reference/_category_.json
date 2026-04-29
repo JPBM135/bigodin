@@ -1,0 +1,10 @@
+{
+  "label": "Reference",
+  "position": 4,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Reference",
+    "description": "Technical descriptions of the Bigodin API and template language. For walkthroughs see the Tutorial; for problem-solving see How-to guides."
+  }
+}
