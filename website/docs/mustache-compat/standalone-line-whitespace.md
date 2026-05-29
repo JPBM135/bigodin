@@ -16,9 +16,11 @@ Bigodin applies this rule to:
 
 Set-delimiter, partial, and inheritance tags are not implemented in Bigodin, so the rule does not apply to them.
 
+For explicit, greedier trimming that is not limited to standalone lines, use [whitespace control](/docs/language/whitespace-control) (`{{~ ~}}`). When a tag side carries `~`, it is handled by whitespace control and skips this standalone rule.
+
 ```handlebars
 Hello
-  {{! a comment }}
+{{! a comment }}
 World
 ```
 

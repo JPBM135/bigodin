@@ -28,10 +28,10 @@ import { parse } from '@jpbm135/bigodin';
 const ast = parse('Hello, {{name}}!');
 // {
 //   type: 'TEMPLATE',
-//   version: 3,
+//   version: 5,
 //   statements: [
 //     { type: 'TEXT', value: 'Hello, ' },
-//     { type: 'MUSTACHE', expression: { type: 'PATH', segments: ['name'] } },
+//     { type: 'MUSTACHE', expression: { type: 'EXPRESSION', path: 'name', params: [] } },
 //     { type: 'TEXT', value: '!' },
 //   ],
 // }
@@ -52,7 +52,7 @@ Every parsed AST carries a `version: number` field at the root. The runner enfor
 ```typescript
 // src/runner/index.ts
 const MIN_VERSION = 1;
-const MAX_VERSION = 3;
+const MAX_VERSION = 5;
 ```
 
 When `run` receives an AST whose version is outside that window, it throws with a message that asks you to parse the template source again. It does **not** attempt to interpret the older or newer shape.

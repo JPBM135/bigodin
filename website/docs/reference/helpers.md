@@ -65,13 +65,17 @@ Inverse of `if`. The body runs when the argument is falsy.
 
 Pushes the argument as the current context for the duration of the block. Inside, `{{$this}}` and bare paths resolve against the new context. The block runs exactly once. Falsy values render the `{{else}}` branch (if any), otherwise nothing.
 
+Accepts [block params](/docs/language/block-params): `{{#with user as |u|}}` binds the pushed context to a local name; with multiple arguments, each name binds to the corresponding frame (`{{#with a b as |x y|}}`).
+
 ### Multiple arguments
 
 `with` accepts more than one argument and pushes each truthy argument onto the context stack as its own frame. The body still runs exactly once. Inside the body, bare paths resolve against the **innermost** frame (the rightmost argument); reach the outer frames with `$parent`, `$parent.$parent`, and so on, or with `$root` for the original context.
 
 ```handlebars
 {{#with user company}}
-  {{name}} works at {{$parent.name}}
+  {{name}}
+  works at
+  {{$parent.name}}
 {{/with}}
 ```
 
@@ -95,6 +99,8 @@ Negated form (`{{^with ...}}`) renders its body when every argument is falsy.
 ```
 
 Iterates over an array, pushing each element as the current context. A non-array argument is treated as a single-element list (the block runs once with that value as context). Empty arrays render nothing.
+
+Accepts [block params](/docs/language/block-params): `{{#each items as |item index|}}` binds the current element and its index to local names.
 
 ## `return`
 

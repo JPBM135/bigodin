@@ -30,10 +30,12 @@ This section is a reference for the template-side syntax. For the host-side API 
 - [Path expressions](/docs/language/path-expressions): reading values from the context with `{{name}}` and dot notation
 - [Comments](/docs/language/comments): `{{! ... }}` and the standalone-line rule
 - [Raw output](/docs/language/raw-output): `{{x}}`, `{{{x}}}`, `{{&x}}` and why they all emit raw
+- [Whitespace control](/docs/language/whitespace-control): `{{~ ~}}` to strip surrounding whitespace
 - [Calling helpers](/docs/language/helpers): positional args, literals, and nested expressions
 - [Conditional blocks](/docs/language/conditional-blocks): truthy / falsy sections, `{{else}}`, and `{{else if}}`
 - [Loop blocks](/docs/language/loop-blocks): iterating over arrays
 - [Iteration variables](/docs/language/iteration-variables): `@index`, `@key`, `@first`, `@last`
+- [Block params](/docs/language/block-params): naming loop variables with `as |item index|`
 - [Negated blocks](/docs/language/negated-blocks): `{{^name}}...{{/name}}`
 - [Context blocks](/docs/language/context-blocks): pushing context, walking with `$parent` / `$root` / `$this`
 - [Variables](/docs/language/variables): `{{= $name value}}` and reuse across statements

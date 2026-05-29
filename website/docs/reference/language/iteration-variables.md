@@ -50,7 +50,20 @@ When loops are nested, the inner iteration **shadows** the outer one. The inner 
 {{/each}}
 ```
 
-There is no `@../index` syntax to reach the outer loop's index. If you need it, capture it in a [variable](/docs/language/variables) before entering the inner loop:
+There is no `@../index` syntax to reach the outer loop's index. The cleanest way to keep it is [block params](/docs/language/block-params), which name the outer index so the inner body can read it directly:
+
+```hbs
+{{#each groups as |group g|}}
+  {{#each group.items as |item i|}}
+    Outer
+    {{g}}, inner
+    {{i}}:
+    {{item}}
+  {{/each}}
+{{/each}}
+```
+
+Alternatively, capture it in a [variable](/docs/language/variables) before entering the inner loop:
 
 ```hbs
 {{#each groups}}

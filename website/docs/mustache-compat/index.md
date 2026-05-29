@@ -60,23 +60,23 @@ Run on `main` against the current `dist/` build:
 
 ## Categories
 
-| #   | Category                                                  | Status                  | Doc                                                                                     |
-| --- | --------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
-| 1   | Triple mustache `{{{x}}}` and ampersand `{{&x}}`          | Supported               | [triple-mustache-and-ampersand.md](/docs/mustache-compat/triple-mustache-and-ampersand) |
-| 2   | Standalone-line whitespace stripping                      | Supported               | [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)       |
-| 3   | Implicit iterator `{{.}}`                                 | Supported               | [implicit-iterator.md](/docs/mustache-compat/implicit-iterator)                         |
-| 4   | Section context & falsy edge cases                        | Mostly supported        | [section-falsy-and-context.md](/docs/mustache-compat/section-falsy-and-context)         |
-| 5   | Set Delimiters `{{=<% %>=}}`                              | Not planned             | [set-delimiters.md](/docs/mustache-compat/set-delimiters)                               |
-| 6   | Partials `{{>name}}`                                      | Not planned             | [partials.md](/docs/mustache-compat/partials)                                           |
-| 7   | Dynamic names `{{*name}}` (optional)                      | Not planned             | [dynamic-names.md](/docs/mustache-compat/dynamic-names)                                 |
-| 8   | Inheritance `{{<parent}}{{$block}}{{/parent}}` (optional) | Not planned             | [inheritance.md](/docs/mustache-compat/inheritance)                                     |
-| 9   | Lambdas (optional)                                        | Not supported           | [lambdas.md](/docs/mustache-compat/lambdas)                                             |
+| #   | Category                                                  | Status           | Doc                                                                                     |
+| --- | --------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| 1   | Triple mustache `{{{x}}}` and ampersand `{{&x}}`          | Supported        | [triple-mustache-and-ampersand.md](/docs/mustache-compat/triple-mustache-and-ampersand) |
+| 2   | Standalone-line whitespace stripping                      | Supported        | [standalone-line-whitespace.md](/docs/mustache-compat/standalone-line-whitespace)       |
+| 3   | Implicit iterator `{{.}}`                                 | Supported        | [implicit-iterator.md](/docs/mustache-compat/implicit-iterator)                         |
+| 4   | Section context & falsy edge cases                        | Mostly supported | [section-falsy-and-context.md](/docs/mustache-compat/section-falsy-and-context)         |
+| 5   | Set Delimiters `{{=<% %>=}}`                              | Not planned      | [set-delimiters.md](/docs/mustache-compat/set-delimiters)                               |
+| 6   | Partials `{{>name}}`                                      | Not planned      | [partials.md](/docs/mustache-compat/partials)                                           |
+| 7   | Dynamic names `{{*name}}` (optional)                      | Not planned      | [dynamic-names.md](/docs/mustache-compat/dynamic-names)                                 |
+| 8   | Inheritance `{{<parent}}{{$block}}{{/parent}}` (optional) | Not planned      | [inheritance.md](/docs/mustache-compat/inheritance)                                     |
+| 9   | Lambdas (optional)                                        | Not supported    | [lambdas.md](/docs/mustache-compat/lambdas)                                             |
 
 Categories 1, 2, 3 ship the Mustache feature behind Bigodin's existing parser; category 4 is mostly aligned with the spec, with the documented exceptions of truthy-scalar context-push and auto context-stack walk. Categories 5–9 are new features Bigodin does not (and in most cases will not) provide.
 
 ## Versioning notes
 
-Bigodin's parser emits a `version` field on the AST root (`src/parser/index.ts`, currently `VERSION = 4`). The runner enforces a `MIN_VERSION = 1`, `MAX_VERSION = 4` window (`src/runner/index.ts`). Any change that alters the AST shape (adding a new statement type, adding fields to existing statements, etc.) must bump `VERSION` and widen `MAX_VERSION`. Old persisted ASTs outside the window fail loudly with a "parse it again" error; this is intentional and must be preserved.
+Bigodin's parser emits a `version` field on the AST root (`src/parser/index.ts`, currently `VERSION = 5`). The runner enforces a `MIN_VERSION = 1`, `MAX_VERSION = 5` window (`src/runner/index.ts`). Any change that alters the AST shape (adding a new statement type, adding fields to existing statements, etc.) must bump `VERSION` and widen `MAX_VERSION`. Old persisted ASTs outside the window fail loudly with a "parse it again" error; this is intentional and must be preserved.
 
 ## Test runner
 
@@ -84,19 +84,19 @@ Bigodin's parser emits a `version` field on the AST root (`src/parser/index.ts`,
 
 ```ts
 const SKIPPED_SPECS = [
-    'partials.json',
-    '~dynamic-names.json',
-    'delimiters.json',
-    '~inheritance.json',
-    '~lambdas.json',
+  'partials.json',
+  '~dynamic-names.json',
+  'delimiters.json',
+  '~inheritance.json',
+  '~lambdas.json',
 ];
 
 const SKIPPED_FEATURES = [
-    'Parent contexts',
-    'List Contexts',
-    'Deeply Nested Contexts',
-    'Variable test',
-    'HTML Escaping',
+  'Parent contexts',
+  'List Contexts',
+  'Deeply Nested Contexts',
+  'Variable test',
+  'HTML Escaping',
 ];
 ```
 

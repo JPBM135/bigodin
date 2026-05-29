@@ -10,9 +10,14 @@ sidebar_position: 9
 In Mustache, `{{x}}` HTML-escapes the value, while `{{{x}}}` and `{{&x}}` emit it raw. Bigodin does not HTML-escape by default; it treats every `{{x}}` as raw output. The triple-brace and ampersand forms are accepted by the parser purely for spec compatibility and behave identically to the standard `{{x}}` form.
 
 ```handlebars
-{{x}}     => raw value
-{{{x}}}   => raw value (same as {{x}})
-{{&x}}    => raw value (same as {{x}})
+{{x}}
+=> raw value
+{{{x}}}
+=> raw value (same as
+{{x}})
+{{{x}}}
+=> raw value (same as
+{{x}})
 ```
 
 All three forms accept the same right-hand side: paths, dotted access, helpers, literals, and variables.

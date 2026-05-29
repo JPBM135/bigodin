@@ -1,0 +1,93 @@
+---
+title: 'Whitespace control'
+slug: '/language/whitespace-control'
+sidebar_position: 11
+---
+
+A `~` placed immediately inside a tag's delimiter removes **all** contiguous whitespace on that side of the tag, including newlines. This is the Handlebars whitespace-control syntax and works on every tag form.
+
+```hbs
+{{~expr}}
+strips whitespace before the tag
+{{expr~}}
+strips whitespace after the tag
+{{~expr~}}
+strips whitespace on both sides
+```
+
+<details>
+<summary>Context and output</summary>
+
+### Template
+
+```hbs
+a {{~name~}} b
+```
+
+### Context
+
+```json
+{ "name": "X" }
+```
+
+### Generated output
+
+```
+aXb
+```
+
+</details>
+
+The trim is greedy: it consumes the entire run of spaces, tabs, and newlines adjacent to the tag, not just a single character or a single line.
+
+```hbs
+a
+
+{{~name~}}
+
+b
+```
+
+…with `{ "name": "X" }` renders `aXb`.
+
+## Where it works
+
+`~` is accepted on the inside of both delimiters of every tag:
+
+| Tag                 | Example         |
+| ------------------- | --------------- |
+| Interpolation       | `{{~x~}}`       |
+| Raw / triple        | `{{~{x}~}}`     |
+| Raw / ampersand     | `{{~&x~}}`      |
+| Comment             | `{{~! note ~}}` |
+| Variable assignment | `{{~= $v 1 ~}}` |
+| Block open          | `{{~#if x~}}`   |
+| Block close         | `{{~/if~}}`     |
+| `else` divider      | `{{~else~}}`    |
+
+For blocks, each tag carries its own flags, so you can trim only the parts you need:
+
+```hbs
+<ul>
+  {{~#each items~}}
+    <li>{{this}}</li>
+  {{~/each~}}
+</ul>
+```
+
+renders the list with no stray whitespace between the `<ul>` and the first `<li>`, between items, or before `</ul>`.
+
+## Relationship to standalone-line stripping
+
+Bigodin already removes [standalone lines](/docs/mustache-compat/standalone-line-whitespace) — a comment or block tag that is alone on its line has that line consumed automatically. `~` is the explicit, greedier form:
+
+- **Standalone stripping** is implicit and line-scoped: it removes the tag's own line when the tag is the only thing on it.
+- **`~`** is explicit and unbounded: it removes every adjacent whitespace character, across as many lines as there are.
+
+When a tag side carries `~`, that side is handled by whitespace control and is not also subject to standalone-line processing. Tags without `~` keep the standalone behavior.
+
+## Notes
+
+- `~` only affects whitespace. It never removes non-whitespace text.
+- If there is no adjacent text (the tag is at the very start or end of the template, or sits directly against another tag), there is simply nothing to trim on that side.
+- The marker must sit directly against the delimiter. `{{ ~name }}` is **not** whitespace control — the `~` there is part of the (invalid) expression. Use `{{~name}}`.

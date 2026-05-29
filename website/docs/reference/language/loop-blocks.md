@@ -123,6 +123,21 @@ If the value is **not** an array but is truthy and is an object, the block runs 
 
 Inside a loop, four `@`-prefixed variables expose iteration state: `@index`, `@key`, `@first`, `@last`. See [Iteration variables](/docs/language/iteration-variables).
 
+## Block params
+
+A loop head can name the current item and index with `as |item index|`, which is handy for reaching them by name from nested loops:
+
+```hbs
+{{#each rows as |row r|}}
+  {{#each row as |cell c|}}
+    {{r}},{{c}}:
+    {{cell}}
+  {{/each}}
+{{/each}}
+```
+
+See [Block params](/docs/language/block-params) for the full rules.
+
 ## Walking the context
 
 A loop pushes a new context. To reach the surrounding context (the one outside the loop), use `$parent` or `$root`:

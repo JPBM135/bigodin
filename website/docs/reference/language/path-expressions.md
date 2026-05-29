@@ -65,6 +65,8 @@ Hey George Smith!
 
 A missing key resolves to `undefined` and renders as the empty string. Bigodin does **not** walk the context stack the way Mustache does; if a name is not found in the current context, the lookup stops there. Use the [context-walking variables](/docs/language/context-blocks) (`$parent`, `$root`) to reach outer scopes explicitly.
 
+A plain leading name (or the first segment of a dotted path) is resolved against the active [block params](/docs/language/block-params) before the context, so an `as |name|` binding shadows a context key of the same name. The prefixed forms below (`$this`, `$parent`, `$root`, `@…`, `$<var>`) are never shadowed by a block param.
+
 ```hbs
 [{{missing}}]
 ```
@@ -75,13 +77,14 @@ A missing key resolves to `undefined` and renders as the empty string. Bigodin d
 
 These bare-word names have built-in meanings inside path expressions; see the linked pages for details.
 
-| Name                                | Meaning                                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `$this`, `this`, `.`                | Current context (see [Context blocks](/docs/language/context-blocks))              |
-| `$parent`, `../`                    | One level up the context stack                                                     |
-| `$root`, `@root`                    | Outermost context                                                                  |
-| `$<name>`                           | A user-assigned variable (see [Variables](/docs/language/variables))               |
-| `@index`, `@key`, `@first`, `@last` | Inside a loop only (see [Iteration variables](/docs/language/iteration-variables)) |
+| Name                                | Meaning                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| `$this`, `this`, `.`                | Current context (see [Context blocks](/docs/language/context-blocks))                       |
+| `$parent`, `../`                    | One level up the context stack                                                              |
+| `$root`, `@root`                    | Outermost context                                                                           |
+| `$<name>`                           | A user-assigned variable (see [Variables](/docs/language/variables))                        |
+| `@index`, `@key`, `@first`, `@last` | Inside a loop only (see [Iteration variables](/docs/language/iteration-variables))          |
+| `as \|a b\|` names                  | Block params bound on the enclosing block (see [Block params](/docs/language/block-params)) |
 
 ## Path versus helper call
 

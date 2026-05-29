@@ -52,6 +52,9 @@ Handlebars-style template syntax:
 - Nested expressions (`{{outer (inner data.first data.second)}}`)
 - Blocks and inverted blocks (`{{#list}}…{{/list}}`, `{{^list}}…{{/list}}`)
 - `{{else}}` and chained `{{else if}}`
+- Iteration variables (`@index`, `@key`, `@first`, `@last`)
+- Block params (`{{#each items as |item index|}}`)
+- Whitespace control (`{{~ ~}}`)
 - Context navigation with `$parent`, `$root`, `$this`
 - Variable assignment (`{{= $foo "bar"}}`) within a template
 
