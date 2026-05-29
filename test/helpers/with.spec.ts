@@ -3,37 +3,6 @@ import Bigodin, { compile } from '../../src';
 
 describe('helpers', () => {
   describe('code', () => {
-    describe('if', () => {
-      it('should evaluate on true, only', async () => {
-        const templ = compile('{{#if foo}}yes{{else}}no{{/if}}');
-        expect(await templ({ foo: 'foo' })).toEqual('yes');
-        expect(await templ({ foo: '' })).toEqual('no');
-      });
-
-      it('should not change context', async () => {
-        const templ = compile('{{#if foo}}{{name}}{{else}}no{{/if}}');
-        expect(await templ({ foo: { name: 'wrong' }, name: 'foo' })).toEqual('foo');
-      });
-
-      it('should run only once', async () => {
-        const templ = compile('{{#if foo}}yes{{else}}no{{/if}}');
-        expect(await templ({ foo: [1, 2, 3] })).toEqual('yes');
-      });
-    });
-
-    describe('unless', () => {
-      it('should evaluate on false, only', async () => {
-        const templ = compile('{{#unless foo}}yes{{else}}no{{/unless}}');
-        expect(await templ({ foo: 'foo' })).toEqual('no');
-        expect(await templ({ foo: '' })).toEqual('yes');
-      });
-
-      it('should not change context', async () => {
-        const templ = compile('{{#unless foo}}no{{else}}{{name}}{{/unless}}');
-        expect(await templ({ foo: { name: 'wrong' }, name: 'foo' })).toEqual('foo');
-      });
-    });
-
     describe('with', () => {
       it('should evaluate with the given context of string, number and boolean', async () => {
         const templ = compile('{{#with foo}}{{$this}}{{/with}}');
@@ -69,6 +38,24 @@ describe('helpers', () => {
         expect(await templ({ foo: [1, 2, 3] })).toEqual('bar');
       });
 
+      it('should reach the outer context with $parent', async () => {
+        const templ = compile('{{#with foo}}{{bar}}@{{$parent.label}}{{/with}}');
+        expect(await templ({ label: 'L', foo: { bar: 'baz' } })).toEqual('baz@L');
+      });
+
+      it('should reach the root context with $root', async () => {
+        const templ = compile('{{#with a}}{{#with b}}{{$root.top}}{{/with}}{{/with}}');
+        expect(await templ({ top: 'T', a: { b: { x: 1 } } })).toEqual('T');
+      });
+
+      it('should render the else branch for falsy single arguments', async () => {
+        const templ = compile('{{#with foo}}body{{else}}fallback{{/with}}');
+        expect(await templ({ foo: null })).toEqual('fallback');
+        expect(await templ({ foo: 0 })).toEqual('fallback');
+        expect(await templ({ foo: '' })).toEqual('fallback');
+        expect(await templ({ foo: [] })).toEqual('fallback');
+      });
+
       it('should push each truthy argument as its own frame and run the body once', async () => {
         const templ = compile('{{#with user company}}{{name}} @ {{$parent.name}}{{/with}}');
         expect(
@@ -100,16 +87,12 @@ describe('helpers', () => {
       });
 
       it('should render the else branch when every argument is falsy', async () => {
-        const templ = compile(
-          '{{#with maybe other}}body{{else}}fallback{{/with}}',
-        );
+        const templ = compile('{{#with maybe other}}body{{else}}fallback{{/with}}');
         expect(await templ({ maybe: null, other: undefined })).toEqual('fallback');
       });
 
       it('should pop every pushed frame after the body runs', async () => {
-        const templ = compile(
-          '{{#with one two three}}in{{/with}}{{name}}',
-        );
+        const templ = compile('{{#with one two three}}in{{/with}}{{name}}');
         expect(
           await templ({
             one: { x: 1 },
@@ -133,9 +116,7 @@ describe('helpers', () => {
       });
 
       it('should render the else branch on negated with when at least one argument is truthy', async () => {
-        const templ = compile(
-          '{{^with maybe user}}none{{else}}some{{/with}}',
-        );
+        const templ = compile('{{^with maybe user}}none{{else}}some{{/with}}');
         expect(await templ({ maybe: null, user: { name: 'Alice' } })).toEqual('some');
       });
 
@@ -147,52 +128,6 @@ describe('helpers', () => {
       it('should ignore inline with calls (returns undefined)', async () => {
         const templ = compile('a{{with foo}}b');
         expect(await templ({ foo: { x: 1 } })).toEqual('ab');
-      });
-    });
-
-    describe('each', () => {
-      it('should iterate over array', async () => {
-        const templ = compile('{{#each arr}}({{$this}}){{/each}}');
-        expect(await templ({ arr: [1, 2, 3] })).toEqual('(1)(2)(3)');
-        expect(await templ({ arr: [] })).toEqual('');
-      });
-
-      it('should iterate over single non-array item', async () => {
-        const templ = compile('{{#each arr}}({{$this}}){{/each}}');
-        expect(await templ({ arr: 1 })).toEqual('(1)');
-      });
-    });
-
-    describe('return', () => {
-      it('should return early', async () => {
-        const templ = compile('foo{{return}}bar');
-        expect(await templ()).toEqual('foo');
-      });
-
-      it('should work from inside conditional blocks', async () => {
-        const templ = compile('foo{{#if bar}}{{return}}{{/if}}baz');
-        expect(await templ({ bar: true })).toEqual('foo');
-        expect(await templ({ bar: false })).toEqual('foobaz');
-      });
-
-      it('should halt from inside loop blocks', async () => {
-        const templ = compile('0{{#each items}}{{#if stop}}{{return}}{{/if}}{{value}}{{/each}}9');
-        expect(
-          await templ({
-            items: [
-              { value: 1, stop: false },
-              { value: 2, stop: false },
-              { value: 3, stop: false },
-              { value: 4, stop: true },
-              { value: 5, stop: false },
-            ],
-          }),
-        ).toEqual('0123');
-      });
-
-      it('should halt from inside context blocks', async () => {
-        const templ = compile('A{{#with foo}}B{{#if stop}}{{return}}{{/if}}C{{/with}}D');
-        expect(await templ({ foo: { stop: true } })).toEqual('AB');
       });
     });
   });

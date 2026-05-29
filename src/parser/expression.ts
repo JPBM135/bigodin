@@ -32,7 +32,11 @@ const newFrame = (): Frame => ({
 
 const topOfStack = <T>(stack: T[]): T => stack[stack.length - 1];
 
-const peekEnd = Pr.lookAhead(Pr.string('}}'));
+// An expression ends at the closing delimiter. The trailing forms are:
+// `}}` (plain), `~}}` (right whitespace control), and `}~}}` (right control on
+// a triple mustache, whose inner `}` precedes the `~`). The lookahead never
+// consumes; the `}`/`~` are left for the outer template parser.
+const peekEnd = Pr.lookAhead(Pr.oneOf(Pr.string('}}'), Pr.string('~}}'), Pr.string('}~}}')));
 
 // Handlebars path aliases: rewrite `../`, `@root`, and bare `this` into the
 // existing `$parent`/`$root`/`$this` AST representation. Other `@<name>`
@@ -238,6 +242,16 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
             yield Pr.fail('Expected ")", make sure every parenthesis was closed');
           }
 
+          return expressionFromFrame(stack[0]);
+        }
+
+        // `as |a b|` block params terminate a block-head expression. Leave the
+        // clause for the template parser; only the bar form (not a bare `as`
+        // helper argument) triggers this so `{{helper as}}` still parses.
+        const blockParamsAhead = yield Pr.optional(
+          Pr.lookAhead(Pr.regex('block params', /^as\s+\|/)),
+        );
+        if (blockParamsAhead) {
           return expressionFromFrame(stack[0]);
         }
 

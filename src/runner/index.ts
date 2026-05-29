@@ -12,7 +12,7 @@ import { runAssignment, runVariable } from './variables.js';
 export type LiteralValue = boolean | number | object | string | null | undefined;
 
 const MIN_VERSION = 1;
-const MAX_VERSION = 4;
+const MAX_VERSION = 5;
 
 export async function run(
   ast: TemplateStatement,
@@ -28,6 +28,27 @@ export async function run(
   const ctx = deepCloneNullPrototype(context);
   const execution = Execution.of(ctx, extraHelpers, options);
   return runStatements(execution, ast.statements);
+}
+
+// Coerces a non-null object value to its rendered string. Arrays render the
+// way Handlebars does (elements coerced and comma-joined, recursing into
+// nested arrays); any other object becomes the `[object Object]` sentinel.
+// We can't use `String(value)` because context objects are deep-cloned to a
+// null prototype and so have no own/inherited `toString`, which would throw.
+function coerceObjectValue(value: object): string {
+  if (!Array.isArray(value)) {
+    return Object.prototype.toString.call(value);
+  }
+
+  return value
+    .map((element) => {
+      if (element === null || typeof element === 'undefined') {
+        return '';
+      }
+
+      return typeof element === 'object' ? coerceObjectValue(element) : String(element);
+    })
+    .join(',');
 }
 
 export async function runStatements(
@@ -47,7 +68,7 @@ export async function runStatements(
     }
 
     if (typeof stmtResult === 'object') {
-      result += Object.prototype.toString.call(stmtResult);
+      result += coerceObjectValue(stmtResult);
       continue;
     }
 

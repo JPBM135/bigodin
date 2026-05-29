@@ -78,6 +78,47 @@ export class Execution {
   }
 
   /**
+   * Block-param scopes (`as |a b|`). Each frame maps the declared names to the
+   * values the block yields. Consumed by path expressions resolving a bare
+   * leading identifier; inner frames shadow outer ones.
+   */
+  private readonly paramFrames: Record<string, unknown>[] = [];
+
+  /**
+   * Push a block-param frame mapping `names` to `values` positionally.
+   */
+  public pushParamFrame(names: string[], values: unknown[]) {
+    const frame: Record<string, unknown> = Object.create(null);
+    for (const [idx, name] of names.entries()) {
+      frame[name] = values[idx];
+    }
+
+    this.paramFrames.push(frame);
+  }
+
+  /**
+   * Pop the most recent block-param frame.
+   */
+  public popParamFrame() {
+    this.paramFrames.pop();
+  }
+
+  /**
+   * Resolve a block-param by name, innermost frame first. Returns whether a
+   * param with that name exists (so a param bound to `undefined` still shadows
+   * the surrounding context) along with its value.
+   */
+  public getParam(name: string): { found: boolean; value: unknown } {
+    for (let idx = this.paramFrames.length - 1; idx >= 0; idx--) {
+      if (Object.hasOwn(this.paramFrames[idx], name)) {
+        return { found: true, value: this.paramFrames[idx][name] };
+      }
+    }
+
+    return { found: false, value: undefined };
+  }
+
+  /**
    * Push a data frame for the current iteration.
    */
   public pushDataFrame(frame: Record<string, unknown>) {

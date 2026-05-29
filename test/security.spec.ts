@@ -348,7 +348,7 @@ describe('security', () => {
       statements,
     });
 
-    for (const v of [0, 5, 1e9, -1, Infinity, -Infinity]) {
+    for (const v of [0, 6, 1e9, -1, Infinity, -Infinity]) {
       it(`rejects forged AST with version ${String(v)}`, async () => {
         await expect(run(mkAst([], v) as any, {}, new Map() as any)).rejects.toThrow(
           /Unsupported AST version/,

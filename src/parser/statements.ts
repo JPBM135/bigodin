@@ -3,6 +3,26 @@ export interface Location {
   start: number;
 }
 
+/**
+ * Whitespace-control flags for a single tag, set when `~` appears just inside
+ * a delimiter. `left` strips the preceding text's trailing whitespace; `right`
+ * strips the following text's leading whitespace.
+ */
+export interface Trim {
+  left?: boolean;
+  right?: boolean;
+}
+
+/**
+ * Whitespace-control flags for a block, whose three tags (open, close, and an
+ * optional `else` divider) can each carry their own `~`.
+ */
+export interface BlockTrim {
+  close?: Trim;
+  else?: Trim;
+  open?: Trim;
+}
+
 export interface TextStatement {
   loc: Location;
   type: 'TEXT';
@@ -11,6 +31,7 @@ export interface TextStatement {
 
 export interface CommentStatement {
   loc: Location;
+  trim?: Trim;
   type: 'COMMENT';
   value: string;
 }
@@ -28,16 +49,19 @@ export interface ExpressionStatement {
 export interface MustacheStatement {
   expression: ValueStatement;
   loc: Location;
+  trim?: Trim;
   type: 'MUSTACHE';
 }
 
 export interface BlockStatement {
+  blockParams?: string[];
   elseStatements?: Statement[];
   expression: ExpressionStatement;
   isNegated: boolean;
   isNested?: boolean;
   loc: Location;
   statements: Statement[];
+  trim?: BlockTrim;
   type: 'BLOCK';
 }
 
@@ -63,6 +87,7 @@ export interface VariableStatement {
 export interface AssignmentStatement {
   expression: ValueStatement;
   loc: Location;
+  trim?: Trim;
   type: 'ASSIGNMENT';
   variable: VariableStatement;
 }

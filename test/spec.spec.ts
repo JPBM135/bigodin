@@ -11,13 +11,9 @@ const SKIPPED_SPECS = [
   '~lambdas.json',
 ];
 
-const SKIPPED_FEATURES = [
-  'Parent contexts',
-  'List Contexts',
-  'Deeply Nested Contexts',
-  'Variable test',
-  'HTML Escaping',
-].map((feature) => feature.toLowerCase());
+const SKIPPED_FEATURES = ['Parent contexts', 'Variable test', 'HTML Escaping'].map((feature) =>
+  feature.toLowerCase(),
+);
 
 describe('spec', () => {
   /* $lab:coverage:off$ */

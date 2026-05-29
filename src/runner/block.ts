@@ -4,19 +4,32 @@ import { runStatement, runStatements } from './index.js';
 
 const isFalsy = (value: unknown): boolean => !value || (Array.isArray(value) && value.length === 0);
 
+// Runs a block body, binding its `as |a b|` block params (if any) to the
+// values the block yields for the duration of the body.
+async function runBody(
+  execution: Execution,
+  block: BlockStatement,
+  statements: BlockStatement['statements'],
+  values: unknown[],
+): Promise<string> {
+  if (!block.blockParams) {
+    return runStatements(execution, statements);
+  }
+
+  execution.pushParamFrame(block.blockParams, values);
+  const result = await runStatements(execution, statements);
+  execution.popParamFrame();
+  return result;
+}
+
 const isNativeWith = (execution: Execution, expression: ExpressionStatement): boolean =>
   expression.path === 'with' &&
   !execution.extraHelpers.has('with') &&
   execution.allowDefaultHelpers;
 
-async function runWithBlock(
-  execution: Execution,
-  block: BlockStatement,
-): Promise<string | null> {
+async function runWithBlock(execution: Execution, block: BlockStatement): Promise<string | null> {
   const params = block.expression.params;
-  const values = await Promise.all(
-    params.map(async (param) => runStatement(execution, param)),
-  );
+  const values = await Promise.all(params.map(async (param) => runStatement(execution, param)));
 
   const frames = values.filter((v) => !isFalsy(v));
 
@@ -44,7 +57,7 @@ async function runWithBlock(
     execution.pushContext(frame as object);
   }
 
-  const result = await runStatements(execution, block.statements);
+  const result = await runBody(execution, block, block.statements, frames);
   execution.popContexts(frames.length);
 
   return result;
@@ -95,7 +108,7 @@ export async function runBlock(
         first: idx === 0,
         last: idx === value.length - 1,
       });
-      result += await runStatements(execution, block.statements);
+      result += await runBody(execution, block, block.statements, [value[idx], idx]);
       execution.popDataFrame();
       execution.popContext();
       if (execution.isHalted) {
@@ -109,7 +122,7 @@ export async function runBlock(
   // Object
   if (typeof value === 'object' && value !== null) {
     execution.pushContext(value);
-    const result = await runStatements(execution, block.statements);
+    const result = await runBody(execution, block, block.statements, [value]);
     execution.popContext();
     return result;
   }
@@ -117,5 +130,5 @@ export async function runBlock(
   // Truthy scalar - preserve Bigodin's existing behavior of NOT pushing the
   // scalar onto the context stack. Mustache spec tests that rely on the
   // push are listed in test/spec.spec.js SKIPPED_FEATURES.
-  return runStatements(execution, block.statements);
+  return runBody(execution, block, block.statements, [value]);
 }

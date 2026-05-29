@@ -22,11 +22,21 @@ export function runPathExpression(
     path.shift();
   } else if (path[0].startsWith('@')) {
     ctx = execution.getDataVar(path.shift()!.slice(1));
-  } else
+  } else if (path[0] === '$parent') {
     while (path[0] === '$parent') {
       ctx = execution.contexts[--contextDeepness];
       path.shift();
     }
+  } else {
+    // A plain leading identifier may be a block param (`as |name|`), which
+    // shadows the surrounding context. The prefixed namespaces above are not
+    // shadowable; a param bound to `undefined` still shadows (found === true).
+    const param = execution.getParam(path[0]);
+    if (param.found) {
+      ctx = param.value;
+      path.shift();
+    }
+  }
 
   for (const key of path) {
     const resolved = lookupOwnValue(ctx, key);

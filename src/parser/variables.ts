@@ -55,7 +55,9 @@ export const $assignment: Parser<AssignmentStatement> = Pr.context('assignment',
   const expression: ValueStatement = yield $assignmentExpression;
 
   yield optionalSpaces;
-  const extraToken = yield Pr.optional(Pr.regex('extra token', /^[^\s}]+/));
+  // `~}}` is the whitespace-control closer (consumed by the template parser),
+  // not an extra token; anything else non-space/non-`}` is a stray token.
+  const extraToken = yield Pr.optional(Pr.regex('extra token', /^(?!~}})[^\s}]+/));
   if (extraToken) {
     yield Pr.fail('Assignments require a single expression, use parenthesis for helpers');
   }

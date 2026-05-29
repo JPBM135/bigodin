@@ -143,7 +143,7 @@ describe('runner', () => {
       expect(
         await templ({
           obj: {},
-          arr: [],
+          arr: [1, 2, 3],
           str: 'foo',
           num: 0,
           bTrue: true,
@@ -151,7 +151,17 @@ describe('runner', () => {
           nil: null,
           undef: void 0,
         }),
-      ).toEqual('[object Object] [object Array] foo 0 true false  ');
+      ).toEqual('[object Object] 1,2,3 foo 0 true false  ');
+    });
+
+    it('should render arrays comma-joined like Handlebars', async () => {
+      const templ = compile('{{ arr }}');
+      expect(await templ({ arr: [1, 2, 3] })).toEqual('1,2,3');
+      expect(await templ({ arr: ['a', 'b'] })).toEqual('a,b');
+      expect(await templ({ arr: [] })).toEqual('');
+      expect(await templ({ arr: [1, [2, 3]] })).toEqual('1,2,3');
+      expect(await templ({ arr: [null, 1] })).toEqual(',1');
+      expect(await templ({ arr: [{}, {}] })).toEqual('[object Object],[object Object]');
     });
 
     it('should ignore unsafe keys', async () => {

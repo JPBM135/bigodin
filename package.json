@@ -70,6 +70,7 @@
     "eslint-config-neon": "^0.3.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
+    "handlebars": "^4.7.9",
     "prettier": "3.8.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2",
