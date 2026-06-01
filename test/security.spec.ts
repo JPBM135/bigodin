@@ -295,9 +295,12 @@ describe('security', () => {
     });
 
     it('URL/Buffer/TypedArray expose no prototype surface to templates', async () => {
-      const templ = compile('{{u.href}}|{{u.constructor}}|{{b.constructor}}|{{t.buffer}}|{{t.length}}');
+      const templ = compile(
+        '{{u.href}}|{{u.constructor}}|{{b.constructor}}|{{t.buffer}}|{{t.length}}',
+      );
       const out = await templ({
         u: new URL('https://secret.example/path'),
+        // eslint-disable-next-line n/prefer-global/buffer
         b: Buffer.from('hi'),
         t: new Uint8Array([1, 2]),
       });

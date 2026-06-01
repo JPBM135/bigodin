@@ -88,6 +88,7 @@ describe('utils', () => {
     it('should copy a Node Buffer by value, downgrading it to a Uint8Array', () => {
       // The package is environment-agnostic, so a Buffer is preserved as bytes
       // in a plain Uint8Array rather than via the Node-only Buffer global.
+      // eslint-disable-next-line n/prefer-global/buffer
       const buf = Buffer.from('hi');
       const clone = deepCloneNullPrototype({ buf }) as any;
 
