@@ -126,5 +126,6 @@ Things Bigodin **does not** do, by design or because they are out of scope. Read
 
 - Helper names matching `__proto__`, `constructor`, `prototype`, etc. are rejected — registering or looking them up will throw. This is intentional anti-prototype-pollution behavior; do not work around it.
 - The `data` channel on `Execution` is helper-only. Templates cannot read it; helpers can mutate it via `this.data` to share side-channel state.
+- The context is deep-cloned before each run: your input object is never mutated, prototypes are stripped, and templates read only own, enumerable, non-function properties (so `Error.stack` and other non-enumerable data stay out of output). Value-typed objects (`Date`, `RegExp`, `URL`, `Map`, `Set`, typed arrays) are preserved by value for helpers while their methods stay hidden from templates; `Buffer` is downgraded to `Uint8Array`. See [the context clone](website/docs/explanation/security-model.md#the-context-clone).
 
 If you need one of the unsupported Mustache features, open an issue — most "Not planned" entries have a design note in [`mustache-compat/`](mustache-compat/README.md) explaining the tradeoff.

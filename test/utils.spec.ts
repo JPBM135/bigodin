@@ -45,6 +45,251 @@ describe('utils', () => {
       expect(clone.constructor).toBeUndefined();
     });
 
+    it('should preserve Date instances instead of emptying them', () => {
+      const date = new Date('2026-05-29T12:34:56.000Z');
+      const obj = { card: { created_at: date } };
+
+      const clone = deepCloneNullPrototype(obj) as any;
+
+      expect(clone.card.created_at).toBeInstanceOf(Date);
+      expect(clone.card.created_at.getTime()).toEqual(date.getTime());
+      expect(clone.card.created_at.toISOString()).toEqual(date.toISOString());
+
+      // Cloned by value, not shared by reference.
+      clone.card.created_at.setFullYear(2_000);
+      expect(date.getFullYear()).toEqual(2_026);
+    });
+
+    it('should preserve Dates nested in arrays', () => {
+      const date = new Date('2026-05-29T12:34:56.000Z');
+      const clone = deepCloneNullPrototype({ dates: [date] }) as any;
+
+      expect(clone.dates[0]).toBeInstanceOf(Date);
+      expect(clone.dates[0].getTime()).toEqual(date.getTime());
+    });
+
+    it('should preserve RegExp by value', () => {
+      const clone = deepCloneNullPrototype({ r: /ab+c/gi }) as any;
+
+      expect(clone.r).toBeInstanceOf(RegExp);
+      expect(clone.r.source).toEqual('ab+c');
+      expect(clone.r.flags).toEqual('gi');
+    });
+
+    it('should preserve URL by value', () => {
+      const u = new URL('https://x.com/p?q=1');
+      const clone = deepCloneNullPrototype({ u }) as any;
+
+      expect(clone.u).toBeInstanceOf(URL);
+      expect(clone.u.href).toEqual('https://x.com/p?q=1');
+      expect(clone.u).not.toBe(u);
+    });
+
+    it('should copy a Node Buffer by value, downgrading it to a Uint8Array', () => {
+      // The package is environment-agnostic, so a Buffer is preserved as bytes
+      // in a plain Uint8Array rather than via the Node-only Buffer global.
+      // eslint-disable-next-line n/prefer-global/buffer
+      const buf = Buffer.from('hi');
+      const clone = deepCloneNullPrototype({ buf }) as any;
+
+      expect(clone.buf).toBeInstanceOf(Uint8Array);
+      expect([...clone.buf]).toEqual([...buf]);
+
+      clone.buf[0] = 0;
+      expect(buf[0]).toEqual(0x68);
+    });
+
+    it('should copy TypedArrays by value, preserving the subclass', () => {
+      const arr = new Uint16Array([1, 2, 3]);
+      const clone = deepCloneNullPrototype({ arr }) as any;
+
+      expect(clone.arr).toBeInstanceOf(Uint16Array);
+      expect([...clone.arr]).toEqual([1, 2, 3]);
+
+      clone.arr[0] = 9;
+      expect(arr[0]).toEqual(1);
+    });
+
+    it('should copy DataView and ArrayBuffer by value', () => {
+      const ab = new ArrayBuffer(4);
+      new Uint8Array(ab)[0] = 7;
+      const view = new DataView(ab);
+      const clone = deepCloneNullPrototype({ ab, view }) as any;
+
+      expect(clone.ab).toBeInstanceOf(ArrayBuffer);
+      expect(clone.ab).not.toBe(ab);
+      expect(new Uint8Array(clone.ab)[0]).toEqual(7);
+
+      expect(clone.view).toBeInstanceOf(DataView);
+      expect(clone.view.getUint8(0)).toEqual(7);
+      clone.view.setUint8(0, 0);
+      expect(view.getUint8(0)).toEqual(7);
+    });
+
+    it('should deep-clone Maps recursively', () => {
+      const map = new Map<string, any>([['a', { n: 1 }]]);
+      const clone = deepCloneNullPrototype({ map }) as any;
+
+      expect(clone.map).toBeInstanceOf(Map);
+      expect(clone.map.get('a')).toEqual({ n: 1 });
+
+      clone.map.get('a').n = 2;
+      expect(map.get('a')!.n).toEqual(1);
+    });
+
+    it('should deep-clone Sets recursively', () => {
+      const set = new Set<any>([{ n: 1 }]);
+      const clone = deepCloneNullPrototype({ set }) as any;
+
+      expect(clone.set).toBeInstanceOf(Set);
+      expect([...clone.set]).toEqual([{ n: 1 }]);
+      expect(clone.set).not.toBe(set);
+    });
+
+    it('should resolve circular references instead of overflowing', () => {
+      const obj: any = { a: 1 };
+      obj.self = obj;
+
+      const clone = deepCloneNullPrototype(obj) as any;
+
+      expect(clone.a).toEqual(1);
+      expect(clone.self).toBe(clone);
+      expect(clone.self.self.a).toEqual(1);
+    });
+
+    it('should resolve circular references through arrays', () => {
+      const arr: any[] = [];
+      arr.push(arr);
+
+      const clone = deepCloneNullPrototype({ arr }) as any;
+
+      expect(clone.arr[0]).toBe(clone.arr);
+    });
+
+    it('should defer getter invocation until the property is read', () => {
+      let calls = 0;
+      const obj: any = {};
+      Object.defineProperty(obj, 'live', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return { n: calls };
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      expect(calls).toEqual(0);
+
+      const read = clone.obj.live;
+      expect(read).toEqual({ n: 1 });
+      expect(calls).toEqual(1);
+    });
+
+    it('should null-prototype strip the result of a lazily-invoked getter', () => {
+      class Holder {
+        public ok = 1;
+
+        public method() {
+          return 'x';
+        }
+      }
+      const obj: any = {};
+      Object.defineProperty(obj, 'live', {
+        enumerable: true,
+        get() {
+          return new Holder();
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      const value = clone.obj.live;
+
+      // Own field survives; the prototype (and its `method`) is stripped, so the
+      // returned object can't be used to reach the class prototype.
+      expect(value.ok).toEqual(1);
+      expect(Object.getPrototypeOf(value)).toBeNull();
+      expect(value.method).toBeUndefined();
+    });
+
+    it('should memoize a getter so it runs once across repeated reads', () => {
+      let calls = 0;
+      const obj: any = {};
+      Object.defineProperty(obj, 'live', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return calls;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      expect(clone.obj.live).toEqual(1);
+      expect(clone.obj.live).toEqual(1);
+      expect(calls).toEqual(1);
+    });
+
+    it('should invoke a getter against the clone, never the original input', () => {
+      const obj: any = { first: 'Ada', last: 'Lovelace' };
+      Object.defineProperty(obj, 'fullName', {
+        enumerable: true,
+        get() {
+          // Reads a sibling and writes a marker on `this`.
+          this.touched = true;
+          return `${this.first} ${this.last}`;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      // Computed from the cloned siblings.
+      expect(clone.obj.fullName).toEqual('Ada Lovelace');
+      // The write landed on the clone, so the caller's input is untouched.
+      expect(obj.touched).toBeUndefined();
+      expect(clone.obj.touched).toBe(true);
+    });
+
+    it('should let a getter return `this` without re-cloning, preserving identity', () => {
+      let calls = 0;
+      const obj: any = { a: 1 };
+      Object.defineProperty(obj, 'self', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return this;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      // The getter returns the clone it is bound to; cloneValue must hand that
+      // same clone back rather than deep-cloning it again.
+      expect(clone.obj.self).toBe(clone.obj);
+      expect(clone.obj.self.self).toBe(clone.obj);
+      expect(calls).toEqual(1);
+    });
+
+    it('should return an already-cloned sibling by identity from a getter', () => {
+      const obj: any = { map: new Map([['k', 1]]) };
+      Object.defineProperty(obj, 'alias', {
+        enumerable: true,
+        get() {
+          return this.map;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      expect(clone.obj.alias).toBeInstanceOf(Map);
+      // Same cloned Map, not a second deep copy of it.
+      expect(clone.obj.alias).toBe(clone.obj.map);
+    });
+
+    it('should alias a value-typed instance referenced twice to one clone', () => {
+      const date = new Date('2026-05-29T12:34:56.000Z');
+      const clone = deepCloneNullPrototype({ a: date, b: date }) as any;
+
+      expect(clone.a).toBeInstanceOf(Date);
+      expect(clone.a).toBe(clone.b);
+      expect(clone.a).not.toBe(date);
+    });
+
     it('should ignore inherited enumerable keys', () => {
       const parent = { leaked: 5 };
       const obj = Object.create(parent);

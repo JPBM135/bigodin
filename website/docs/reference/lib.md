@@ -63,7 +63,7 @@ Parse `source` into a `TemplateStatement` AST. The result is plain JSON, safe to
 Interpret a previously parsed AST. Returns `Promise<string>`.
 
 - **`ast`** is the output of `parse`, possibly round-tripped through JSON. The runner enforces a `[MIN_VERSION, MAX_VERSION]` window on `ast.version`; ASTs outside that window throw with a "parse it again" message. See [AST and versioning](/docs/explanation/ast-and-versioning).
-- **`context`** is the root rendering context. Any JSON-like value.
+- **`context`** is the root rendering context. Any JSON-like value. It is deep-cloned before the run, so your object is never mutated, and templates only ever read own, enumerable, non-function properties. Value-typed objects (`Date`, `RegExp`, `URL`, `Map`, `Set`, typed arrays) are cloned by value so helpers receive real instances; circular references and getters are handled safely. See [The context clone](/docs/explanation/security-model#the-context-clone).
 - **`extraHelpers`** is an optional `Record<string, Helper>` merged on top of the instance's helpers for this run only.
 - **`options`** is documented under `RunOptions` below.
 
