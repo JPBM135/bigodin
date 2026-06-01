@@ -31,26 +31,38 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   // generic key-copy below would erase them into an empty object (e.g. a Date
   // becomes `{}` with no getTime/valueOf/toString). Clone them by value. Their
   // methods live on the prototype, so `lookupOwnValue` still hides them from
-  // templates; only helpers, which receive real values, can use them.
+  // templates; only helpers, which receive real values, can use them. Each is
+  // registered in `seen` before returning so that, like every other branch, a
+  // single instance referenced twice resolves to one shared clone.
   if (value instanceof Date) {
-    return new Date(value.getTime());
+    const clone = new Date(value.getTime());
+    seen.set(value, clone);
+    return clone;
   }
 
   if (value instanceof RegExp) {
-    return new RegExp(value.source, value.flags);
+    const clone = new RegExp(value.source, value.flags);
+    seen.set(value, clone);
+    return clone;
   }
 
   // URL is a platform global, not part of the ES library this package targets,
   // so feature-detect it through globalThis instead of assuming it exists.
   const globalUrl = (globalThis as { URL?: new (href: string) => object }).URL;
   if (globalUrl && value instanceof globalUrl) {
-    return new globalUrl((value as { href: string }).href);
+    const clone = new globalUrl((value as { href: string }).href);
+    seen.set(value, clone);
+    return clone;
   }
 
   // ArrayBuffer-backed binary views. Without this, Object.keys() turns a typed
   // array into a `{0: …, 1: …}` index object that no longer behaves like one.
   if (value instanceof DataView) {
-    return new DataView(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength));
+    const clone = new DataView(
+      value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength),
+    );
+    seen.set(value, clone);
+    return clone;
   }
 
   if (ArrayBuffer.isView(value)) {
@@ -58,15 +70,18 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
     // Node Buffer subclasses Uint8Array but only exposes a deprecated
     // constructor, and this package stays environment-agnostic (no Node
     // globals), so copy it into a plain Uint8Array - the bytes survive.
-    if (TypedArrayCtor.name === 'Buffer') {
-      return Uint8Array.from(value as Uint8Array);
-    }
-
-    return new TypedArrayCtor(value);
+    const clone =
+      TypedArrayCtor.name === 'Buffer'
+        ? Uint8Array.from(value as Uint8Array)
+        : new TypedArrayCtor(value);
+    seen.set(value, clone);
+    return clone;
   }
 
   if (value instanceof ArrayBuffer) {
-    return value.slice(0);
+    const clone = value.slice(0);
+    seen.set(value, clone);
+    return clone;
   }
 
   if (value instanceof Map) {
@@ -101,12 +116,16 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
     if (descriptor && typeof descriptor.get === 'function') {
       // Defer getter invocation: only run it (and strip its result) when the
       // template actually reads the key. This avoids firing side effects - or
-      // throwing - for fields that are never referenced, matching lazy lookup.
-      const getter = descriptor.get.bind(source);
+      // throwing - for fields that are never referenced. Bind it to the clone,
+      // not the original, so a getter that reads or writes `this` cannot touch
+      // the caller's input; and memoize, so repeated references in one render
+      // run it at most once instead of re-triggering its side effects.
+      const getter = descriptor.get.bind(clone);
+      let memo: { value: unknown } | undefined;
       Object.defineProperty(clone, key, {
         enumerable: true,
         configurable: true,
-        get: () => cloneValue(getter(), seen),
+        get: () => (memo ??= { value: cloneValue(getter(), seen) }).value,
       });
       continue;
     }

@@ -211,6 +211,51 @@ describe('utils', () => {
       expect(value.method).toBeUndefined();
     });
 
+    it('should memoize a getter so it runs once across repeated reads', () => {
+      let calls = 0;
+      const obj: any = {};
+      Object.defineProperty(obj, 'live', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return calls;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      expect(clone.obj.live).toEqual(1);
+      expect(clone.obj.live).toEqual(1);
+      expect(calls).toEqual(1);
+    });
+
+    it('should invoke a getter against the clone, never the original input', () => {
+      const obj: any = { first: 'Ada', last: 'Lovelace' };
+      Object.defineProperty(obj, 'fullName', {
+        enumerable: true,
+        get() {
+          // Reads a sibling and writes a marker on `this`.
+          this.touched = true;
+          return `${this.first} ${this.last}`;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      // Computed from the cloned siblings.
+      expect(clone.obj.fullName).toEqual('Ada Lovelace');
+      // The write landed on the clone, so the caller's input is untouched.
+      expect(obj.touched).toBeUndefined();
+      expect(clone.obj.touched).toBe(true);
+    });
+
+    it('should alias a value-typed instance referenced twice to one clone', () => {
+      const date = new Date('2026-05-29T12:34:56.000Z');
+      const clone = deepCloneNullPrototype({ a: date, b: date }) as any;
+
+      expect(clone.a).toBeInstanceOf(Date);
+      expect(clone.a).toBe(clone.b);
+      expect(clone.a).not.toBe(date);
+    });
+
     it('should ignore inherited enumerable keys', () => {
       const parent = { leaked: 5 };
       const obj = Object.create(parent);

@@ -263,10 +263,11 @@ describe('security', () => {
         },
       });
       // The getter fires only because the template reads it; its returned object
-      // is still null-prototype stripped, so the method stays hidden.
+      // is still null-prototype stripped, so the method stays hidden. Two
+      // references resolve it once - the result is memoized within the render.
       const templ = compile('{{obj.live.value}}|{{obj.live.method}}');
       expect(await templ({ obj })).toEqual('ok|');
-      expect(calls).toEqual(2);
+      expect(calls).toEqual(1);
     });
 
     it('Map/Set/RegExp are preserved by value for helpers but hide methods from templates', async () => {
