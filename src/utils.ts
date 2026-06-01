@@ -4,22 +4,33 @@ export function deepCloneNullPrototype(obj: object): object {
   return cloneValue(obj, new WeakMap()) as object;
 }
 
+// Record an `original -> clone` mapping for the cycle guard, and also
+// `clone -> clone`, which makes cloneValue idempotent. Getters are bound to the
+// clone, so one may legally return `this` or another already-cloned object;
+// without the self-mapping, cloneValue would deep-clone an already-safe
+// subgraph again (wasteful) and break reference identity within the clone.
+function track<T extends object>(seen: WeakMap<object, unknown>, original: object, clone: T): T {
+  seen.set(original, clone);
+  seen.set(clone, clone);
+  return clone;
+}
+
 function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   if (value === null || typeof value !== 'object') {
     return value;
   }
 
-  // Cycle guard: return the in-progress clone for any object we've already
-  // started cloning, so circular references resolve to the same clone instead
-  // of recursing forever and overflowing the stack.
+  // Cycle guard: return the existing clone for any object we have already
+  // started cloning, or any clone we produced. This resolves circular
+  // references and getters that return already-cloned objects to the same
+  // clone instead of recursing forever or re-copying a safe subgraph.
   const existing = seen.get(value);
   if (typeof existing !== 'undefined') {
     return existing;
   }
 
   if (Array.isArray(value)) {
-    const clone: unknown[] = [];
-    seen.set(value, clone);
+    const clone = track(seen, value, [] as unknown[]);
     for (const element of value) {
       clone.push(cloneValue(element, seen));
     }
@@ -32,37 +43,31 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   // becomes `{}` with no getTime/valueOf/toString). Clone them by value. Their
   // methods live on the prototype, so `lookupOwnValue` still hides them from
   // templates; only helpers, which receive real values, can use them. Each is
-  // registered in `seen` before returning so that, like every other branch, a
-  // single instance referenced twice resolves to one shared clone.
+  // tracked so that, like every other branch, a single instance referenced
+  // twice resolves to one shared clone.
   if (value instanceof Date) {
-    const clone = new Date(value.getTime());
-    seen.set(value, clone);
-    return clone;
+    return track(seen, value, new Date(value.getTime()));
   }
 
   if (value instanceof RegExp) {
-    const clone = new RegExp(value.source, value.flags);
-    seen.set(value, clone);
-    return clone;
+    return track(seen, value, new RegExp(value.source, value.flags));
   }
 
   // URL is a platform global, not part of the ES library this package targets,
   // so feature-detect it through globalThis instead of assuming it exists.
   const globalUrl = (globalThis as { URL?: new (href: string) => object }).URL;
   if (globalUrl && value instanceof globalUrl) {
-    const clone = new globalUrl((value as { href: string }).href);
-    seen.set(value, clone);
-    return clone;
+    return track(seen, value, new globalUrl((value as { href: string }).href));
   }
 
   // ArrayBuffer-backed binary views. Without this, Object.keys() turns a typed
   // array into a `{0: …, 1: …}` index object that no longer behaves like one.
   if (value instanceof DataView) {
-    const clone = new DataView(
-      value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength),
+    return track(
+      seen,
+      value,
+      new DataView(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength)),
     );
-    seen.set(value, clone);
-    return clone;
   }
 
   if (ArrayBuffer.isView(value)) {
@@ -74,19 +79,15 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
       TypedArrayCtor.name === 'Buffer'
         ? Uint8Array.from(value as Uint8Array)
         : new TypedArrayCtor(value);
-    seen.set(value, clone);
-    return clone;
+    return track(seen, value, clone);
   }
 
   if (value instanceof ArrayBuffer) {
-    const clone = value.slice(0);
-    seen.set(value, clone);
-    return clone;
+    return track(seen, value, value.slice(0));
   }
 
   if (value instanceof Map) {
-    const clone = new Map<unknown, unknown>();
-    seen.set(value, clone);
+    const clone = track(seen, value, new Map<unknown, unknown>());
     for (const [key, val] of value) {
       clone.set(cloneValue(key, seen), cloneValue(val, seen));
     }
@@ -95,8 +96,7 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   }
 
   if (value instanceof Set) {
-    const clone = new Set<unknown>();
-    seen.set(value, clone);
+    const clone = track(seen, value, new Set<unknown>());
     for (const element of value) {
       clone.add(cloneValue(element, seen));
     }
@@ -104,8 +104,7 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
     return clone;
   }
 
-  const clone: Record<string, unknown> = Object.create(null);
-  seen.set(value, clone);
+  const clone = track(seen, value, Object.create(null) as Record<string, unknown>);
   const source = value as Record<string, unknown>;
   for (const key of Object.keys(source)) {
     if (UNSAFE_KEYS.has(key)) {

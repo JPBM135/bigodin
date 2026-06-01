@@ -247,6 +247,40 @@ describe('utils', () => {
       expect(clone.obj.touched).toBe(true);
     });
 
+    it('should let a getter return `this` without re-cloning, preserving identity', () => {
+      let calls = 0;
+      const obj: any = { a: 1 };
+      Object.defineProperty(obj, 'self', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return this;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      // The getter returns the clone it is bound to; cloneValue must hand that
+      // same clone back rather than deep-cloning it again.
+      expect(clone.obj.self).toBe(clone.obj);
+      expect(clone.obj.self.self).toBe(clone.obj);
+      expect(calls).toEqual(1);
+    });
+
+    it('should return an already-cloned sibling by identity from a getter', () => {
+      const obj: any = { map: new Map([['k', 1]]) };
+      Object.defineProperty(obj, 'alias', {
+        enumerable: true,
+        get() {
+          return this.map;
+        },
+      });
+
+      const clone = deepCloneNullPrototype({ obj }) as any;
+      expect(clone.obj.alias).toBeInstanceOf(Map);
+      // Same cloned Map, not a second deep copy of it.
+      expect(clone.obj.alias).toBe(clone.obj.map);
+    });
+
     it('should alias a value-typed instance referenced twice to one clone', () => {
       const date = new Date('2026-05-29T12:34:56.000Z');
       const clone = deepCloneNullPrototype({ a: date, b: date }) as any;
