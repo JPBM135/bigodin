@@ -192,11 +192,12 @@ describe('security', () => {
       expect(await templ({ m: testMap, s: testSet })).toEqual('||||');
     });
 
-    it('Date instances are neutered by the null-prototype clone', async () => {
-      // Date methods are inherited (filtered) and Date.prototype.getTime/toISOString
-      // are functions. Object.keys(date) is empty, so the clone is `{}`.
+    it('Date instances keep their value but expose no methods to templates', async () => {
+      // The clone preserves Date instances by value (so helpers receive a real
+      // Date), but the methods live on Date.prototype, so `lookupOwnValue` still
+      // hides them from path access. `{{d}}` coerces via Object.prototype.toString.
       const templ = compile('{{d.toISOString}}|{{d.getTime}}|{{d}}');
-      expect(await templ({ d: new Date('2024-01-01T00:00:00.000Z') })).toEqual('||[object Object]');
+      expect(await templ({ d: new Date('2024-01-01T00:00:00.000Z') })).toEqual('||[object Date]');
     });
 
     it('Error instance message is non-enumerable and is therefore hidden', async () => {
@@ -223,17 +224,18 @@ describe('security', () => {
       expect(await templ({ f: new Foo() })).toEqual('1|');
     });
 
-    it('circular context references currently overflow the deep clone', async () => {
-      // Pin current behavior: deepCloneNullPrototype is recursive, so a circular
-      // input throws RangeError. If this is ever made iterative, this test must
-      // be updated deliberately - the contract change is worth surfacing.
+    it('circular context references are cloned without overflowing', async () => {
+      // The clone tracks visited objects, so a circular input resolves to a
+      // shared clone instead of recursing forever. The cycle is still reachable.
       const obj: any = { a: 1 };
       obj.self = obj;
-      const templ = compile('{{a}}');
-      return expect(templ(obj)).rejects.toThrow(/Maximum call stack size/);
+      const templ = compile('{{a}}|{{self.a}}|{{self.self.a}}');
+      expect(await templ(obj)).toEqual('1|1|1');
     });
 
-    it('context getters that throw propagate through deepCloneNullPrototype', async () => {
+    it('context getters are invoked lazily, not eagerly at clone time', async () => {
+      // A throwing getter that the template never references must not blow up
+      // the render: the clone defers getter invocation until the key is read.
       const obj: any = {};
       Object.defineProperty(obj, 'bad', {
         enumerable: true,
@@ -242,7 +244,66 @@ describe('security', () => {
         },
       });
       const templ = compile('safe');
-      await expect(templ({ obj })).rejects.toThrow(/getter-boom/);
+      expect(await templ({ obj })).toEqual('safe');
+    });
+
+    it('referenced getters still run and have their result stripped', async () => {
+      let calls = 0;
+      const obj: any = {};
+      Object.defineProperty(obj, 'live', {
+        enumerable: true,
+        get() {
+          calls += 1;
+          return {
+            value: 'ok',
+            method() {
+              return 'pwned';
+            },
+          };
+        },
+      });
+      // The getter fires only because the template reads it; its returned object
+      // is still null-prototype stripped, so the method stays hidden.
+      const templ = compile('{{obj.live.value}}|{{obj.live.method}}');
+      expect(await templ({ obj })).toEqual('ok|');
+      expect(calls).toEqual(2);
+    });
+
+    it('Map/Set/RegExp are preserved by value for helpers but hide methods from templates', async () => {
+      const bigodin = new Bigodin();
+      const captured: any = {};
+      // eslint-disable-next-line func-names
+      bigodin.addHelper('capture', function (this: any) {
+        captured.m = this.contexts[0].m;
+        captured.s = this.contexts[0].s;
+        captured.r = this.contexts[0].r;
+        return '';
+      });
+      const templ = bigodin.compile('{{capture}}{{m.size}}|{{r.source}}');
+      const input = { m: new Map([['k', 1]]), s: new Set([1, 2]), r: /ab+c/gi };
+      // Methods/getters stay hidden from the template (prototype-resident).
+      expect(await templ(input)).toEqual('|');
+      // Helpers receive real, working instances cloned by value.
+      expect(captured.m).toBeInstanceOf(Map);
+      expect(captured.m.get('k')).toEqual(1);
+      expect(captured.s).toBeInstanceOf(Set);
+      expect(captured.s.has(2)).toBe(true);
+      expect(captured.r).toBeInstanceOf(RegExp);
+      expect(captured.r.source).toEqual('ab+c');
+      // Cloned, not the caller's own references.
+      expect(captured.m).not.toBe(input.m);
+    });
+
+    it('URL/Buffer/TypedArray expose no prototype surface to templates', async () => {
+      const templ = compile('{{u.href}}|{{u.constructor}}|{{b.constructor}}|{{t.buffer}}|{{t.length}}');
+      const out = await templ({
+        u: new URL('https://secret.example/path'),
+        b: Buffer.from('hi'),
+        t: new Uint8Array([1, 2]),
+      });
+      // href is a prototype getter, constructor/buffer/length are prototype or
+      // blocked - none are own data props, so all resolve empty.
+      expect(out).toEqual('||||');
     });
   });
 
