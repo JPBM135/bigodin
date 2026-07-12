@@ -13,6 +13,8 @@ const Bigodin = require('@jpbm135/bigodin').default;
 const {
   compile,
   compileExpression,
+  lazy,
+  LazyValue,
   parse,
   parseExpression,
   run,
@@ -24,6 +26,8 @@ const {
 import Bigodin, {
   compile,
   compileExpression,
+  lazy,
+  LazyValue,
   parse,
   parseExpression,
   run,
@@ -90,15 +94,59 @@ interface RunOptions {
 Every helper is invoked with an `Execution` instance bound to `this`:
 
 ```typescript
-bigodin.addHelper('myHelper', function (...args) {
+bigodin.addHelper('myHelper', async function (...args) {
   this.data; // the RunOptions.data object (may be undefined)
   this.halt(); // stop execution; the run returns whatever has been emitted so far
   this.contexts; // the context stack (read-only by convention)
   this.variables; // {{= $var ...}} assignments for this run
+  await this.resolveLazy(value); // resolve a LazyValue; non-lazy values pass through unchanged
 });
 ```
 
 `halt()` is the programmatic counterpart to the `{{return}}` block. Mutating `this.data` is the supported way to return structured data from a render.
+
+`resolveLazy(value)` resolves a [`LazyValue`](#lazy-context-values) and returns non-lazy values untouched, so a helper can call it unconditionally. A helper receives a path parameter already resolved, but if a parameter resolves to an **object that still holds lazy fields** (a nested lazy is handed back as a fresh wrapper), use `this.resolveLazy(obj.field)` to force that field on demand.
+
+## Lazy context values
+
+Place a `LazyValue` in the context to defer loading a value until a template path or helper actually reads it. The loader runs at most once per render (by default), and its result is stripped through the same [context clone](/docs/explanation/security-model#the-context-clone) as any eager value, so a lazy field behaves identically to one you provided up front.
+
+```typescript
+import { lazy } from '@jpbm135/bigodin';
+
+const context = {
+  user: lazy(() => db.user(id)), // not awaited unless a path reads it
+};
+
+await compile('{{#with user}}{{name}}{{/with}}')(context);
+```
+
+### `lazy(loader, options?)`
+
+Creates a `LazyValue`. `new LazyValue(loader, options?)` is equivalent; `lazy()` is the ergonomic form. The class is exported for `instanceof` checks and TypeScript types (`LazyLoader`, `LazyErrorHandler`, `LazyOptions`).
+
+- **`loader: () => unknown | Promise<unknown>`** produces the value, synchronously or asynchronously. It runs the first time the value is read along a path (`{{user.name}}`, `{{#with user}}`, `{{#each rows}}`), or when a helper calls `this.resolveLazy` on it.
+- **`options.cache?: boolean`** (default `true`) memoizes the loader per render: referencing the value many times in one render runs the loader once, including when the **same instance** is aliased at two paths (`{ author: u, editor: u }`). Set `false` to re-run the loader on every reference.
+- **`options.onError?: (error) => unknown | Promise<unknown>`** is called with the raw loader error. Return a value to substitute (it is stripped like any loader result) or re-throw to fail the render. When omitted, the error propagates, wrapped with the path and position of the failing expression.
+
+```typescript
+lazy(() => db.user(id)); // fail the render if the load throws
+lazy(() => db.user(id), { onError: () => null }); // render empty on failure
+lazy(() => db.user(id), { onError: () => ({ name: 'Guest' }) }); // fallback value
+lazy(() => clock.now(), { cache: false }); // re-read on every reference
+```
+
+### Resolution and caching
+
+- A lazy value resolves **on access**, wherever a template reads it: a leaf (`{{x}}`), mid-path (`{{a.b.c}}`), as a block subject (`{{#with x}}`, `{{#each x}}`), as a block param, or via `{{.}}` / `{{$root}}`. A lazy value that is never read never loads.
+- A resolved object is deep-cloned to a null prototype, so nested lazy values inside it resolve on the next hop, and prototype methods / non-enumerable fields stay hidden from the template.
+- Caching is **per render**. A reused `LazyValue` instance gets a fresh, empty cache on each `run`, so memoization never leaks across renders.
+
+### Limitations
+
+- **Loaders are not interrupted by `maxExecutionMillis`.** Like an async helper, a loader that exceeds the budget still completes; the limit is checked between statements, so the next statement trips the wall. See [Bound execution time](/docs/how-to/bound-execution-time).
+- **Helpers must return resolved data, not a `LazyValue`.** A wrapper returned from a helper is not auto-resolved at the render site and would stringify as `[object Object]`. Resolve it with `this.resolveLazy` before returning.
+- **A loader should return data, not another `LazyValue` directly.** A lazy nested _inside_ a returned object resolves normally; a loader whose top-level return is itself a `LazyValue` is not unwrapped.
 
 ## Hash arguments
 

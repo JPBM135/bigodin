@@ -1,14 +1,32 @@
 import type { ExpressionStatement } from '../parser/statements.js';
-import { lookupOwnValue } from '../utils.js';
+import { lookupOwnValue, resolveLazy } from '../utils.js';
 import type { Execution } from './execution.js';
 import type { LiteralValue } from './index.js';
 
-export function runPathExpression(
+export async function runPathExpression(
   execution: Execution,
   expression: ExpressionStatement,
-): LiteralValue {
+): Promise<LiteralValue> {
+  // Resolving a lazy value is the only fallible step here. Wrap a failing
+  // loader (or its re-throwing onError) with the path and position, mirroring
+  // the way helper errors are rewritten.
+  const resolve = async (value: unknown): Promise<unknown> => {
+    try {
+      return await resolveLazy(value);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      if (expression.loc) {
+        err.message = `Error resolving lazy value at "${expression.path}", position ${expression.loc.start}: ${err.message}`;
+      } else {
+        err.message = `Error resolving lazy value at "${expression.path}": ${err.message}`;
+      }
+
+      throw err;
+    }
+  };
+
   if (expression.path === '.' || expression.path === '$this') {
-    return execution.context;
+    return (await resolve(execution.context)) as LiteralValue;
   }
 
   const path = expression.path.split('.');
@@ -38,8 +56,12 @@ export function runPathExpression(
     }
   }
 
+  // The leading context may itself be lazy (a lazy array element bound as a
+  // block param, a lazy whole-context, etc.), so resolve it before traversing.
+  ctx = await resolve(ctx);
+
   for (const key of path) {
-    const resolved = lookupOwnValue(ctx, key);
+    const resolved = await resolve(lookupOwnValue(ctx, key));
     if (typeof resolved === 'undefined') {
       return undefined;
     }

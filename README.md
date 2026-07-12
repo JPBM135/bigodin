@@ -61,6 +61,7 @@ Handlebars-style template syntax:
 What sets Bigodin apart:
 
 - **Async helpers** — `await` requests, database calls, file IO, etc. directly from a helper.
+- **Lazy context values** — wrap a field in `lazy(() => …)` to defer an expensive load until a path actually reads it; resolved once per render, with `cache`/`onError` options.
 - **Safe by construction** — no codegen, no `eval`, no `Function` constructor; templates are walked over a JSON AST.
 - **Execution limits** — `maxExecutionMillis` and `halt()` let you bound runtime on hostile input.
 - **Better error messages** — parser combinators surface line/column and what was expected.
@@ -120,6 +121,7 @@ Things Bigodin **does not** do, by design or because they are out of scope. Read
 - **Templates are interpreted, never compiled.** You cannot get a JavaScript function out of a template; this is the security guarantee, not an oversight.
 - **Helpers must be registered ahead of time** via `addHelper` (or the `extraHelpers` argument to `run`). Templates cannot define their own helpers, import code, or read files.
 - **Module-level `parse`/`run`/`compile` exports do not carry custom helpers.** `addHelper` only mutates the instance it is called on — instantiate `new Bigodin()` if you need a registry of your own.
+- **Lazy loaders are not interrupted by `maxExecutionMillis`.** Like an async helper, a `lazy(() => …)` loader that exceeds the budget still completes; the limit is checked between statements. Helpers must also return resolved data, not a `LazyValue` (resolve one with `this.resolveLazy` first). See [Lazy-load context values](website/docs/how-to/lazy-load-context-values.md).
 - **Only one runtime dependency** (`pierrejs`). New runtime deps are scrutinized; the value prop is "safe to run on user input".
 
 ### Security boundaries

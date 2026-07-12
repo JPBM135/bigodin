@@ -1,7 +1,7 @@
 /* eslint-disable id-length */
 /* eslint-disable unicorn/consistent-function-scoping */
 import { describe, it, expect } from 'vitest';
-import Bigodin, { compile, compileExpression, parse, run } from '../src';
+import Bigodin, { compile, compileExpression, lazy, parse, run } from '../src';
 import { VERSION } from '../src/parser';
 import type { Execution } from '../src/runner/execution';
 
@@ -568,6 +568,54 @@ describe('security', () => {
     it('compileExpression cannot reach prototype chain via path access', async () => {
       const expr = compileExpression('obj.__proto__.toString');
       expect(await expr({ obj: { a: 1 } })).toEqual(undefined);
+    });
+  });
+
+  describe('lazy values', () => {
+    it('strips the prototype off a resolved lazy object', async () => {
+      class Holder {
+        public own = 'data';
+
+        public method() {
+          return 'pwned';
+        }
+      }
+      const templ = compile('{{x.own}}{{x.method}}{{x.inherited}}');
+      const res = await templ({
+        x: lazy(() => Object.assign(new Holder(), { inherited: undefined })),
+      });
+      // Own field renders; the class prototype and its `method` are stripped.
+      expect(res).toEqual('data');
+    });
+
+    it('strips elements of an array returned by a loader', async () => {
+      class Row {
+        public n = 'a';
+
+        public secret() {
+          return 'leak';
+        }
+      }
+      const templ = compile('{{#each rows}}{{n}}{{secret}}{{/each}}');
+      const res = await templ({ rows: lazy(() => [new Row()]) });
+      expect(res).toEqual('a');
+    });
+
+    it('does not let a loader pollute via unsafe keys in its result', async () => {
+      const templ = compile('{{x.polluted}}{{x.ok}}');
+      const res = await templ({
+        x: lazy(() => JSON.parse('{"__proto__": {"polluted": "yes"}, "ok": "fine"}')),
+      });
+      expect(res).toEqual('fine');
+      expect(({} as any).polluted).toBeUndefined();
+    });
+
+    it('cannot be forged from inside a template', async () => {
+      // Templates have no syntax to construct a LazyValue; a context key named
+      // like the class is just an ordinary value, resolved as a normal path.
+      const templ = compile('{{LazyValue}}{{lazy}}');
+      const res = await templ({ LazyValue: 'plain', lazy: 'text' });
+      expect(res).toEqual('plaintext');
     });
   });
 });

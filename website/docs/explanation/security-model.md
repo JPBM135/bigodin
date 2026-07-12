@@ -87,6 +87,12 @@ The guarantee is uniform: the **value** survives for your helpers, but the **met
 - **Circular references are safe.** The clone tracks objects it has already started copying, so `obj.self = obj` resolves to the same clone (`clone.self === clone`) instead of overflowing the stack.
 - **Getters are evaluated lazily.** An enumerable getter on a context object is not invoked at clone time; it runs only if a template actually reads that key, and its result is stripped like any other value. A getter the template never references never fires, so there are no surprise side effects, and a throwing getter does not break a render that does not touch it.
 
+### Lazy values resolve through the same clone
+
+A [`LazyValue`](/docs/lib#lazy-context-values) (an opt-in deferred-load marker placed in the context) survives the clone as a fresh instance and is resolved the first time a path or helper reads it. Crucially, the loader's **result re-enters through `deepCloneNullPrototype`** before the template sees it: prototypes are stripped, getters are deferred, value-typed objects are cloned by value, and `UNSAFE_KEYS` are dropped. A lazily-loaded object is therefore subject to the exact same boundary as one provided eagerly, with one practical difference for traversal: the path resolver's per-hop `lookupOwnValue` already guards prototype access, so the clone here is about **consistency with eager context** (and getter handling), not a second, weaker sandbox.
+
+A template cannot construct or forge a `LazyValue` — there is no syntax for it. Only integrator-supplied context can carry one, so a lazy load is as trusted as an async helper, and a context key that merely happens to be named `LazyValue` is just an ordinary value.
+
 ## Why no compilation, even as an opt-in?
 
 The recurring proposal: "could you optionally compile for speed, with a flag?" The answer is no. Two reasons.

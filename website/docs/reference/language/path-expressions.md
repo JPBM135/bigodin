@@ -67,6 +67,10 @@ A missing key resolves to `undefined` and renders as the empty string. Bigodin d
 
 A plain leading name (or the first segment of a dotted path) is resolved against the active [block params](/docs/language/block-params) before the context, so an `as |name|` binding shadows a context key of the same name. The prefixed forms below (`$this`, `$parent`, `$root`, `@…`, `$<var>`) are never shadowed by a block param.
 
+## Lazy values resolve transparently
+
+If a context value is a [`LazyValue`](/docs/lib#lazy-context-values), the path resolver loads it the first time a path reads it — at any depth. `{{user.profile.bio}}` works whether `user`, `profile`, or `bio` is lazy; the loader fires only for the segment actually traversed, and only if the template reaches it. From the template's point of view a lazy value is indistinguishable from an eager one. See [Lazy-load context values](/docs/how-to/lazy-load-context-values).
+
 ```hbs
 [{{missing}}]
 ```

@@ -1,6 +1,7 @@
 /* eslint-disable id-length */
 import { describe, it, expect } from 'vitest';
-import { deepCloneNullPrototype, ensure } from '../src/utils';
+import { lazy, LazyValue } from '../src';
+import { deepCloneNullPrototype, ensure, resolveLazy } from '../src/utils';
 
 describe('utils', () => {
   describe('deep clone', () => {
@@ -299,6 +300,41 @@ describe('utils', () => {
 
       expect(clone.own).toEqual(7);
       expect(clone.leaked).toBeUndefined();
+    });
+
+    it('should hand out a fresh LazyValue instance, not key-copy it', () => {
+      const u = lazy(() => 'x');
+      const clone = deepCloneNullPrototype({ u }) as any;
+
+      expect(clone.u).toBeInstanceOf(LazyValue);
+      expect(clone.u).not.toBe(u);
+    });
+
+    it('should collapse an aliased LazyValue to a single clone', () => {
+      const u = lazy(() => 'x');
+      const clone = deepCloneNullPrototype({ a: u, b: u }) as any;
+
+      expect(clone.a).toBeInstanceOf(LazyValue);
+      expect(clone.a).toBe(clone.b);
+    });
+  });
+
+  describe('resolveLazy', () => {
+    it('returns a non-lazy value untouched', async () => {
+      const value = { a: 1 };
+      expect(await resolveLazy(5)).toEqual(5);
+      expect(await resolveLazy(value)).toBe(value);
+    });
+
+    it('resolves and strips a lazy object to a null prototype', async () => {
+      const resolved = (await resolveLazy(lazy(() => ({ a: 1 })))) as any;
+      expect(resolved).toEqual({ a: 1 });
+      expect(Object.getPrototypeOf(resolved)).toBeNull();
+    });
+
+    it('resolves a lazy scalar without cloning', async () => {
+      expect(await resolveLazy(lazy(() => 'x'))).toEqual('x');
+      expect(await resolveLazy(lazy(() => null))).toBeNull();
     });
   });
 

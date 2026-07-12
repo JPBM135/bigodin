@@ -1,3 +1,4 @@
+import { resolveLazy } from '../utils.js';
 import type { Helper } from './helpers/type.js';
 import type { BigodinOptions } from './options.js';
 import type { LiteralValue } from './index.js';
@@ -150,6 +151,18 @@ export class Execution {
    */
   public halt() {
     this.isHalted = true;
+  }
+
+  /**
+   * Resolve a lazy value from within a helper, returning non-lazy values
+   * unchanged. A resolved object is stripped (deep-cloned to a null prototype)
+   * exactly like the rest of the context, so helpers can safely traverse it.
+   *
+   * @param {unknown} value Possibly-lazy value to resolve.
+   * @return {Promise<unknown>} The resolved, stripped value.
+   */
+  public async resolveLazy(value: unknown): Promise<unknown> {
+    return resolveLazy(value);
   }
 
   /**

@@ -1,7 +1,24 @@
+import { LazyValue } from './lazy.js';
+
 export const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype', 'hasOwnProperty']);
 
 export function deepCloneNullPrototype(obj: object): object {
   return cloneValue(obj, new WeakMap()) as object;
+}
+
+// Resolve a possibly-lazy value, returning non-lazy values untouched (no
+// re-clone). A resolved object is re-stripped through the same clone as the
+// eager context, so a lazily-loaded field behaves identically to one provided
+// up front (getters deferred/bound, Date/Map value-cloned, null prototype).
+export async function resolveLazy(value: unknown): Promise<unknown> {
+  if (!(value instanceof LazyValue)) {
+    return value;
+  }
+
+  const resolved = await value.resolve();
+  return resolved !== null && typeof resolved === 'object'
+    ? deepCloneNullPrototype(resolved)
+    : resolved;
 }
 
 // Record an `original -> clone` mapping for the cycle guard, and also
@@ -27,6 +44,16 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   const existing = seen.get(value);
   if (typeof existing !== 'undefined') {
     return existing;
+  }
+
+  // LazyValue is an opt-in deferred-load marker. Hand out a fresh instance per
+  // run so memoization never leaks across renders, and track it so two
+  // references to the same instance in one context graph collapse to a single
+  // clone - and therefore a single loader call. It is resolved and re-stripped
+  // on access in runPathExpression, never key-copied here (which would erase
+  // its methods, just like Date/Map below).
+  if (value instanceof LazyValue) {
+    return track(seen, value, value.fresh());
   }
 
   if (Array.isArray(value)) {

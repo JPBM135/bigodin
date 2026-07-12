@@ -149,5 +149,7 @@ export const { compile, compileExpression } = defaultBigodin;
 
 export type { TemplateStatement } from './parser/statements.js';
 export type { BigodinOptions } from './runner/options.js';
+export { lazy, LazyValue } from './lazy.js';
+export type { LazyLoader, LazyErrorHandler, LazyOptions } from './lazy.js';
 export { Bigodin };
 export default Bigodin;
