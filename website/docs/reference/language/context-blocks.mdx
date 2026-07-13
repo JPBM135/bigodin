@@ -16,34 +16,10 @@ Inside the block you can still reach the outer context with `$parent` or `$root`
 
 Bare-name blocks treat object values as a context push:
 
-```hbs
-{{#parent}}
-  Hello,
-  {{name}}!
-{{/parent}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George",
-  "parent": {
-    "name": "Alice"
-  }
-}
-```
-
-### Generated output
-
-```
-Hello, Alice!
-```
-
-</details>
+<CompactPlayground
+  template={'{{#parent}}\n  Hello,\n  {{name}}!\n{{/parent}}'}
+  context={{ name: 'George', parent: { name: 'Alice' } }}
+/>
 
 `{{name}}` resolves against the pushed `parent` object, so it picks up `"Alice"`, not the outer `"George"`.
 
@@ -51,32 +27,10 @@ Hello, Alice!
 
 A truthy value that is **not** an object does not push context. The body runs once, with the surrounding context still in scope. To force "treat this scalar as the new context," use `with`:
 
-```hbs
-{{#with parent}}
-  Hello,
-  {{$this}}!
-{{/with}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George",
-  "parent": 5
-}
-```
-
-### Generated output
-
-```
-Hello, 5!
-```
-
-</details>
+<CompactPlayground
+  template={'{{#with parent}}\n  Hello,\n  {{$this}}!\n{{/with}}'}
+  context={{ name: 'George', parent: 5 }}
+/>
 
 This is a deliberate Handlebars-style behavior; classic Mustache pushes scalars too. See [Mustache spec compatibility](/docs/mustache-compat) for the divergence.
 
@@ -84,34 +38,10 @@ This is a deliberate Handlebars-style behavior; classic Mustache pushes scalars 
 
 `if` evaluates its argument as truthy / falsy and **does not** push context, even when the argument is an object:
 
-```hbs
-{{#if parent}}
-  Hello,
-  {{name}}!
-{{/if}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George",
-  "parent": {
-    "name": "Alice"
-  }
-}
-```
-
-### Generated output
-
-```
-Hello, George!
-```
-
-</details>
+<CompactPlayground
+  template={'{{#if parent}}\n  Hello,\n  {{name}}!\n{{/if}}'}
+  context={{ name: 'George', parent: { name: 'Alice' } }}
+/>
 
 `name` resolves against the outer context (`"George"`) because `if` did not change the scope. This is the standard pattern for "render the surrounding template only when a related object exists."
 
@@ -127,48 +57,18 @@ Every block (loop, context, even a positional block helper that pushes context) 
 
 `$parent` chains: `{{$parent.$parent.foo}}` walks two levels up. The Handlebars `../` form chains the same way: `{{../../foo}}`.
 
-```hbs
-{{name}}, your comments:
-
-{{#comments}}
-    From {{author}} to {{../name}}:
-    {{comment}}
-{{/comments}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George",
-  "comments": [
-    {
-      "author": "Alice",
-      "comment": "Nice presentation"
-    },
-    {
-      "author": "Bob",
-      "comment": "Thanks for the feedbacks"
-    }
-  ]
-}
-```
-
-### Generated output
-
-```
-George, your comments:
-
-    From Alice to George:
-    Nice presentation
-    From Bob to George:
-    Thanks for the feedbacks
-```
-
-</details>
+<CompactPlayground
+  template={
+    '{{name}}, your comments:\n\n{{#comments}}\n    From {{author}} to {{../name}}:\n    {{comment}}\n{{/comments}}'
+  }
+  context={{
+    name: 'George',
+    comments: [
+      { author: 'Alice', comment: 'Nice presentation' },
+      { author: 'Bob', comment: 'Thanks for the feedbacks' },
+    ],
+  }}
+/>
 
 `{{../name}}` and `{{$parent.name}}` are interchangeable; they produce identical ASTs.
 

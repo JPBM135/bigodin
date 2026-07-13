@@ -6,49 +6,18 @@ sidebar_position: 6
 
 When a block's argument is an array, the body runs once per element with that element pushed as the current context:
 
-```hbs
-{{name}}, your comments:
-
-{{#comments}}
-  {{author}}
-  wrote:
-  {{comment}}
-{{/comments}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George",
-  "comments": [
-    {
-      "author": "Alice",
-      "comment": "Nice presentation"
-    },
-    {
-      "author": "Bob",
-      "comment": "Thanks for the feedbacks"
-    }
-  ]
-}
-```
-
-### Generated output
-
-```
-George, your comments:
-
-    Alice wrote:
-    Nice presentation
-    Bob wrote:
-    Thanks for the feedbacks
-```
-
-</details>
+<CompactPlayground
+  template={
+    '{{name}}, your comments:\n\n{{#comments}}\n  {{author}}\n  wrote:\n  {{comment}}\n{{/comments}}'
+  }
+  context={{
+    name: 'George',
+    comments: [
+      { author: 'Alice', comment: 'Nice presentation' },
+      { author: 'Bob', comment: 'Thanks for the feedbacks' },
+    ],
+  }}
+/>
 
 The blank line between the title and the first iteration is preserved verbatim; the `{{#comments}}` and `{{/comments}}` tags themselves consume their own lines because they are [standalone](/docs/language/comments#standalone-lines).
 
@@ -62,42 +31,19 @@ Inside the loop, bare path expressions resolve against the current element. Two 
 | `{{this}}`  | Handlebars-style alias           |
 | `{{.}}`     | Mustache-style implicit iterator |
 
+<CompactPlayground
+  template={'{{#keywords}}\n  -\n  {{$this}}\n{{/keywords}}'}
+  context={{ keywords: ['lorem', 'ipsum', 'dolor'] }}
+/>
+
+The three forms are interchangeable. Swapping `{{$this}}` for `{{.}}` (or `{{this}}`) produces the same output:
+
 ```hbs
 {{#keywords}}
   -
-  {{$this}}
+  {{.}}
 {{/keywords}}
 ```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "keywords": ["lorem", "ipsum", "dolor"]
-}
-```
-
-### Generated output
-
-```
-- lorem
-- ipsum
-- dolor
-```
-
-</details>
-
-The three forms are interchangeable:
-
-```hbs
-{{#keywords}}- {{.}}
-{{/keywords}}
-```
-
-…produces the same output.
 
 ## Empty arrays
 

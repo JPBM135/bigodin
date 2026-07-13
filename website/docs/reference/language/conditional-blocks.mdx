@@ -6,31 +6,13 @@ sidebar_position: 5
 
 A block runs its body conditionally based on a value. Blocks open with `{{#name}}` and close with `{{/name}}`. The simplest form treats the value as a truthy / falsy switch:
 
-```hbs
-{{#name}}
-  Hello,
-  {{name}}!
-{{/name}}
-Welcome to our website :)
-```
-
-<details>
-<summary>Context and output</summary>
-
-With context `{"name": "George"}` the output is:
-
-```
-Hello, George!
-Welcome to our website :)
-```
-
-With context `{}` or `{"name": null}` the output is:
-
-```
-Welcome to our website :)
-```
-
-</details>
+<CompactPlayground
+  template={'{{#name}}\n  Hello,\n  {{name}}!\n{{/name}}\nWelcome to our website :)'}
+  cases={[
+    { label: 'With name', context: { name: 'George' } },
+    { label: 'Without name', context: {} },
+  ]}
+/>
 
 There must be **no space** between the opening `{{` and the `#`. `{{ #name}}` is a syntax error.
 
@@ -38,23 +20,13 @@ There must be **no space** between the opening `{{` and the `#`. `{{ #name}}` is
 
 A conditional block may include an `{{else}}` branch that runs when the value is falsy:
 
-```hbs
-{{#name}}
-  Hello,
-  {{name}}!
-{{else}}
-  Hello, Stranger!
-{{/name}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-With context `{"name": "George"}` the output is `Hello, George!`.
-
-With context `{}` or `{"name": null}` the output is `Hello, Stranger!`.
-
-</details>
+<CompactPlayground
+  template={'{{#name}}\n  Hello,\n  {{name}}!\n{{else}}\n  Hello, Stranger!\n{{/name}}'}
+  cases={[
+    { label: 'With name', context: { name: 'George' } },
+    { label: 'Without name', context: {} },
+  ]}
+/>
 
 A block can have at most one `{{else}}` branch.
 
@@ -62,22 +34,16 @@ A block can have at most one `{{else}}` branch.
 
 Any registered helper can be invoked as the head of a block. The bundled `if` helper is the canonical conditional:
 
-```hbs
-{{#if (eq name 'george')}}
-  Hello, George!
-{{else}}
-  Hello, stranger!
-{{/if}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-With context `{"name": "george"}` the output is `Hello, George!`.
-
-With context `{"name": "alice"}` the output is `Hello, stranger!`.
-
-</details>
+<CompactPlayground
+  template={"{{#if (eq name 'george')}}\n  Hello, George!\n{{else}}\n  Hello, stranger!\n{{/if}}"}
+  cases={[
+    { label: 'george', context: { name: 'george' } },
+    { label: 'alice', context: { name: 'alice' } },
+  ]}
+  helpers={{
+    eq: (a, b) => a === b,
+  }}
+/>
 
 The full set of bundled block helpers (`if`, `unless`, `with`, `each`, `return`) is in [Block helpers reference](/docs/helpers). The return value of a block helper controls what the body sees; see [Block helper return values](/docs/lib#block-helper-return-values).
 

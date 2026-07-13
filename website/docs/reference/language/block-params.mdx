@@ -6,30 +6,10 @@ sidebar_position: 12
 
 A block head may end with `as |name1 name2|` to bind local names to the values the block yields. The names are scoped to the block body (and any blocks nested inside it) and **shadow** context keys of the same name.
 
-```hbs
-{{#each users as |user index|}}
-  {{index}}.
-  {{user.name}}
-{{/each}}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{ "users": [{ "name": "Alice" }, { "name": "Bob" }] }
-```
-
-### Generated output
-
-```
-0. Alice
-1. Bob
-```
-
-</details>
+<CompactPlayground
+  template={'{{#each users as |user index|}}\n  {{index}}.\n  {{user.name}}\n{{/each}}'}
+  context={{ users: [{ name: 'Alice' }, { name: 'Bob' }] }}
+/>
 
 This is the Handlebars block-params syntax. It is most useful for naming the current item and index so you can reach them by name from inside nested blocks, instead of relying on `$parent` / `$root` or capturing [variables](/docs/language/variables).
 

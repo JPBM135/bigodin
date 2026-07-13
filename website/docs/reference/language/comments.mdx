@@ -6,31 +6,10 @@ sidebar_position: 2
 
 A comment is delimited by `{{!` and `}}`. The contents are not rendered; the comment itself may be removed from the output entirely (see "standalone lines" below).
 
-```hbs
-{{! greeting the user }}
-Hello,
-{{name}}
-:)
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George"
-}
-```
-
-### Generated output
-
-```
-Hello, George :)
-```
-
-</details>
+<CompactPlayground
+  template={'{{! greeting the user }}\nHello,\n{{name}}\n:)'}
+  context={{ name: 'George' }}
+/>
 
 ## What can go inside
 

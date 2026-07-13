@@ -16,28 +16,13 @@ A helper call is a name followed by zero or more arguments separated by spaces. 
 bigodin.addHelper('capitalize', (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1));
 ```
 
-```hbs
-Hello, {{capitalize name}}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "george"
-}
-```
-
-### Generated output
-
-```
-Hello, George!
-```
-
-</details>
+<CompactPlayground
+  template={'Hello, {{capitalize name}}!'}
+  context={{ name: 'george' }}
+  helpers={{
+    capitalize: (s) => (s == null ? s : String(s).charAt(0).toUpperCase() + String(s).slice(1)),
+  }}
+/>
 
 Spaces inside the mustache are not significant: `{{capitalize name}}`, `{{ capitalize name }}`, and `{{capitalize  name }}` are equivalent.
 
@@ -45,18 +30,16 @@ Spaces inside the mustache are not significant: `{{capitalize name}}`, `{{ capit
 
 Pass arguments by listing them after the helper name. With a `default` helper that returns the first non-null argument:
 
-```hbs
-Hello, {{default name 'stranger'}}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-With context `{"name": "George"}` the output is `Hello, George!`.
-
-With context `{}` the output is `Hello, stranger!`.
-
-</details>
+<CompactPlayground
+  template={"Hello, {{default name 'stranger'}}!"}
+  cases={[
+    { label: 'With name', context: { name: 'George' } },
+    { label: 'Without name', context: {} },
+  ]}
+  helpers={{
+    default: (...args) => args.find((v) => v != null) ?? '',
+  }}
+/>
 
 Argument types:
 
@@ -74,18 +57,17 @@ Argument types:
 
 Wrap a helper call in parentheses to use its result as an argument to another helper:
 
-```hbs
-Hello, {{default (capitalize name) 'stranger'}}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-With context `{"name": "george"}` the output is `Hello, George!`.
-
-With context `{}` the output is `Hello, stranger!`.
-
-</details>
+<CompactPlayground
+  template={"Hello, {{default (capitalize name) 'stranger'}}!"}
+  cases={[
+    { label: 'With name', context: { name: 'george' } },
+    { label: 'Without name', context: {} },
+  ]}
+  helpers={{
+    default: (...args) => args.find((v) => v != null) ?? '',
+    capitalize: (s) => (s == null ? s : String(s).charAt(0).toUpperCase() + String(s).slice(1)),
+  }}
+/>
 
 Subexpressions can nest arbitrarily deep: `{{outer (mid (inner x) y) z}}`.
 

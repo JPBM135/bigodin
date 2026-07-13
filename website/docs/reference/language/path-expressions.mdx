@@ -6,28 +6,7 @@ sidebar_position: 1
 
 A **path expression** is a mustache (between `{{` and `}}`) that reads a value out of the rendering context. The simplest form names a top-level key:
 
-```hbs
-Hello, {{name}}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": "George"
-}
-```
-
-### Generated output
-
-```
-Hello, George!
-```
-
-</details>
+<CompactPlayground template={'Hello, {{name}}!'} context={{ name: 'George' }} />
 
 Spaces inside the braces are optional and never significant: `{{name}}`, `{{ name }}`, and `{{  name  }}` all parse identically.
 
@@ -35,31 +14,10 @@ Spaces inside the braces are optional and never significant: `{{name}}`, `{{ nam
 
 Nested fields are reached with dot notation. There is no special operator for arrays; numeric segments are supported by helpers, not by the path syntax itself:
 
-```hbs
-Hey {{name.first}} {{name.last}}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "name": {
-    "first": "George",
-    "last": "Smith"
-  }
-}
-```
-
-### Generated output
-
-```
-Hey George Smith!
-```
-
-</details>
+<CompactPlayground
+  template={'Hey {{name.first}} {{name.last}}!'}
+  context={{ name: { first: 'George', last: 'Smith' } }}
+/>
 
 ## Missing keys
 

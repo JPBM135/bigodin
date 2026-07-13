@@ -6,27 +6,7 @@ sidebar_position: 10
 
 A **template variable** stores a value that can be reused later in the same render. Variables are prefixed with `$` and assigned with the `=` mustache:
 
-```hbs
-{{= $name "John"}}
-Hello, {{ $name }}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{}
-```
-
-### Generated output
-
-```
-Hello, John!
-```
-
-</details>
+<CompactPlayground template={'{{= $name "John"}}\nHello, {{ $name }}!'} context={{}} />
 
 The assignment mustache produces no output of its own. It is "standalone" in the [comment](/docs/language/comments#standalone-lines) sense — when alone on a line, the line is removed.
 
@@ -43,145 +23,56 @@ The right-hand side of `{{= $name <value>}}` can be any expression that is also 
 
 Examples:
 
-```hbs
-{{= $userName user.name}}
-Hello, {{ $userName }}!
-```
+<CompactPlayground
+  template={'{{= $userName user.name}}\nHello, {{ $userName }}!'}
+  context={{ user: { name: 'Alice' } }}
+/>
 
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "user": {
-    "name": "Alice"
-  }
-}
-```
-
-### Generated output
-
-```
-Hello, Alice!
-```
-
-</details>
-
-```hbs
-{{= $upperName (uppercase name)}}
-Welcome, {{ $upperName }}!
-```
-
-<details>
-<summary>Context and output</summary>
-
-(With an `uppercase` helper registered.)
-
-### Context
-
-```json
-{
-  "name": "john"
-}
-```
-
-### Generated output
-
-```
-Welcome, JOHN!
-```
-
-</details>
+<CompactPlayground
+  template={'{{= $upperName (uppercase name)}}\nWelcome, {{ $upperName }}!'}
+  context={{ name: 'john' }}
+  helpers={{
+    uppercase: (s) => String(s).toUpperCase(),
+  }}
+/>
 
 ## Reassignment
 
 A variable can be reassigned. The new value replaces the old one immediately; subsequent reads see the new value:
 
-```hbs
-{{= $x 1}}
-{{= $y 2}}
-{{= $sum (add $x $y)}}
-{{= $result (multiply $sum 10)}}
-Result: {{ $result }}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{}
-```
-
-### Generated output
-
-```
-Result: 30
-```
-
-</details>
+<CompactPlayground
+  template={
+    '{{= $x 1}}\n{{= $y 2}}\n{{= $sum (add $x $y)}}\n{{= $result (multiply $sum 10)}}\nResult: {{ $result }}'
+  }
+  context={{}}
+  helpers={{
+    add: (a, b) => Number(a) + Number(b),
+    multiply: (a, b) => Number(a) * Number(b),
+  }}
+/>
 
 ## Scoping: variables are global
 
 Unlike block-pushed context, variables are **not** scoped to the block they were assigned in. An assignment inside a block is visible after the block closes, in sibling blocks, and in parent blocks:
 
-```hbs
-{{= $var "global"}}
-{{#condition}}
-    {{= $var "block"}}
-{{/condition}}
-Outside: {{ $var }}
-```
-
-<details>
-
-### Context
-
-```json
-{
-  "condition": true
-}
-```
-
-### Generated output
-
-```
-Outside: "block"
-```
-
-</details>
+<CompactPlayground
+  template={
+    '{{= $var "global"}}\n{{#condition}}\n    {{= $var "block"}}\n{{/condition}}\nOutside: {{ $var }}'
+  }
+  context={{ condition: true }}
+/>
 
 This is intentional — variables are how you accumulate state across iterations. The classic use is a running total in a loop:
 
-```hbs
-{{= $sum 0}}
-{{#numbers}}
-    {{= $sum (add $sum $this)}}
-{{/numbers}}
-Total: {{ $sum }}
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{
-  "numbers": [1, 2, 3, 4, 5]
-}
-```
-
-### Generated output
-
-```
-Total: 15
-```
-
-</details>
+<CompactPlayground
+  template={
+    '{{= $sum 0}}\n{{#numbers}}\n    {{= $sum (add $sum $this)}}\n{{/numbers}}\nTotal: {{ $sum }}'
+  }
+  context={{ numbers: [1, 2, 3, 4, 5] }}
+  helpers={{
+    add: (a, b) => Number(a) + Number(b),
+  }}
+/>
 
 If you need block-local state, use a fresh variable name per block.
 
@@ -189,26 +80,7 @@ If you need block-local state, use a fresh variable name per block.
 
 Reading a variable that was never assigned does **not** error; it resolves to `undefined` and renders as the empty string:
 
-```hbs
-Value: "{{$undefined}}"
-```
-
-<details>
-<summary>Context and output</summary>
-
-### Context
-
-```json
-{}
-```
-
-### Generated output
-
-```
-Value: ""
-```
-
-</details>
+<CompactPlayground template={'Value: "{{$undefined}}"'} context={{}} />
 
 ## Variables versus context
 

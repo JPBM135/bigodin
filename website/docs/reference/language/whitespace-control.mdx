@@ -15,28 +15,7 @@ strips whitespace after the tag
 strips whitespace on both sides
 ```
 
-<details>
-<summary>Context and output</summary>
-
-### Template
-
-```hbs
-a {{~name~}} b
-```
-
-### Context
-
-```json
-{ "name": "X" }
-```
-
-### Generated output
-
-```
-aXb
-```
-
-</details>
+<CompactPlayground template={'a {{~name~}} b'} context={{ name: 'X' }} />
 
 The trim is greedy: it consumes the entire run of spaces, tabs, and newlines adjacent to the tag, not just a single character or a single line.
 
