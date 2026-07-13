@@ -116,9 +116,10 @@ const stripStandaloneLines = (
     const slotAtEnd =
       atTemplateEnd && (idx === stmts.length - 1 || (idx === stmts.length - 2 && next !== null));
 
-    if (stmt.type === 'COMMENT') {
-      // A side already consumed by explicit `~` whitespace control is exempt
-      // from standalone-line processing (its whitespace is gone, and `~` wins).
+    if (stmt.type === 'COMMENT' || stmt.type === 'ASSIGNMENT') {
+      // Comments and assignments emit no output, so a tag alone on its line is
+      // a standalone line and the whole line is removed. A side already consumed
+      // by explicit `~` whitespace control is exempt (its whitespace is gone).
       const left = stmt.trim?.left ? null : prev;
       const right = stmt.trim?.right ? null : next;
       tryStripStandalone(left, right, slotAtStart, slotAtEnd);

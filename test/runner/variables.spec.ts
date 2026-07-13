@@ -221,4 +221,30 @@ Unknown status
       expect((await template({ shouldSet: false })).trim()).toEqual('baz');
     });
   });
+
+  describe('standalone assignment lines', () => {
+    it('strips a standalone assignment line at the template start', async () => {
+      expect(await compile('{{= $name "John"}}\nHello, {{ $name }}!')()).toEqual('Hello, John!');
+    });
+
+    it('strips a standalone assignment line in the middle', async () => {
+      expect(await compile('a\n{{= $x 1}}\nb')()).toEqual('a\nb');
+    });
+
+    it('strips several stacked standalone assignment lines', async () => {
+      const bigodin = withHelpers();
+      const template = bigodin.compile(
+        '{{= $x 1}}\n{{= $y 2}}\n{{= $sum (add $x $y)}}\nSum: {{ $sum }}',
+      );
+      expect(await template()).toEqual('Sum: 3');
+    });
+
+    it('does not strip when other text shares the line', async () => {
+      expect(await compile('a {{= $x 1}} b')()).toEqual('a  b');
+    });
+
+    it('leaves whitespace control (~) in charge when present', async () => {
+      expect(await compile('a  {{~= $v "V" ~}}  {{$v}}')({})).toEqual('aV');
+    });
+  });
 });
