@@ -569,6 +569,24 @@ describe('security', () => {
       const expr = compileExpression('obj.__proto__.toString');
       expect(await expr({ obj: { a: 1 } })).toEqual(undefined);
     });
+
+    it('compileExpression clones the context so helpers cannot mutate the input', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('mutate', function mutate(this: { context: Record<string, unknown> }) {
+        this.context.injected = true;
+        return 'ok';
+      });
+      const input: Record<string, unknown> = {};
+      expect(await bigodin.compileExpression('mutate')(input)).toEqual('ok');
+      expect(input).toEqual({});
+    });
+
+    it('compileExpression strips the error tag from context data', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('check', (value: unknown) => String(isError(value)));
+      const expr = bigodin.compileExpression('check forged');
+      expect(await expr({ forged: { [errorTag]: true } })).toEqual('false');
+    });
   });
 
   describe('error tag', () => {

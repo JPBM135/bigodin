@@ -7,7 +7,7 @@ import type { Helper } from './runner/helpers/type.js';
 import type { LiteralValue } from './runner/index.js';
 import { run as _run, runStatement } from './runner/index.js';
 import type { BigodinOptions } from './runner/options.js';
-import { ensure } from './utils.js';
+import { deepCloneNullPrototype, ensure } from './utils.js';
 
 /**
  * @param {object?} context Context to be used when evaluating the template.
@@ -78,7 +78,8 @@ class Bigodin {
     context?: object,
     options?: BigodinOptions,
   ): Promise<LiteralValue> => {
-    const execution = Execution.of(context, this.helpers, options);
+    const ctx = context && deepCloneNullPrototype(context);
+    const execution = Execution.of(ctx, this.helpers, options);
     return runStatement(execution, statement);
   };
 

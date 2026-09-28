@@ -73,7 +73,7 @@ Interpret a previously parsed AST. Returns `Promise<string>`.
 
 ### `bigodin.parseExpression(source)`, `bigodin.runExpression(ast, context?, options?)`, `bigodin.compileExpression(source)`
 
-Same as `parse` / `run` / `compile`, but for a single expression rather than a full template. Useful when you want to evaluate one mustache-shaped value without surrounding text. The expression is the body of a `{{...}}` minus the braces.
+Same as `parse` / `run` / `compile`, but for a single expression rather than a full template. The context is deep-cloned the same way as in `run`, so a context value returned by the expression is the clone, not your original object. Useful when you want to evaluate one mustache-shaped value without surrounding text. The expression is the body of a `{{...}}` minus the braces.
 
 ## `RunOptions`
 

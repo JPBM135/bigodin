@@ -50,7 +50,7 @@ The asymmetry matters. A template cannot reach into `data`, even by walking pare
 
 ## The context clone
 
-Before a run starts, Bigodin deep-clones the context you pass to `run` (`deepCloneNullPrototype` in `src/utils.ts`). The render walks the clone, never your original object. The clone does two jobs at once.
+Before a run starts, Bigodin deep-clones the context you pass to `run` or `runExpression`, and so to the runners returned by `compile` and `compileExpression` (`deepCloneNullPrototype` in `src/utils.ts`). The render walks the clone, never your original object. The clone does two jobs at once.
 
 **It strips prototypes.** Every plain object in the context is rebuilt with a `null` prototype, and path lookups go through `lookupOwnValue`, which returns a value only when the key is an **own, enumerable, non-function** property whose name is not in `UNSAFE_KEYS` (`__proto__`, `constructor`, `prototype`, `hasOwnProperty`). The combined effect: a template cannot reach a prototype method, a constructor, or any inherited property. There is no `{{x.constructor.constructor}}` pivot, because `constructor` is filtered and the clone has no prototype chain to walk anyway.
 
