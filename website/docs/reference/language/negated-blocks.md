@@ -12,7 +12,7 @@ You are not logged in
 {{/name}}
 ```
 
-The body runs when `name` is `null`, `undefined`, `false`, `0`, `''`, `NaN`, or an empty array. It is skipped for any truthy value.
+The body runs when `name` is `null`, `undefined`, `false`, `0`, `''`, `NaN`, an empty array, or a [tagged error](/docs/lib#error-returns) returned by a helper. It is skipped for any truthy value.
 
 ## Empty arrays
 

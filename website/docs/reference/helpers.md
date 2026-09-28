@@ -100,7 +100,7 @@ Negated form (`{{^with ...}}`) renders its body when every argument is falsy.
 {{/each}}
 ```
 
-Iterates over an array, pushing each element as the current context. A non-array argument is treated as a single-element list (the block runs once with that value as context). Empty arrays render nothing.
+Iterates over an array, pushing each element as the current context. A non-array argument is treated as a single-element list (the block runs once with that value as context). Empty arrays and [tagged errors](/docs/lib#error-returns) render nothing, or the `{{else}}` branch if present.
 
 Accepts [block params](/docs/language/block-params): `{{#each items as |item index|}}` binds the current element and its index to local names.
 

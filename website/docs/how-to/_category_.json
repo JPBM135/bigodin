@@ -5,6 +5,6 @@
   "link": {
     "type": "generated-index",
     "title": "How-to guides",
-    "description": "Recipes for specific problems: rendering HTML safely, caching ASTs, bounding execution time, writing async helpers, migrating from Mustache."
+    "description": "Recipes for specific problems: rendering HTML safely, caching ASTs, bounding execution time, writing async helpers, handling helper errors, migrating from Mustache."
   }
 }

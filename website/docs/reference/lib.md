@@ -146,39 +146,36 @@ await tmpl({ num: 3 }); // "3 is odd"
 
 ## Error returns
 
-`errorTag` is a well-known symbol that marks an object as an error, the same way `Symbol.iterator` marks an object as iterable. Set it to a truthy value on any object a helper returns (a plain object, an `Error`, an array, or a class instance). It can be an own property or inherited from the prototype.
+A helper can return an object marked as an error instead of throwing. The render continues, and the template can branch on the failure. For recipes, see [Handle helper errors](/docs/how-to/handle-helper-errors).
 
-- Tagged errors are **falsy** everywhere Bigodin checks truthiness: `#if`, `#unless`, negated blocks, `#each`, `#with`, custom block helpers, and the `if` / `unless` helpers.
-- Rendered directly (`{{myHelper}}`), or as an element of a rendered array, a tagged error outputs an empty string. It never throws.
-- Tagged errors pass unchanged to other helpers as parameters. Use `isError(value)` to detect one; the object itself carries whatever details you put on it.
-- The tag is `Symbol.for('bigodin.error')`, so the CommonJS and ESM builds share it. Only helper return values can carry it: the context clone copies string keys only, and templates only resolve string keys, so a template cannot forge or read the tag.
+### `errorTag`
 
-Both are also available as static members: `Bigodin.errorTag` and `Bigodin.isError`.
+`unique symbol`, equal to `Symbol.for('bigodin.error')`. Also available as `Bigodin.errorTag`.
+
+An object is a tagged error when `value[errorTag]` is truthy. The property can be own or inherited (for example, a getter on an `Error` subclass prototype). Primitives cannot be tagged.
 
 ```javascript
-import Bigodin, { errorTag, isError } from '@jpbm135/bigodin';
-
-class HelperError extends Error {
-  get [errorTag]() {
-    return true;
-  }
-}
-
-const bigodin = new Bigodin();
-bigodin.addHelper('fetchUser', async (id) => {
-  try {
-    return await api.getUser(id);
-  } catch (error) {
-    return new HelperError(error.message);
-    // or: return { [errorTag]: true, message: error.message };
-  }
-});
-bigodin.addHelper('errorMessage', (value) => (isError(value) ? value.message : ''));
-
-const tmpl = bigodin.compile(
-  '{{= $user (fetchUser id)}}{{#with $user}}Hi {{name}}{{else}}Failed: {{errorMessage $user}}{{/with}}',
-);
+return { [errorTag]: true, message: 'not found' };
 ```
+
+### `isError(value)`
+
+`(value: unknown) => boolean`. Also available as `Bigodin.isError`.
+
+Returns `true` when `value` is a non-null object whose `errorTag` property is truthy, otherwise `false`.
+
+### How the runner treats tagged errors
+
+| Where the value ends up                                                                 | Behavior                                                                                  |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Block expression (`#if`, `#unless`, `#each`, `#with`, `{{^...}}`, custom block helpers) | Falsy: the body is skipped and `{{else}}` runs if present (negated blocks run their body) |
+| `if` / `unless` helpers                                                                 | `if` returns `false`, `unless` returns `true`                                             |
+| `each` helper                                                                           | Returns `[]` instead of wrapping the value as `[value]`                                   |
+| Output (`{{helper}}`, or an element of a rendered array)                                | Renders as `''`; never throws                                                             |
+| Parameter of another helper                                                             | Passed unchanged                                                                          |
+| Context data passed to `run`                                                            | Tag is stripped by the context clone, so the value is not an error                        |
+
+Templates cannot read or create the tag: paths resolve string keys only.
 
 ## Module-level helpers do not carry custom helpers
 

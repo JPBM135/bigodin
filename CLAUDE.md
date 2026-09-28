@@ -48,6 +48,10 @@ Helper resolution (`src/runner/helper.ts`): user-registered helpers in `executio
 
 Bare-identifier expressions (no params) are ambiguous between path access and a no-arg helper call. The disambiguation in `runExpression` is: if a helper exists with that name (extra or default), call it; otherwise treat it as a path. This means registering a helper can shadow a context key with the same name.
 
+### Error tag (`src/runner/error.ts`)
+
+`errorTag` (`Symbol.for('bigodin.error')`) marks any object a helper returns as an error; `isError` checks it. Tagged values are falsy in `isFalsy` (`block.ts`) and in the `if`/`unless`/`each` helpers, and are skipped when rendering (`runStatements`, `coerceObjectValue`). Any new truthiness check or output path must go through `isError`. The context clone copies string keys only, which is what keeps templates and context data from forging the tag - don't copy symbol keys there.
+
 ### Built-in helpers (`src/runner/helpers/`)
 
 Grouped by category (`array`, `code`, `comparison`, `date`, `math`, `string`) and merged in `helpers/index.ts` into a null-prototype object. When adding a helper, put it in the matching file, export through that group, and add tests under `test/helpers/<group>.spec.js`. New helpers must also be documented in `HELPERS.md` - that file is the public contract.

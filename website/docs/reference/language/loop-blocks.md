@@ -115,6 +115,8 @@ An empty array is treated as falsy: the body of a `{{#items}}...{{/items}}` bloc
 
 The negated form `{{^items}}...{{/items}}` runs the body for an empty array; see [Negated blocks](/docs/language/negated-blocks).
 
+An array returned by a helper and tagged with [`errorTag`](/docs/lib#error-returns) is falsy too, even when it has elements, so the `{{else}}` branch runs instead of the loop.
+
 ## Non-array values
 
 If the value is **not** an array but is truthy and is an object, the block runs once with that object as context (see [Context blocks](/docs/language/context-blocks)). For other truthy values, the body runs once with the **parent** context unchanged. To force "treat this single value as the new context," use the `{{#with x}}...{{/with}}` block helper.

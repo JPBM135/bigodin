@@ -63,6 +63,7 @@ Only own, enumerable, non-function data. That has consequences worth knowing:
 - **Non-enumerable own properties are invisible.** An `Error`'s `message` and `stack` are non-enumerable, so `{{err.stack}}` is empty, and file paths and traces are not leaked into output. Anything you define with `Object.defineProperty(obj, k, { enumerable: false })` is dropped from the clone.
 - **Functions are dropped at read time.** A function in context is never invoked and never rendered (this is also why Mustache lambdas are unsupported).
 - **Methods stay on the prototype, so they stay hidden.** This is what makes the value-type preservation below safe.
+- **Symbol keys are dropped.** The clone copies string keys only. This includes [`errorTag`](/docs/lib#error-returns): a context object cannot pretend to be a helper error, so only code you registered as a helper can mark a value as failed. Templates cannot create or read the tag either, because paths resolve string keys only.
 
 ### Value-typed objects are preserved
 
