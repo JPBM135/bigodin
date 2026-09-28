@@ -6,7 +6,7 @@ sidebar_position: 3
 
 Bigodin ships only the **block primitives** wired to template syntax. String, math, date, array, and comparison helpers were removed in 3.0.0; register your own with `bigodin.addHelper(name, fn)`. See [Library API](/docs/lib) for `addHelper` and the [tutorial](/docs/tutorial/first-template) for a worked example.
 
-Values tagged with `markError` are treated as falsy by every helper below. See [Error returns](/docs/lib#error-returns).
+Objects tagged with `errorTag` are treated as falsy by every helper below. See [Error returns](/docs/lib#error-returns).
 
 | Helper              | Purpose                                                                 |
 | ------------------- | ----------------------------------------------------------------------- |

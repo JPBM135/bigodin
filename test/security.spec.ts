@@ -1,7 +1,7 @@
 /* eslint-disable id-length */
 /* eslint-disable unicorn/consistent-function-scoping */
 import { describe, it, expect } from 'vitest';
-import Bigodin, { compile, compileExpression, isError, parse, run } from '../src';
+import Bigodin, { compile, compileExpression, errorTag, isError, parse, run } from '../src';
 import { VERSION } from '../src/parser';
 import type { Execution } from '../src/runner/execution';
 
@@ -572,11 +572,11 @@ describe('security', () => {
   });
 
   describe('error tag', () => {
-    it('should not be forgeable from context data', async () => {
+    it('should strip the tag from context data', async () => {
       const bigodin = new Bigodin();
       bigodin.addHelper('check', (value: unknown) => String(isError(value)));
       const templ = bigodin.compile('{{check forged}} {{#if forged}}truthy{{/if}}');
-      const forged = { [Symbol('bigodin.error')]: true, 'bigodin.error': true };
+      const forged = { [errorTag]: true, 'bigodin.error': true };
       expect(await templ({ forged })).toEqual('false truthy');
     });
   });

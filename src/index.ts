@@ -1,7 +1,7 @@
 import { $expression } from './parser/expression.js';
 import { $template } from './parser/index.js';
 import type { TemplateStatement, ValueStatement } from './parser/statements.js';
-import { isError, markError, unwrapError } from './runner/error.js';
+import { errorTag, isError } from './runner/error.js';
 import { Execution } from './runner/execution.js';
 import type { Helper } from './runner/helpers/type.js';
 import type { LiteralValue } from './runner/index.js';
@@ -21,11 +21,9 @@ export type TemplateRunner = (context?: object, options?: BigodinOptions) => Pro
  * not present in the default functions.
  */
 class Bigodin {
-  public static readonly markError = markError;
+  public static readonly errorTag = errorTag;
 
   public static readonly isError = isError;
-
-  public static readonly unwrapError = unwrapError;
 
   private readonly helpers: Map<string, Helper> = new Map();
 
@@ -156,7 +154,6 @@ export const { compile, compileExpression } = defaultBigodin;
 
 export type { TemplateStatement } from './parser/statements.js';
 export type { BigodinOptions } from './runner/options.js';
-export type { BigodinError } from './runner/error.js';
-export { isError, markError, unwrapError } from './runner/error.js';
+export { errorTag, isError } from './runner/error.js';
 export { Bigodin };
 export default Bigodin;

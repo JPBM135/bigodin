@@ -13,13 +13,12 @@ const Bigodin = require('@jpbm135/bigodin').default;
 const {
   compile,
   compileExpression,
+  errorTag,
   isError,
-  markError,
   parse,
   parseExpression,
   run,
   runExpression,
-  unwrapError,
 } = require('@jpbm135/bigodin');
 ```
 
@@ -27,13 +26,12 @@ const {
 import Bigodin, {
   compile,
   compileExpression,
+  errorTag,
   isError,
-  markError,
   parse,
   parseExpression,
   run,
   runExpression,
-  unwrapError,
 } from '@jpbm135/bigodin';
 ```
 
@@ -148,28 +146,34 @@ await tmpl({ num: 3 }); // "3 is odd"
 
 ## Error returns
 
-A helper can tag any return value, primitives included, as an error with `markError(value?)`. The wrapped value can be an `Error`, a message, or anything else.
+`errorTag` is a well-known symbol that marks an object as an error, the same way `Symbol.iterator` marks an object as iterable. Set it to a truthy value on any object a helper returns (a plain object, an `Error`, an array, or a class instance). It can be an own property or inherited from the prototype.
 
 - Tagged errors are **falsy** everywhere Bigodin checks truthiness: `#if`, `#unless`, negated blocks, `#each`, `#with`, custom block helpers, and the `if` / `unless` helpers.
 - Rendered directly (`{{myHelper}}`), or as an element of a rendered array, a tagged error outputs an empty string. It never throws.
-- Tagged errors pass unchanged to other helpers as parameters. Use `isError(value)` to detect one and `unwrapError(value)` to get the original value back.
-- The tag is a module-private `Symbol`. Templates cannot read the wrapped value or forge a tag from context data.
+- Tagged errors pass unchanged to other helpers as parameters. Use `isError(value)` to detect one; the object itself carries whatever details you put on it.
+- The tag is `Symbol.for('bigodin.error')`, so the CommonJS and ESM builds share it. Only helper return values can carry it: the context clone copies string keys only, and templates only resolve string keys, so a template cannot forge or read the tag.
 
-The three functions are also available as static members: `Bigodin.markError`, `Bigodin.isError`, `Bigodin.unwrapError`.
+Both are also available as static members: `Bigodin.errorTag` and `Bigodin.isError`.
 
 ```javascript
-import Bigodin, { isError, markError, unwrapError } from '@jpbm135/bigodin';
+import Bigodin, { errorTag, isError } from '@jpbm135/bigodin';
+
+class HelperError extends Error {
+  get [errorTag]() {
+    return true;
+  }
+}
 
 const bigodin = new Bigodin();
 bigodin.addHelper('fetchUser', async (id) => {
   try {
     return await api.getUser(id);
   } catch (error) {
-    return markError(error);
+    return new HelperError(error.message);
+    // or: return { [errorTag]: true, message: error.message };
   }
 });
-bigodin.addHelper('orElse', (value, fallback) => (isError(value) ? fallback : value));
-bigodin.addHelper('errorMessage', (value) => (isError(value) ? String(unwrapError(value)) : ''));
+bigodin.addHelper('errorMessage', (value) => (isError(value) ? value.message : ''));
 
 const tmpl = bigodin.compile(
   '{{= $user (fetchUser id)}}{{#with $user}}Hi {{name}}{{else}}Failed: {{errorMessage $user}}{{/with}}',
