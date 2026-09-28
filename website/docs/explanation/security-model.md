@@ -50,7 +50,7 @@ The asymmetry matters. A template cannot reach into `data`, even by walking pare
 
 ## The context clone
 
-Before a run starts, Bigodin deep-clones the context you pass to `run` (`deepCloneNullPrototype` in `src/utils.ts`). The render walks the clone, never your original object. The clone does two jobs at once.
+Before a run starts, Bigodin deep-clones the context you pass to `run` or `runExpression`, and so to the runners returned by `compile` and `compileExpression` (`deepCloneNullPrototype` in `src/utils.ts`). The render walks the clone, never your original object. The clone does two jobs at once.
 
 **It strips prototypes.** Every plain object in the context is rebuilt with a `null` prototype, and path lookups go through `lookupOwnValue`, which returns a value only when the key is an **own, enumerable, non-function** property whose name is not in `UNSAFE_KEYS` (`__proto__`, `constructor`, `prototype`, `hasOwnProperty`). The combined effect: a template cannot reach a prototype method, a constructor, or any inherited property. There is no `{{x.constructor.constructor}}` pivot, because `constructor` is filtered and the clone has no prototype chain to walk anyway.
 
@@ -63,6 +63,7 @@ Only own, enumerable, non-function data. That has consequences worth knowing:
 - **Non-enumerable own properties are invisible.** An `Error`'s `message` and `stack` are non-enumerable, so `{{err.stack}}` is empty, and file paths and traces are not leaked into output. Anything you define with `Object.defineProperty(obj, k, { enumerable: false })` is dropped from the clone.
 - **Functions are dropped at read time.** A function in context is never invoked and never rendered (this is also why Mustache lambdas are unsupported).
 - **Methods stay on the prototype, so they stay hidden.** This is what makes the value-type preservation below safe.
+- **Symbol keys are dropped.** The clone copies string keys only. This includes [`errorTag`](/docs/lib#error-returns): a context object cannot pretend to be a helper error, so only code you registered as a helper can mark a value as failed. Templates cannot create or read the tag either, because paths resolve string keys only.
 
 ### Value-typed objects are preserved
 

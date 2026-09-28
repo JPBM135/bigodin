@@ -63,6 +63,7 @@ What sets Bigodin apart:
 - **Async helpers** — `await` requests, database calls, file IO, etc. directly from a helper.
 - **Safe by construction** — no codegen, no `eval`, no `Function` constructor; templates are walked over a JSON AST.
 - **Execution limits** — `maxExecutionMillis` and `halt()` let you bound runtime on hostile input.
+- **Soft helper errors**: tag a helper's return with `errorTag` and it becomes falsy, so `{{else}}` renders a fallback instead of the whole render failing.
 - **Better error messages** — parser combinators surface line/column and what was expected.
 - **Minimal core** — only the block primitives ship by default (`if`, `unless`, `with`, `each`, `return`); add your own with `addHelper`.
 - **Persistable AST** — versioned JSON; old ASTs fail loudly when the runner has moved on.

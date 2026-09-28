@@ -93,7 +93,7 @@ bigodin.addHelper('user', async (id) => {
 });
 ```
 
-If you want a render to continue past a failed helper, catch inside the helper and return a sentinel. There is no per-helper `try/catch` in the template language.
+If you want a render to continue past a failed helper, catch inside the helper and return an object tagged with `errorTag`. The tagged value is falsy, so an `{{else}}` branch in the template acts as the fallback. There is no per-helper `try/catch` in the template language. See [Handle helper errors](/docs/how-to/handle-helper-errors).
 
 ## Performance notes
 
@@ -103,5 +103,6 @@ If you want a render to continue past a failed helper, catch inside the helper a
 
 ## Related
 
+- [Handle helper errors](/docs/how-to/handle-helper-errors) for failures that should not stop the render
 - [Bound execution time](/docs/how-to/bound-execution-time) for budgets and early exit
 - [Library API](/docs/lib#execution-the-helper-this) for the `Execution` shape

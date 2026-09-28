@@ -130,3 +130,5 @@ If the chain mixes helpers, you still close only the first one:
 The same coercion as JavaScript's `Boolean(value)`, with one Mustache-derived special case: an **empty array** is falsy. So `{{#items}}...{{/items}}` over `{ "items": [] }` skips the body, and `{{^items}}...{{/items}}` runs it (see [Negated blocks](/docs/language/negated-blocks)).
 
 `null`, `undefined`, `false`, `0`, `NaN`, and `''` are falsy. Everything else (including `0n`-equivalent BigInts and non-empty objects) is truthy.
+
+Bigodin adds a second special case: an object returned by a helper and tagged with [`errorTag`](/docs/lib#error-returns) is falsy, so `{{else}}` works as an error fallback. See [Handle helper errors](/docs/how-to/handle-helper-errors).

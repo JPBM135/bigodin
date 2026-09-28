@@ -1,12 +1,13 @@
 import { $expression } from './parser/expression.js';
 import { $template } from './parser/index.js';
 import type { TemplateStatement, ValueStatement } from './parser/statements.js';
+import { errorTag, isError } from './runner/error.js';
 import { Execution } from './runner/execution.js';
 import type { Helper } from './runner/helpers/type.js';
 import type { LiteralValue } from './runner/index.js';
 import { run as _run, runStatement } from './runner/index.js';
 import type { BigodinOptions } from './runner/options.js';
-import { ensure } from './utils.js';
+import { deepCloneNullPrototype, ensure } from './utils.js';
 
 /**
  * @param {object?} context Context to be used when evaluating the template.
@@ -20,6 +21,10 @@ export type TemplateRunner = (context?: object, options?: BigodinOptions) => Pro
  * not present in the default functions.
  */
 class Bigodin {
+  public static readonly errorTag = errorTag;
+
+  public static readonly isError = isError;
+
   private readonly helpers: Map<string, Helper> = new Map();
 
   /**
@@ -73,7 +78,8 @@ class Bigodin {
     context?: object,
     options?: BigodinOptions,
   ): Promise<LiteralValue> => {
-    const execution = Execution.of(context, this.helpers, options);
+    const ctx = context && deepCloneNullPrototype(context);
+    const execution = Execution.of(ctx, this.helpers, options);
     return runStatement(execution, statement);
   };
 
@@ -149,5 +155,6 @@ export const { compile, compileExpression } = defaultBigodin;
 
 export type { TemplateStatement } from './parser/statements.js';
 export type { BigodinOptions } from './runner/options.js';
+export { errorTag, isError } from './runner/error.js';
 export { Bigodin };
 export default Bigodin;

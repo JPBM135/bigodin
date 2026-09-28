@@ -1,7 +1,7 @@
 /* eslint-disable id-length */
 /* eslint-disable unicorn/consistent-function-scoping */
 import { describe, it, expect } from 'vitest';
-import Bigodin, { compile, compileExpression, parse, run } from '../src';
+import Bigodin, { compile, compileExpression, errorTag, isError, parse, run } from '../src';
 import { VERSION } from '../src/parser';
 import type { Execution } from '../src/runner/execution';
 
@@ -568,6 +568,34 @@ describe('security', () => {
     it('compileExpression cannot reach prototype chain via path access', async () => {
       const expr = compileExpression('obj.__proto__.toString');
       expect(await expr({ obj: { a: 1 } })).toEqual(undefined);
+    });
+
+    it('compileExpression clones the context so helpers cannot mutate the input', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('mutate', function mutate(this: { context: Record<string, unknown> }) {
+        this.context.injected = true;
+        return 'ok';
+      });
+      const input: Record<string, unknown> = {};
+      expect(await bigodin.compileExpression('mutate')(input)).toEqual('ok');
+      expect(input).toEqual({});
+    });
+
+    it('compileExpression strips the error tag from context data', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('check', (value: unknown) => String(isError(value)));
+      const expr = bigodin.compileExpression('check forged');
+      expect(await expr({ forged: { [errorTag]: true } })).toEqual('false');
+    });
+  });
+
+  describe('error tag', () => {
+    it('should strip the tag from context data', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('check', (value: unknown) => String(isError(value)));
+      const templ = bigodin.compile('{{check forged}} {{#if forged}}truthy{{/if}}');
+      const forged = { [errorTag]: true, 'bigodin.error': true };
+      expect(await templ({ forged })).toEqual('false truthy');
     });
   });
 });

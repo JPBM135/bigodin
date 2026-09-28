@@ -1,6 +1,7 @@
 import type { ExpressionStatement, Statement, TemplateStatement } from '../parser/statements.js';
 import { deepCloneNullPrototype } from '../utils.js';
 import { runBlock } from './block.js';
+import { isError } from './error.js';
 import { Execution } from './execution.js';
 import { runHelperExpression } from './helper.js';
 import { helpers } from './helpers/index.js';
@@ -42,7 +43,7 @@ function coerceObjectValue(value: object): string {
 
   return value
     .map((element) => {
-      if (element === null || typeof element === 'undefined') {
+      if (element === null || typeof element === 'undefined' || isError(element)) {
         return '';
       }
 
@@ -63,7 +64,7 @@ export async function runStatements(
     }
 
     const stmtResult = await runStatement(execution, statement);
-    if (stmtResult === null || typeof stmtResult === 'undefined') {
+    if (stmtResult === null || typeof stmtResult === 'undefined' || isError(stmtResult)) {
       continue;
     }
 

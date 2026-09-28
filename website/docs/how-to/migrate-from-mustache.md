@@ -1,6 +1,6 @@
 ---
 title: 'Migrate from Mustache'
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 **Problem.** You have templates written for Mustache (or Handlebars) and want to render them with Bigodin.

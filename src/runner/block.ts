@@ -1,8 +1,10 @@
 import type { BlockStatement, ExpressionStatement } from '../parser/statements.js';
+import { isError } from './error.js';
 import type { Execution } from './execution.js';
 import { runStatement, runStatements } from './index.js';
 
-const isFalsy = (value: unknown): boolean => !value || (Array.isArray(value) && value.length === 0);
+const isFalsy = (value: unknown): boolean =>
+  !value || (Array.isArray(value) && value.length === 0) || isError(value);
 
 // Runs a block body, binding its `as |a b|` block params (if any) to the
 // values the block yields for the duration of the body.

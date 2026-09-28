@@ -6,6 +6,8 @@ sidebar_position: 3
 
 Bigodin ships only the **block primitives** wired to template syntax. String, math, date, array, and comparison helpers were removed in 3.0.0; register your own with `bigodin.addHelper(name, fn)`. See [Library API](/docs/lib) for `addHelper` and the [tutorial](/docs/tutorial/first-template) for a worked example.
 
+Objects tagged with `errorTag` are treated as falsy by every helper below. See [Error returns](/docs/lib#error-returns).
+
 | Helper              | Purpose                                                                 |
 | ------------------- | ----------------------------------------------------------------------- |
 | [`if`](#if)         | Run a block when the value is truthy. Does not change context.          |
@@ -98,7 +100,7 @@ Negated form (`{{^with ...}}`) renders its body when every argument is falsy.
 {{/each}}
 ```
 
-Iterates over an array, pushing each element as the current context. A non-array argument is treated as a single-element list (the block runs once with that value as context). Empty arrays render nothing.
+Iterates over an array, pushing each element as the current context. A non-array argument is treated as a single-element list (the block runs once with that value as context). Empty arrays and [tagged errors](/docs/lib#error-returns) render nothing, or the `{{else}}` branch if present.
 
 Accepts [block params](/docs/language/block-params): `{{#each items as |item index|}}` binds the current element and its index to local names.
 

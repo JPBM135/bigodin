@@ -13,6 +13,8 @@ const Bigodin = require('@jpbm135/bigodin').default;
 const {
   compile,
   compileExpression,
+  errorTag,
+  isError,
   parse,
   parseExpression,
   run,
@@ -24,6 +26,8 @@ const {
 import Bigodin, {
   compile,
   compileExpression,
+  errorTag,
+  isError,
   parse,
   parseExpression,
   run,
@@ -69,7 +73,7 @@ Interpret a previously parsed AST. Returns `Promise<string>`.
 
 ### `bigodin.parseExpression(source)`, `bigodin.runExpression(ast, context?, options?)`, `bigodin.compileExpression(source)`
 
-Same as `parse` / `run` / `compile`, but for a single expression rather than a full template. Useful when you want to evaluate one mustache-shaped value without surrounding text. The expression is the body of a `{{...}}` minus the braces.
+Same as `parse` / `run` / `compile`, but for a single expression rather than a full template. The context is deep-cloned the same way as in `run`, so a context value returned by the expression is the clone, not your original object. Useful when you want to evaluate one mustache-shaped value without surrounding text. The expression is the body of a `{{...}}` minus the braces.
 
 ## `RunOptions`
 
@@ -125,12 +129,12 @@ Hash values may be literals, paths, variables, or subexpressions, same as positi
 
 A helper used as a block (`{{#myHelper x}}...{{/myHelper}}`) controls block rendering by what it returns:
 
-| Returned value                                                 | Behavior                                                               |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Falsy (`false`, `null`, `undefined`, `0`, `''`) or empty array | The body is skipped; an `{{else}}` branch runs if present.             |
-| Object                                                         | The body runs once with the returned object pushed as the new context. |
-| Array (non-empty)                                              | The body runs once per element with each element pushed as context.    |
-| Any other truthy value                                         | The body runs once with the parent context unchanged.                  |
+| Returned value                                                                                    | Behavior                                                               |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Falsy (`false`, `null`, `undefined`, `0`, `''`), empty array, or a [tagged error](#error-returns) | The body is skipped; an `{{else}}` branch runs if present.             |
+| Object                                                                                            | The body runs once with the returned object pushed as the new context. |
+| Array (non-empty)                                                                                 | The body runs once per element with each element pushed as context.    |
+| Any other truthy value                                                                            | The body runs once with the parent context unchanged.                  |
 
 ```javascript
 bigodin.addHelper('isEven', (value) => value % 2 === 0);
@@ -139,6 +143,39 @@ const tmpl = bigodin.compile('{{num}} is {{#isEven num}}even{{else}}odd{{/isEven
 await tmpl({ num: 2 }); // "2 is even"
 await tmpl({ num: 3 }); // "3 is odd"
 ```
+
+## Error returns
+
+A helper can return an object marked as an error instead of throwing. The render continues, and the template can branch on the failure. For recipes, see [Handle helper errors](/docs/how-to/handle-helper-errors).
+
+### `errorTag`
+
+`unique symbol`, equal to `Symbol.for('bigodin.error')`. Also available as `Bigodin.errorTag`.
+
+An object is a tagged error when `value[errorTag]` is truthy. The property can be own or inherited (for example, a getter on an `Error` subclass prototype). Primitives cannot be tagged.
+
+```javascript
+return { [errorTag]: true, message: 'not found' };
+```
+
+### `isError(value)`
+
+`(value: unknown) => boolean`. Also available as `Bigodin.isError`.
+
+Returns `true` when `value` is a non-null object whose `errorTag` property is truthy, otherwise `false`.
+
+### How the runner treats tagged errors
+
+| Where the value ends up                                                                 | Behavior                                                                                  |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Block expression (`#if`, `#unless`, `#each`, `#with`, `{{^...}}`, custom block helpers) | Falsy: the body is skipped and `{{else}}` runs if present (negated blocks run their body) |
+| `if` / `unless` helpers                                                                 | `if` returns `false`, `unless` returns `true`                                             |
+| `each` helper                                                                           | Returns `[]` instead of wrapping the value as `[value]`                                   |
+| Output (`{{helper}}`, or an element of a rendered array)                                | Renders as `''`; never throws                                                             |
+| Parameter of another helper                                                             | Passed unchanged                                                                          |
+| Context data passed to `run`                                                            | Tag is stripped by the context clone, so the value is not an error                        |
+
+Templates cannot read or create the tag: paths resolve string keys only.
 
 ## Module-level helpers do not carry custom helpers
 
