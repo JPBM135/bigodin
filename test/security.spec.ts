@@ -1,7 +1,7 @@
 /* eslint-disable id-length */
 /* eslint-disable unicorn/consistent-function-scoping */
 import { describe, it, expect } from 'vitest';
-import Bigodin, { compile, compileExpression, parse, run } from '../src';
+import Bigodin, { compile, compileExpression, isError, parse, run } from '../src';
 import { VERSION } from '../src/parser';
 import type { Execution } from '../src/runner/execution';
 
@@ -568,6 +568,16 @@ describe('security', () => {
     it('compileExpression cannot reach prototype chain via path access', async () => {
       const expr = compileExpression('obj.__proto__.toString');
       expect(await expr({ obj: { a: 1 } })).toEqual(undefined);
+    });
+  });
+
+  describe('error tag', () => {
+    it('should not be forgeable from context data', async () => {
+      const bigodin = new Bigodin();
+      bigodin.addHelper('check', (value: unknown) => String(isError(value)));
+      const templ = bigodin.compile('{{check forged}} {{#if forged}}truthy{{/if}}');
+      const forged = { [Symbol('bigodin.error')]: true, 'bigodin.error': true };
+      expect(await templ({ forged })).toEqual('false truthy');
     });
   });
 });

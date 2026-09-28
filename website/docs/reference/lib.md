@@ -13,10 +13,13 @@ const Bigodin = require('@jpbm135/bigodin').default;
 const {
   compile,
   compileExpression,
+  isError,
+  markError,
   parse,
   parseExpression,
   run,
   runExpression,
+  unwrapError,
 } = require('@jpbm135/bigodin');
 ```
 
@@ -24,10 +27,13 @@ const {
 import Bigodin, {
   compile,
   compileExpression,
+  isError,
+  markError,
   parse,
   parseExpression,
   run,
   runExpression,
+  unwrapError,
 } from '@jpbm135/bigodin';
 ```
 
@@ -125,12 +131,12 @@ Hash values may be literals, paths, variables, or subexpressions, same as positi
 
 A helper used as a block (`{{#myHelper x}}...{{/myHelper}}`) controls block rendering by what it returns:
 
-| Returned value                                                 | Behavior                                                               |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Falsy (`false`, `null`, `undefined`, `0`, `''`) or empty array | The body is skipped; an `{{else}}` branch runs if present.             |
-| Object                                                         | The body runs once with the returned object pushed as the new context. |
-| Array (non-empty)                                              | The body runs once per element with each element pushed as context.    |
-| Any other truthy value                                         | The body runs once with the parent context unchanged.                  |
+| Returned value                                                                                    | Behavior                                                               |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Falsy (`false`, `null`, `undefined`, `0`, `''`), empty array, or a [tagged error](#error-returns) | The body is skipped; an `{{else}}` branch runs if present.             |
+| Object                                                                                            | The body runs once with the returned object pushed as the new context. |
+| Array (non-empty)                                                                                 | The body runs once per element with each element pushed as context.    |
+| Any other truthy value                                                                            | The body runs once with the parent context unchanged.                  |
 
 ```javascript
 bigodin.addHelper('isEven', (value) => value % 2 === 0);
@@ -138,6 +144,36 @@ bigodin.addHelper('isEven', (value) => value % 2 === 0);
 const tmpl = bigodin.compile('{{num}} is {{#isEven num}}even{{else}}odd{{/isEven}}');
 await tmpl({ num: 2 }); // "2 is even"
 await tmpl({ num: 3 }); // "3 is odd"
+```
+
+## Error returns
+
+A helper can tag any return value, primitives included, as an error with `markError(value?)`. The wrapped value can be an `Error`, a message, or anything else.
+
+- Tagged errors are **falsy** everywhere Bigodin checks truthiness: `#if`, `#unless`, negated blocks, `#each`, `#with`, custom block helpers, and the `if` / `unless` helpers.
+- Rendered directly (`{{myHelper}}`), or as an element of a rendered array, a tagged error outputs an empty string. It never throws.
+- Tagged errors pass unchanged to other helpers as parameters. Use `isError(value)` to detect one and `unwrapError(value)` to get the original value back.
+- The tag is a module-private `Symbol`. Templates cannot read the wrapped value or forge a tag from context data.
+
+The three functions are also available as static members: `Bigodin.markError`, `Bigodin.isError`, `Bigodin.unwrapError`.
+
+```javascript
+import Bigodin, { isError, markError, unwrapError } from '@jpbm135/bigodin';
+
+const bigodin = new Bigodin();
+bigodin.addHelper('fetchUser', async (id) => {
+  try {
+    return await api.getUser(id);
+  } catch (error) {
+    return markError(error);
+  }
+});
+bigodin.addHelper('orElse', (value, fallback) => (isError(value) ? fallback : value));
+bigodin.addHelper('errorMessage', (value) => (isError(value) ? String(unwrapError(value)) : ''));
+
+const tmpl = bigodin.compile(
+  '{{= $user (fetchUser id)}}{{#with $user}}Hi {{name}}{{else}}Failed: {{errorMessage $user}}{{/with}}',
+);
 ```
 
 ## Module-level helpers do not carry custom helpers
