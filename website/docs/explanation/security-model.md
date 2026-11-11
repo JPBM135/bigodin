@@ -39,7 +39,7 @@ The boundary is "the template cannot do anything you did not give it." That has 
 
 - **Helpers run with full Node privilege.** A helper you write that calls `fs.readFileSync('/etc/passwd')` will read /etc/passwd. The sandbox is the registry of helpers you registered, not the helpers themselves.
 - **HTML injection is your problem.** Bigodin emits raw output by default. If you render HTML, you escape; see [Render HTML safely](/docs/how-to/render-html-safely).
-- **Resource exhaustion via output size.** There is no cap on the size of the rendered string. A `{{#each items}}` over a million items produces a million-line string.
+- **Resource exhaustion, unless you set budgets.** Nested sections multiply: a few hundred characters of nested `{{#each}}` over a two-element array can run for hours. Nothing is capped by default. Set `maxStatements` and `maxOutputLength` (and `maxExecutionMillis`) for untrusted templates.
 - **CPU-bound helpers.** `maxExecutionMillis` is wall-clock. A synchronous helper that pegs the loop will starve it for the duration; the budget catches the _next_ statement, not this one.
 
 ## The data channel
@@ -61,7 +61,7 @@ Before a run starts, Bigodin deep-clones the context you pass to `run` or `runEx
 Only own, enumerable, non-function data. That has consequences worth knowing:
 
 - **Non-enumerable own properties are invisible.** An `Error`'s `message` and `stack` are non-enumerable, so `{{err.stack}}` is empty, and file paths and traces are not leaked into output. Anything you define with `Object.defineProperty(obj, k, { enumerable: false })` is dropped from the clone.
-- **Functions are dropped at read time.** A function in context is never invoked and never rendered (this is also why Mustache lambdas are unsupported).
+- **Functions are dropped by the clone.** A function anywhere in context (a property, an array element, a `Map` value, a getter's result) is removed before the render starts. It is never invoked, never rendered, and never passed to a helper (this is also why Mustache lambdas are unsupported). Dropped array elements become `undefined` so indexes stay stable.
 - **Methods stay on the prototype, so they stay hidden.** This is what makes the value-type preservation below safe.
 - **Symbol keys are dropped.** The clone copies string keys only. This includes [`errorTag`](/docs/lib#error-returns): a context object cannot pretend to be a helper error, so only code you registered as a helper can mark a value as failed. Templates cannot create or read the tag either, because paths resolve string keys only.
 
@@ -101,7 +101,8 @@ Bigodin gives you a sandbox. You decide what is in it.
 
 - **Helper allow-listing.** If you let users name the helpers they call, allow-list the names. Bigodin will happily call any helper you registered.
 - **Output escaping.** For HTML output, escape every untrusted value with a helper.
-- **Execution budgets.** For untrusted templates, set `maxExecutionMillis`. Pick a budget appropriate to your render path; a few milliseconds for a hot path, a few hundred for a batch job.
+- **Execution budgets.** For untrusted templates, set `maxStatements`, `maxOutputLength` and `maxExecutionMillis`. The first two are deterministic; the wall-clock budget is a backstop. See [Bound execution time](/docs/how-to/bound-execution-time).
+- **Template size.** Parsing is linear in template length, and nesting is capped (1,000 open blocks, 100 nested sub-expressions), but Bigodin does not cap the length itself. Reject oversized templates before parsing.
 - **AST validation if you accept ASTs over the wire.** A persisted AST is a trusted artifact in Bigodin's model. If you accept ASTs from untrusted sources (rather than parsing source you received), validate the shape before running.
 
 ## Related

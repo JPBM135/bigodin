@@ -22,7 +22,7 @@ export async function run(
   extraHelpers: Map<string, Helper>,
   options?: BigodinOptions,
 ): Promise<string> {
-  if (ast.version < MIN_VERSION || ast.version > MAX_VERSION) {
+  if (!Number.isInteger(ast.version) || ast.version < MIN_VERSION || ast.version > MAX_VERSION) {
     throw new Error(`Unsupported AST version ${ast.version}, parse it again to generate a new AST`);
   }
 
@@ -36,20 +36,29 @@ export async function run(
 // nested arrays); any other object becomes the `[object Object]` sentinel.
 // We can't use `String(value)` because context objects are deep-cloned to a
 // null prototype and so have no own/inherited `toString`, which would throw.
-function coerceObjectValue(value: object): string {
+// An array that contains itself renders as an empty string at the point of
+// the cycle, matching `Array.prototype.join`, instead of recursing forever.
+function coerceObjectValue(value: object, ancestors: Set<object> = new Set()): string {
   if (!Array.isArray(value)) {
     return Object.prototype.toString.call(value);
   }
 
-  return value
+  if (ancestors.has(value)) {
+    return '';
+  }
+
+  ancestors.add(value);
+  const result = value
     .map((element) => {
       if (element === null || typeof element === 'undefined' || isError(element)) {
         return '';
       }
 
-      return typeof element === 'object' ? coerceObjectValue(element) : String(element);
+      return typeof element === 'object' ? coerceObjectValue(element, ancestors) : String(element);
     })
     .join(',');
+  ancestors.delete(value);
+  return result;
 }
 
 export async function runStatements(
@@ -68,12 +77,16 @@ export async function runStatements(
       continue;
     }
 
-    if (typeof stmtResult === 'object') {
-      result += coerceObjectValue(stmtResult);
-      continue;
+    const output =
+      typeof stmtResult === 'object' ? coerceObjectValue(stmtResult) : String(stmtResult);
+
+    // A block's result is made of output its own statements already accounted
+    // for, so only leaf statements count towards the output budget.
+    if (statement.type !== 'BLOCK') {
+      execution.addOutput(output.length);
     }
 
-    result += String(stmtResult);
+    result += output;
   }
 
   return result;
@@ -83,9 +96,7 @@ export async function runStatement(
   execution: Execution,
   statement: Statement,
 ): Promise<LiteralValue> {
-  if (execution.elapsedMillis > execution.maxExecutionMillis) {
-    throw new Error(`Execution time limit exceeded`);
-  }
+  execution.tick();
 
   switch (statement.type) {
     case 'TEXT':
@@ -125,7 +136,10 @@ async function runExpression(
   }
 
   // If there are no parameters but a helper exists with that name, the expression is a helper call
-  if (execution.extraHelpers.has(expression.path) || helpers[expression.path]) {
+  if (
+    execution.extraHelpers.has(expression.path) ||
+    (execution.allowDefaultHelpers && helpers[expression.path])
+  ) {
     return runHelperExpression(execution, expression);
   }
 

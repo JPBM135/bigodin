@@ -80,12 +80,16 @@ Same as `parse` / `run` / `compile`, but for a single expression rather than a f
 ```typescript
 interface RunOptions {
   maxExecutionMillis?: number;
+  maxStatements?: number;
+  maxOutputLength?: number;
   data?: Record<string, unknown>;
   allowDefaultHelpers?: boolean;
 }
 ```
 
 - **`maxExecutionMillis`** is checked at the top of every statement. When exceeded, the run throws. Use this to bound runtime on hostile input. See [Bound execution time](/docs/how-to/bound-execution-time).
+- **`maxStatements`** caps how many statements a run may execute (every text, mustache, block, sub-expression and loop iteration body counts). When exceeded, the run throws `Execution statement limit exceeded`. Unlike the wall-clock budget it is deterministic, so it is the reliable guard against templates that nest loops to multiply work. Unlimited by default.
+- **`maxOutputLength`** caps the number of characters a run may emit. When exceeded, the run throws `Output length limit exceeded`. Unlimited by default.
 - **`data`** is a side channel passed to helpers as `this.data`. Templates **cannot** read it; helpers may mutate it to surface structured data back to your code. See [Async helpers](/docs/how-to/async-helpers).
 - **`allowDefaultHelpers`** defaults to `true`. Set to `false` to disable the bundled block helpers (`if`, `unless`, `with`, `each`, `return`). Helpers added via `addHelper` always run.
 

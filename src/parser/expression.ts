@@ -32,6 +32,19 @@ const newFrame = (): Frame => ({
 
 const topOfStack = <T>(stack: T[]): T => stack[stack.length - 1];
 
+// Maximum nesting of parenthesized sub-expressions. The runner evaluates them
+// recursively, so unbounded nesting would end in a stack overflow.
+export const MAX_EXPRESSION_DEPTH = 100;
+
+const pushFrame = (stack: Frame[]): string | null => {
+  if (stack.length > MAX_EXPRESSION_DEPTH) {
+    return `Expressions are nested too deeply, the limit is ${MAX_EXPRESSION_DEPTH} levels`;
+  }
+
+  stack.push(newFrame());
+  return null;
+};
+
 // An expression ends at the closing delimiter. The trailing forms are:
 // `}}` (plain), `~}}` (right whitespace control), and `}~}}` (right control on
 // a triple mustache, whose inner `}` precedes the `~`). The lookahead never
@@ -180,7 +193,11 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
 
         const subExpr = yield Pr.optional(Pr.string('('));
         if (subExpr) {
-          stack.push(newFrame());
+          const depthErr = pushFrame(stack);
+          if (depthErr) {
+            yield Pr.fail(depthErr);
+          }
+
           state = State._START;
           break;
         }
@@ -283,7 +300,11 @@ export const $expression: Parser<ValueStatement> = Pr.context('expression', func
 
         const subExpr = yield Pr.optional(Pr.string('('));
         if (subExpr) {
-          stack.push(newFrame());
+          const depthErr = pushFrame(stack);
+          if (depthErr) {
+            yield Pr.fail(depthErr);
+          }
+
           state = State._START;
           break;
         }

@@ -7,7 +7,7 @@ import type { Helper } from './runner/helpers/type.js';
 import type { LiteralValue } from './runner/index.js';
 import { run as _run, runStatement } from './runner/index.js';
 import type { BigodinOptions } from './runner/options.js';
-import { deepCloneNullPrototype, ensure } from './utils.js';
+import { deepCloneNullPrototype, ensure, UNSAFE_KEYS } from './utils.js';
 
 /**
  * @param {object?} context Context to be used when evaluating the template.
@@ -118,6 +118,7 @@ class Bigodin {
   public addHelper = (name: string, helper: Helper): this => {
     ensure(typeof name === 'string', 'name must be a string');
     ensure(typeof helper === 'function', 'helper must be a function');
+    ensure(!UNSAFE_KEYS.has(name), `Helper ${name} not allowed`);
 
     this.helpers.set(name, helper);
     return this;

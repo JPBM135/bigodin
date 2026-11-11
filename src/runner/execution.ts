@@ -19,7 +19,17 @@ export class Execution {
   /**
    * Bigodin variables
    */
-  public readonly variables: Record<string, LiteralValue> = {};
+  public readonly variables: Record<string, LiteralValue> = Object.create(null);
+
+  /**
+   * Number of statements executed so far, checked against `maxStatements`.
+   */
+  private statementCount = 0;
+
+  /**
+   * Characters emitted so far, checked against `maxOutputLength`.
+   */
+  private outputLength = 0;
 
   /**
    * Per-iteration data frames populated by block iteration. Consumed by
@@ -37,6 +47,8 @@ export class Execution {
    * @param {object?} data Data that cannot be accessed from the template but can be accessed and modified from helpers
    * @param {number} maxExecutionMillis Maximum milliseconds allowed for the template execution
    * @param {boolean} allowDefaultHelpers Indicates whether the execution allows default helpers. Default helpers are provided by bigodin.
+   * @param {number} maxStatements Maximum number of statements the execution may run
+   * @param {number} maxOutputLength Maximum number of characters the execution may emit
    */
   private constructor(
     public readonly contexts: object[],
@@ -44,7 +56,33 @@ export class Execution {
     public readonly data: object,
     public readonly maxExecutionMillis: number,
     public readonly allowDefaultHelpers: boolean,
+    public readonly maxStatements: number = Infinity,
+    public readonly maxOutputLength: number = Infinity,
   ) {}
+
+  /**
+   * Accounts for one executed statement, enforcing the time and statement
+   * budgets. Called at the top of every statement.
+   */
+  public tick() {
+    if (this.elapsedMillis > this.maxExecutionMillis) {
+      throw new Error(`Execution time limit exceeded`);
+    }
+
+    if (++this.statementCount > this.maxStatements) {
+      throw new Error(`Execution statement limit exceeded`);
+    }
+  }
+
+  /**
+   * Accounts for `length` emitted characters, enforcing the output budget.
+   */
+  public addOutput(length: number) {
+    this.outputLength += length;
+    if (this.outputLength > this.maxOutputLength) {
+      throw new Error(`Output length limit exceeded`);
+    }
+  }
 
   /**
    * Current context to be used by path expressions.
@@ -181,6 +219,8 @@ export class Execution {
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       options.maxExecutionMillis || Infinity,
       options.allowDefaultHelpers ?? true,
+      options.maxStatements ?? Infinity,
+      options.maxOutputLength ?? Infinity,
     );
   }
 }

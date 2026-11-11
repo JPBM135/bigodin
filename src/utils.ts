@@ -1,7 +1,13 @@
 export const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype', 'hasOwnProperty']);
 
+// Maximum nesting depth of a context object. The clone is recursive, so an
+// absurdly deep context would otherwise surface as an opaque stack overflow.
+export const MAX_CONTEXT_DEPTH = 1_000;
+
 export function deepCloneNullPrototype(obj: object): object {
-  return cloneValue(obj, new WeakMap()) as object;
+  // A function as the root context is treated as an empty context, like every
+  // other function value in the clone.
+  return (cloneValue(obj, new WeakMap(), 0) ?? Object.create(null)) as object;
 }
 
 // Record an `original -> clone` mapping for the cycle guard, and also
@@ -15,7 +21,16 @@ function track<T extends object>(seen: WeakMap<object, unknown>, original: objec
   return clone;
 }
 
-function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
+function cloneValue(value: unknown, seen: WeakMap<object, unknown>, depth: number): unknown {
+  // Functions never enter the clone. Templates must not be able to read them
+  // (rendering one leaks its source code) and the runner must not call them: a
+  // function-valued `then` would otherwise turn its owner into a thenable that
+  // the async runner invokes, or waits on forever. Helpers are the only
+  // callable surface.
+  if (typeof value === 'function') {
+    return undefined;
+  }
+
   if (value === null || typeof value !== 'object') {
     return value;
   }
@@ -29,10 +44,16 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
     return existing;
   }
 
+  if (depth > MAX_CONTEXT_DEPTH) {
+    throw new Error(`Context is nested too deeply, the limit is ${MAX_CONTEXT_DEPTH} levels`);
+  }
+
+  const next = depth + 1;
+
   if (Array.isArray(value)) {
     const clone = track(seen, value, [] as unknown[]);
     for (const element of value) {
-      clone.push(cloneValue(element, seen));
+      clone.push(cloneValue(element, seen, next));
     }
 
     return clone;
@@ -89,7 +110,7 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   if (value instanceof Map) {
     const clone = track(seen, value, new Map<unknown, unknown>());
     for (const [key, val] of value) {
-      clone.set(cloneValue(key, seen), cloneValue(val, seen));
+      clone.set(cloneValue(key, seen, next), cloneValue(val, seen, next));
     }
 
     return clone;
@@ -98,7 +119,7 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
   if (value instanceof Set) {
     const clone = track(seen, value, new Set<unknown>());
     for (const element of value) {
-      clone.add(cloneValue(element, seen));
+      clone.add(cloneValue(element, seen, next));
     }
 
     return clone;
@@ -124,12 +145,17 @@ function cloneValue(value: unknown, seen: WeakMap<object, unknown>): unknown {
       Object.defineProperty(clone, key, {
         enumerable: true,
         configurable: true,
-        get: () => (memo ??= { value: cloneValue(getter(), seen) }).value,
+        get: () => (memo ??= { value: cloneValue(getter(), seen, next) }).value,
       });
       continue;
     }
 
-    clone[key] = cloneValue(source[key], seen);
+    const property = source[key];
+    if (typeof property === 'function') {
+      continue;
+    }
+
+    clone[key] = cloneValue(property, seen, next);
   }
 
   return clone;

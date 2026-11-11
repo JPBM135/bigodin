@@ -5,15 +5,17 @@ sidebar_position: 3
 
 **Problem.** You are rendering templates submitted by end users. A buggy or hostile template can spin in a helper, recurse pathologically, or allocate enough output to be a denial-of-service vector. You need a hard ceiling on render time and a way to stop early on business conditions.
 
-**Three knobs, three audiences.**
+**Five knobs, three audiences.**
 
 | Knob                 | Who controls it      | When to use                                                                   |
 | -------------------- | -------------------- | ----------------------------------------------------------------------------- |
 | `maxExecutionMillis` | The host application | Hard wall-clock budget on hostile or untrusted input                          |
+| `maxStatements`      | The host application | Deterministic cap on work, the reliable guard against nested-loop blowups     |
+| `maxOutputLength`    | The host application | Cap on the size of the rendered string                                        |
 | `this.halt()`        | A custom helper      | Programmatic early exit on a business condition (e.g. "user is rate-limited") |
 | `{{return}}`         | The template author  | Cooperative early exit baked into the template                                |
 
-You typically combine them: `maxExecutionMillis` as the outer fence, helpers and `{{return}}` for in-band control flow.
+You typically combine them: `maxExecutionMillis`, `maxStatements` and `maxOutputLength` as the outer fence, helpers and `{{return}}` for in-band control flow.
 
 ## Recipe: hard wall-clock budget
 
@@ -38,6 +40,22 @@ try {
 ```
 
 The check sits between statements, so a single helper that takes longer than the budget will still complete (the budget catches the _next_ statement). For real isolation against runaway helpers, also wrap the whole render in a `Promise.race` with a timeout, or run the render in a worker.
+
+## Recipe: deterministic work and output budgets
+
+A wall-clock budget depends on machine load. Nested sections multiply work (each level of `{{#each}}` over the same array multiplies the iteration count), so for untrusted templates also cap the work itself:
+
+```javascript
+const template = bigodin.compile(userTemplate);
+
+await template(context, {
+  maxStatements: 100_000, // statements executed, loop bodies counted per iteration
+  maxOutputLength: 1_000_000, // characters emitted
+  maxExecutionMillis: 500,
+});
+```
+
+The run rejects with `Execution statement limit exceeded` or `Output length limit exceeded`. Both are unlimited unless you set them.
 
 ## Recipe: programmatic early exit from a helper
 

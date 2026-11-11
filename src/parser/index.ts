@@ -52,6 +52,11 @@ const buildBlock = (
 
 export const VERSION = 5;
 
+// Maximum number of blocks that can be open at once. The post-parse passes and
+// the runner recurse once per level, so unbounded nesting would end in a stack
+// overflow instead of a parse error.
+export const MAX_BLOCK_DEPTH = 1_000;
+
 // Mustache spec compatibility: standalone-line whitespace stripping.
 // A "standalone tag" is one whose containing line has only the tag and
 // surrounding whitespace; in that case the entire line (leading whitespace
@@ -155,12 +160,15 @@ const stripStandaloneLines = (
 // Whitespace control (`~`). A `~` just inside a delimiter greedily removes all
 // contiguous whitespace on that side. These run as a post-parse pass, before
 // standalone-line stripping (which then skips `~`-handled sides).
+// `trimEnd`/`trimStart` strip the same character set as `\s` but in linear
+// time; `/\s+$/` backtracks quadratically on a long whitespace run that is
+// followed by a non-space character.
 const trimTextTail = (statement: TextStatement | null): void => {
-  if (statement) statement.value = statement.value.replace(/\s+$/, '');
+  if (statement) statement.value = statement.value.trimEnd();
 };
 
 const trimTextHead = (statement: TextStatement | null): void => {
-  if (statement) statement.value = statement.value.replace(/^\s+/, '');
+  if (statement) statement.value = statement.value.trimStart();
 };
 
 const applyWhitespaceControl = (stmts: Statement[]): void => {
@@ -389,6 +397,10 @@ export const $template = Pr.context('mustache', function* () {
             /* v8 ignore stop */
           }
 
+          if (stack.length > MAX_BLOCK_DEPTH) {
+            yield Pr.fail(`Blocks are nested too deeply, the limit is ${MAX_BLOCK_DEPTH} levels`);
+          }
+
           const blockParams = yield Pr.optional($blockParams);
           const block = buildBlock(open, expression, typeChar === '^');
           if (blockParams) {
@@ -523,6 +535,10 @@ export const $template = Pr.context('mustache', function* () {
           // if-branch tail, right-trim to the nested block's body head.
           // eslint-disable-next-line require-atomic-updates -- single-threaded generator; `top` is stable
           top.elseStatements = [];
+          if (stack.length > MAX_BLOCK_DEPTH) {
+            yield Pr.fail(`Blocks are nested too deeply, the limit is ${MAX_BLOCK_DEPTH} levels`);
+          }
+
           const nested = buildBlock(open, stmt.expression, false, true);
           stack.push(nested);
           annotate = (left, right) => {
