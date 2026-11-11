@@ -87,7 +87,7 @@ With context `{}` the output is `Hello, stranger!`.
 
 </details>
 
-Subexpressions can nest arbitrarily deep: `{{outer (mid (inner x) y) z}}`.
+Subexpressions can nest: `{{outer (mid (inner x) y) z}}`. Up to 100 levels of parentheses may be open at once inside a single tag; going deeper is a parse error (`Expressions are nested too deeply`).
 
 ## Hash arguments
 

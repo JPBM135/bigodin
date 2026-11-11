@@ -2,8 +2,10 @@
 /* eslint-disable unicorn/consistent-function-scoping */
 import { describe, it, expect } from 'vitest';
 import Bigodin, { compile, compileExpression, errorTag, isError, parse, run } from '../src';
-import { VERSION } from '../src/parser';
+import { MAX_BLOCK_DEPTH, VERSION } from '../src/parser';
+import { MAX_EXPRESSION_DEPTH } from '../src/parser/expression';
 import type { Execution } from '../src/runner/execution';
+import { MAX_CONTEXT_DEPTH } from '../src/utils';
 
 describe('security', () => {
   describe('SSTI tests', () => {
@@ -421,11 +423,52 @@ describe('security', () => {
       });
     }
 
-    it('NaN and missing version currently bypass the range check', async () => {
-      // Pin known quirk: the version check is `< MIN || > MAX`, both false for
-      // NaN/undefined. Captured here so a future tightening is intentional.
-      await expect(run(mkAst([], Number.NaN) as any, {}, new Map() as any)).resolves.toEqual('');
-      await expect(run(mkAst([], undefined) as any, {}, new Map() as any)).resolves.toEqual('');
+    for (const v of [Number.NaN, null, '5', 2.5, true]) {
+      it(`rejects forged AST with non-integer version ${String(v)}`, async () => {
+        await expect(run(mkAst([], v) as any, {}, new Map() as any)).rejects.toThrow(
+          /Unsupported AST version/,
+        );
+      });
+    }
+
+    it('rejects forged AST with a missing version', async () => {
+      const ast = { type: 'TEMPLATE', statements: [] };
+      await expect(run(ast as any, {}, new Map() as any)).rejects.toThrow(
+        /Unsupported AST version/,
+      );
+    });
+
+    it('forged VARIABLE cannot read Object.prototype members', async () => {
+      const bigodin = new Bigodin();
+      const seen: unknown[] = [];
+      bigodin.addHelper('spy', (value: unknown) => {
+        seen.push(value);
+        return '';
+      });
+      const ast = mkAst([
+        { type: 'VARIABLE', name: 'constructor' },
+        { type: 'VARIABLE', name: 'toString' },
+        {
+          type: 'EXPRESSION',
+          path: 'spy',
+          params: [{ type: 'VARIABLE', name: 'constructor' }],
+        },
+      ]);
+      expect(await bigodin.run(ast as any, {})).toEqual('');
+      expect(seen).toEqual([undefined]);
+    });
+
+    it('forged ASSIGNMENT to __proto__ stays a plain variable', async () => {
+      const ast = mkAst([
+        {
+          type: 'ASSIGNMENT',
+          variable: { type: 'VARIABLE', name: '__proto__' },
+          expression: { type: 'EXPRESSION', path: '$this', params: [] },
+        },
+        { type: 'VARIABLE', name: 'leak' },
+      ]);
+      expect(await run(ast as any, { leak: 'inherited' })).toEqual('');
+      expect(({} as any).leak).toBeUndefined();
     });
 
     it('forged LITERAL containing a function does not execute it', async () => {
@@ -596,6 +639,247 @@ describe('security', () => {
       const templ = bigodin.compile('{{check forged}} {{#if forged}}truthy{{/if}}');
       const forged = { [errorTag]: true, 'bigodin.error': true };
       expect(await templ({ forged })).toEqual('false truthy');
+    });
+  });
+  describe('functions in context', () => {
+    const secret = () => 'API_KEY=hunter2';
+
+    for (const template of [
+      '{{#items}}{{.}}{{/items}}',
+      '{{#items}}{{$this}}{{/items}}',
+      '{{items}}',
+      '{{#each items as |x|}}{{x}}{{/each}}',
+      '{{#each nested}}{{$this}}{{/each}}',
+      '{{#with holder as |h|}}{{h.fn}}{{/with}}',
+    ]) {
+      it(`does not render function source through ${template}`, async () => {
+        const res = await compile(template)({
+          items: [secret],
+          nested: [[secret]],
+          holder: { fn: secret },
+        });
+        expect(res).not.toContain('hunter2');
+        expect(res).not.toContain('=>');
+      });
+    }
+
+    it('keeps array positions when dropping function elements', async () => {
+      const res = await compile('{{#each items}}[{{@index}}:{{$this}}]{{/each}}')({
+        items: ['a', secret, 'c'],
+      });
+      expect(res).toEqual('[0:a][1:][2:c]');
+    });
+
+    it('does not hand context functions to helpers', async () => {
+      const bigodin = new Bigodin();
+      const seen: unknown[] = [];
+      bigodin.addHelper('spy', (value: any) => {
+        seen.push(value.fn, value.list[0], value.map.get('k'), 'fn' in value);
+        return '';
+      });
+      await bigodin.compile('{{spy obj}}')({
+        obj: { fn: secret, list: [secret], map: new Map([['k', secret]]) },
+      });
+      expect(seen).toEqual([undefined, undefined, undefined, false]);
+    });
+
+    it('hides own function properties of helper-returned objects', async () => {
+      const bigodin = new Bigodin().addHelper('make', () => ({ fn: secret, name: 'n' }));
+      expect(await bigodin.compile('{{#with (make)}}[{{fn}}{{name}}]{{/with}}')({})).toEqual('[n]');
+    });
+
+    it('strips functions returned by context getters', async () => {
+      const ctx = {
+        get lazy() {
+          return secret;
+        },
+      };
+      expect(await compile('[{{lazy}}]')(ctx)).toEqual('[]');
+    });
+
+    it('treats a function root context as empty', async () => {
+      expect(await compile('[{{name}}{{.}}]')(secret as any)).toEqual('[[object Object]]');
+    });
+
+    it('never invokes a function-valued `then` in context', async () => {
+      let called = 0;
+      const thenable = {
+        // eslint-disable-next-line unicorn/no-thenable
+        then(resolve: (value: string) => void) {
+          called++;
+          resolve('PWNED');
+        },
+        label: 'ok',
+      };
+      const res = await compile('{{a.label}}{{a}}{{#with a}}{{label}}{{/with}}')({ a: thenable });
+      expect(called).toEqual(0);
+      expect(res).toEqual('ok[object Object]ok');
+    });
+
+    it('a never-settling `then` in context cannot hang the render', async () => {
+      // eslint-disable-next-line unicorn/no-thenable
+      const ctx = { a: { then() {} } };
+      const res = await compile('[{{a}}]')(ctx, { maxExecutionMillis: 1_000 });
+      expect(res).toEqual('[[object Object]]');
+    });
+  });
+
+  describe('execution budgets', () => {
+    // 2^depth iterations out of a template that is only ~25 * depth characters.
+    const bomb = (depth: number, body: string) =>
+      '{{#$root.a}}'.repeat(depth) + body + '{{/$root.a}}'.repeat(depth);
+
+    it('maxStatements stops an exponential nested-section template', async () => {
+      const templ = compile(bomb(40, 'x'));
+      await expect(templ({ a: [1, 2] }, { maxStatements: 10_000 })).rejects.toThrow(
+        /Execution statement limit exceeded/,
+      );
+    });
+
+    it('maxStatements also bounds templates that emit nothing', async () => {
+      const templ = compile(bomb(40, ''));
+      await expect(templ({ a: [1, 2] }, { maxStatements: 10_000 })).rejects.toThrow(
+        /Execution statement limit exceeded/,
+      );
+    });
+
+    it('maxStatements counts sub-expressions and allows runs within budget', async () => {
+      const bigodin = new Bigodin().addHelper('id', (value: unknown) => value);
+      // MUSTACHE + EXPRESSION + LITERAL
+      const templ = bigodin.compile('{{id 1}}');
+      expect(await templ({}, { maxStatements: 3 })).toEqual('1');
+      await expect(templ({}, { maxStatements: 2 })).rejects.toThrow(
+        /Execution statement limit exceeded/,
+      );
+    });
+
+    it('maxOutputLength stops an output bomb', async () => {
+      const templ = compile(bomb(40, 'xxxxxxxxxx'));
+      await expect(templ({ a: [1, 2] }, { maxOutputLength: 1_000 })).rejects.toThrow(
+        /Output length limit exceeded/,
+      );
+    });
+
+    it('maxOutputLength counts block output once and is inclusive', async () => {
+      const templ = compile('{{#each a}}{{#each $root.a}}ab{{/each}}{{/each}}');
+      expect(await templ({ a: [1, 2] }, { maxOutputLength: 8 })).toEqual('abababab');
+      await expect(templ({ a: [1, 2] }, { maxOutputLength: 7 })).rejects.toThrow(
+        /Output length limit exceeded/,
+      );
+    });
+
+    it('maxOutputLength counts rendered values, not just template text', async () => {
+      const templ = compile('{{big}}');
+      await expect(templ({ big: 'x'.repeat(100) }, { maxOutputLength: 99 })).rejects.toThrow(
+        /Output length limit exceeded/,
+      );
+      expect(await templ({ big: [1, 2, 3] }, { maxOutputLength: 5 })).toEqual('1,2,3');
+    });
+
+    it('budgets apply to compileExpression too', async () => {
+      const bigodin = new Bigodin().addHelper('id', (value: unknown) => value);
+      const expr = bigodin.compileExpression('id (id (id 1))');
+      await expect(expr({}, { maxStatements: 2 })).rejects.toThrow(
+        /Execution statement limit exceeded/,
+      );
+    });
+  });
+
+  describe('parser resource limits', () => {
+    it('whitespace control trims long whitespace runs in linear time', () => {
+      // `/\s+$/` took seconds on this input; trimEnd is effectively instant.
+      const spaces = ' '.repeat(200_000);
+      const start = Date.now();
+      const ast = parse(`x${spaces}y{{~a~}}z${spaces}`);
+      expect(Date.now() - start).toBeLessThan(2_000);
+      expect((ast.statements[0] as any).value).toEqual(`x${spaces}y`);
+      expect((ast.statements[2] as any).value).toEqual(`z${spaces}`);
+    });
+
+    it('whitespace control still strips every whitespace kind', async () => {
+      const ws = [0x20, 0x09, 0x0d, 0x0a, 0xa0, 0x2028, 0xfeff]
+        .map((code) => String.fromCodePoint(code))
+        .join('');
+      expect(await compile(`a${ws}{{~x~}}${ws}b`)({ x: '-' })).toEqual('a-b');
+    });
+
+    it('accepts blocks nested up to the limit and rejects one more', () => {
+      const nest = (depth: number) => '{{#a}}'.repeat(depth) + '{{/a}}'.repeat(depth);
+      expect(() => parse(nest(MAX_BLOCK_DEPTH))).not.toThrow();
+      expect(() => parse(nest(MAX_BLOCK_DEPTH + 1))).toThrow(/Blocks are nested too deeply/);
+    });
+
+    it('counts {{else if}} chains towards the block nesting limit', () => {
+      const chain = (links: number) => `{{#if a}}${'{{else if a}}'.repeat(links)}{{/if}}`;
+      expect(() => parse(chain(MAX_BLOCK_DEPTH - 1))).not.toThrow();
+      expect(() => parse(chain(MAX_BLOCK_DEPTH))).toThrow(/Blocks are nested too deeply/);
+    });
+
+    it('accepts sub-expressions nested up to the limit and runs them', async () => {
+      const bigodin = new Bigodin().addHelper('id', (value: unknown) => value);
+      const nest = (depth: number) => `{{id ${'(id '.repeat(depth)}7${')'.repeat(depth)}}}`;
+      expect(await bigodin.compile(nest(MAX_EXPRESSION_DEPTH))({})).toEqual('7');
+      expect(() => bigodin.parse(nest(MAX_EXPRESSION_DEPTH + 1))).toThrow(
+        /Expressions are nested too deeply/,
+      );
+    });
+
+    it('limits sub-expressions that open an expression', () => {
+      const nest = (depth: number) => `{{${'('.repeat(depth)}id 7${')'.repeat(depth)}}}`;
+      expect(() => parse(nest(MAX_EXPRESSION_DEPTH))).not.toThrow();
+      expect(() => parse(nest(MAX_EXPRESSION_DEPTH + 1))).toThrow(
+        /Expressions are nested too deeply/,
+      );
+    });
+  });
+
+  describe('recursion guards', () => {
+    it('renders a self-referencing array without overflowing', async () => {
+      const a: unknown[] = [1];
+      a.push(a, 2);
+      expect(await compile('{{a}}')({ a })).toEqual('1,,2');
+    });
+
+    it('renders an array that repeats a non-cyclic child every time', async () => {
+      const child = [1, 2];
+      expect(await compile('{{a}}')({ a: [child, child] })).toEqual('1,2,1,2');
+    });
+
+    it('rejects a context nested beyond the limit with a clear error', async () => {
+      const nest = (depth: number) => {
+        let ctx: any = {};
+        for (let idx = 0; idx < depth; idx++) {
+          ctx = { n: ctx };
+        }
+
+        return ctx;
+      };
+
+      expect(await compile('ok')(nest(MAX_CONTEXT_DEPTH))).toEqual('ok');
+      await expect(compile('ok')(nest(MAX_CONTEXT_DEPTH + 1))).rejects.toThrow(
+        /Context is nested too deeply/,
+      );
+    });
+  });
+
+  describe('helper registry', () => {
+    for (const name of ['__proto__', 'constructor', 'prototype', 'hasOwnProperty']) {
+      it(`addHelper rejects the unsafe name ${name}`, () => {
+        expect(() => new Bigodin().addHelper(name, () => 'x')).toThrow(/not allowed/);
+      });
+    }
+
+    it('allowDefaultHelpers: false frees built-in names for context paths', async () => {
+      const ctx = { if: 'I', each: 'E', with: 'W', unless: 'U', return: 'R' };
+      const templ = compile('{{if}}{{each}}{{with}}{{unless}}{{return}}');
+      expect(await templ(ctx, { allowDefaultHelpers: false })).toEqual('IEWUR');
+    });
+
+    it('allowDefaultHelpers: false still prefers a registered helper', async () => {
+      const bigodin = new Bigodin().addHelper('if', () => 'custom');
+      expect(
+        await bigodin.compile('{{if}}')({ if: 'ctx' }, { allowDefaultHelpers: false }),
+      ).toEqual('custom');
     });
   });
 });

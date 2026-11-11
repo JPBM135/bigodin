@@ -80,14 +80,36 @@ Same as `parse` / `run` / `compile`, but for a single expression rather than a f
 ```typescript
 interface RunOptions {
   maxExecutionMillis?: number;
+  maxStatements?: number;
+  maxOutputLength?: number;
   data?: Record<string, unknown>;
   allowDefaultHelpers?: boolean;
 }
 ```
 
 - **`maxExecutionMillis`** is checked at the top of every statement. When exceeded, the run throws. Use this to bound runtime on hostile input. See [Bound execution time](/docs/how-to/bound-execution-time).
+- **`maxStatements`** caps how many statements a run may execute (every text, mustache, block, sub-expression and loop iteration body counts). When exceeded, the run throws `Execution statement limit exceeded`. Unlike the wall-clock budget it is deterministic, so it is the reliable guard against templates that nest loops to multiply work. Unlimited by default.
+- **`maxOutputLength`** caps the number of characters a run may emit. When exceeded, the run throws `Output length limit exceeded`. Unlimited by default.
 - **`data`** is a side channel passed to helpers as `this.data`. Templates **cannot** read it; helpers may mutate it to surface structured data back to your code. See [Async helpers](/docs/how-to/async-helpers).
 - **`allowDefaultHelpers`** defaults to `true`. Set to `false` to disable the bundled block helpers (`if`, `unless`, `with`, `each`, `return`). Helpers added via `addHelper` always run.
+
+## Built-in limits
+
+Separate from the opt-in budgets above, a few structural limits are always on. They are fixed and not configurable; each turns input that would otherwise overflow the call stack into an ordinary error.
+
+| Limit                                | Value | Enforced by             | Error message                                                |
+| ------------------------------------ | ----- | ----------------------- | ------------------------------------------------------------ |
+| Blocks open at once                  | 1,000 | `parse` / `compile`     | `Blocks are nested too deeply, the limit is 1000 levels`     |
+| Nested sub-expressions `(a (b (c)))` | 100   | `parse` / `compile`     | `Expressions are nested too deeply, the limit is 100 levels` |
+| Context object nesting               | 1,000 | `run` / `runExpression` | `Context is nested too deeply, the limit is 1000 levels`     |
+
+- **Block nesting** counts every block that is open at the same point of the template. Each `{{else if}}` link in a chain counts as one open block until the chain's closing tag. Sibling blocks do not accumulate.
+- **Sub-expression nesting** counts parentheses open at once inside a single mustache, block head or assignment. Arguments side by side do not accumulate.
+- **Context nesting** counts levels of objects, arrays, `Map`s and `Set`s inside each other, starting at the root context. It is checked while the context is cloned, so the run rejects before any statement executes. A circular reference is not deep nesting: it resolves to the same clone and never hits the limit.
+
+The parse limits are reported like any other parse error, with line and column. The values are exported for reference as `MAX_BLOCK_DEPTH` (`src/parser/index.ts`), `MAX_EXPRESSION_DEPTH` (`src/parser/expression.ts`) and `MAX_CONTEXT_DEPTH` (`src/utils.ts`); they are not part of the package's public entry point.
+
+Template length itself is not limited. If you accept templates from users, reject oversized input before calling `parse`.
 
 ## `Execution` (the helper `this`)
 

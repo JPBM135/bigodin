@@ -19,4 +19,22 @@ export interface BigodinOptions {
    * @type {number}
    */
   maxExecutionMillis?: number;
+
+  /**
+   * Maximum length, in characters, of the rendered output. The run rejects
+   * once the template has emitted more than this. Unlimited by default.
+   *
+   * @type {number}
+   */
+  maxOutputLength?: number;
+
+  /**
+   * Maximum number of statements a run may execute. Every text, mustache,
+   * block, sub-expression and loop iteration body counts. This bounds the
+   * work of a template deterministically, independent of machine speed.
+   * Unlimited by default.
+   *
+   * @type {number}
+   */
+  maxStatements?: number;
 }

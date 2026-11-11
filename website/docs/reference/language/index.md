@@ -40,4 +40,13 @@ This section is a reference for the template-side syntax. For the host-side API 
 - [Context blocks](/docs/language/context-blocks): pushing context, walking with `$parent` / `$root` / `$this`
 - [Variables](/docs/language/variables): `{{= $name value}}` and reuse across statements
 
+## Limits
+
+Two nesting limits apply to every template. Exceeding either is a parse error with line and column, like any other syntax error:
+
+- At most **1,000 blocks open at once**. Each `{{else if}}` link in a chain counts as one until the chain is closed.
+- At most **100 nested sub-expressions** (`{{a (b (c ...))}}`) inside a single tag.
+
+Real templates do not come close to either; the limits exist so that hostile input fails cleanly. See [Built-in limits](/docs/lib#built-in-limits) for the full list, including the context-depth limit applied at run time.
+
 If you are coming from Mustache, also read [Migrate from Mustache](/docs/how-to/migrate-from-mustache) for a list of behavioral differences.
