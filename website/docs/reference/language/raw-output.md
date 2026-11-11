@@ -40,4 +40,6 @@ Non-string values are coerced before emission:
 | Array                | `arr.join(',')` (rare; usually you want a loop)             |
 | Object               | `[object Object]` (rare; usually you want a path or helper) |
 
+Array elements are coerced by the same rules: `null`, `undefined` and helper errors become empty, and nested arrays are joined recursively (`[1, [2, 3]]` renders `1,2,3`). An array that contains itself renders an empty string at the point of the cycle, so it can never recurse forever: for `a = [1]; a.push(a, 2)`, `{{a}}` emits `1,,2`.
+
 If you need a specific format for a value, route it through a helper (`{{currency amount}}`, `{{date created_at}}`).

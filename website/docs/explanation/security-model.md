@@ -31,6 +31,8 @@ The library has zero `eval`, zero `new Function`, zero `vm` module use. You can 
 
 **Runaway helpers and templates.** `RunOptions.maxExecutionMillis` is checked at the top of every statement. `this.halt()` and `{{return}}` give cooperative early exit. Together they bound how much work a hostile template can do; see [Bound execution time](/docs/how-to/bound-execution-time).
 
+**Stack exhaustion.** Block nesting, sub-expression nesting and context depth are capped, and array rendering guards against cycles, so pathological input produces a normal error instead of a `RangeError` from deep recursion. See [Built-in limits](/docs/lib#built-in-limits).
+
 **Persisted-AST drift.** If the AST shape changes between releases, old persisted ASTs are rejected at run time rather than silently misinterpreted. See [The AST contract](/docs/explanation/ast-and-versioning).
 
 ## What this does not defend against
@@ -69,15 +71,15 @@ Only own, enumerable, non-function data. That has consequences worth knowing:
 
 A naive null-prototype copy would erase any object that stores its data outside enumerable string keys: a `Date` would become `{}`, a `Uint8Array` would become `{0: …, 1: …}`. Bigodin special-cases these and clones them **by value**, so helpers receive a real, working instance:
 
-| Context value | Clone receives | Template sees |
-| --- | --- | --- |
-| `Date` | a copied `Date` | `[object Date]` (methods are prototype-resident, so hidden) |
-| `RegExp` | a copied `RegExp` | `[object RegExp]` |
-| `URL` | a copied `URL` | `[object URL]` |
-| `Map` / `Set` | a deep-cloned `Map` / `Set` | nothing (`.size`, `.get`, etc. are prototype members) |
-| `TypedArray` (`Uint8Array`, …) | a copy of the same subclass | per-index bytes (own props), nothing else |
-| `DataView` / `ArrayBuffer` | a byte-for-byte copy | nothing |
-| Node `Buffer` | a `Uint8Array` copy (see below) | per-index bytes |
+| Context value                  | Clone receives                  | Template sees                                               |
+| ------------------------------ | ------------------------------- | ----------------------------------------------------------- |
+| `Date`                         | a copied `Date`                 | `[object Date]` (methods are prototype-resident, so hidden) |
+| `RegExp`                       | a copied `RegExp`               | `[object RegExp]`                                           |
+| `URL`                          | a copied `URL`                  | `[object URL]`                                              |
+| `Map` / `Set`                  | a deep-cloned `Map` / `Set`     | nothing (`.size`, `.get`, etc. are prototype members)       |
+| `TypedArray` (`Uint8Array`, …) | a copy of the same subclass     | per-index bytes (own props), nothing else                   |
+| `DataView` / `ArrayBuffer`     | a byte-for-byte copy            | nothing                                                     |
+| Node `Buffer`                  | a `Uint8Array` copy (see below) | per-index bytes                                             |
 
 The guarantee is uniform: the **value** survives for your helpers, but the **methods** do not become reachable from a template, because they live on the prototype and `lookupOwnValue` only ever returns own properties.
 
@@ -86,6 +88,8 @@ The guarantee is uniform: the **value** survives for your helpers, but the **met
 ### Circular references and getters
 
 - **Circular references are safe.** The clone tracks objects it has already started copying, so `obj.self = obj` resolves to the same clone (`clone.self === clone`) instead of overflowing the stack.
+- **A self-referencing array renders the cycle as empty.** Interpolating an array joins its elements with commas, recursing into nested arrays. Where an array contains itself, that position renders as an empty string, the same result `Array.prototype.join` gives: for `a = [1]; a.push(a, 2)`, `{{a}}` emits `1,,2`. An array that merely appears twice is not a cycle and renders both times.
+- **Deep nesting is rejected, not overflowed.** A context nested more than 1,000 levels deep fails the run with `Context is nested too deeply` before any statement executes. See [Built-in limits](/docs/lib#built-in-limits).
 - **Getters are evaluated lazily.** An enumerable getter on a context object is not invoked at clone time; it runs only if a template actually reads that key, and its result is stripped like any other value. A getter the template never references never fires, so there are no surprise side effects, and a throwing getter does not break a render that does not touch it.
 
 ## Why no compilation, even as an opt-in?
@@ -102,7 +106,7 @@ Bigodin gives you a sandbox. You decide what is in it.
 - **Helper allow-listing.** If you let users name the helpers they call, allow-list the names. Bigodin will happily call any helper you registered.
 - **Output escaping.** For HTML output, escape every untrusted value with a helper.
 - **Execution budgets.** For untrusted templates, set `maxStatements`, `maxOutputLength` and `maxExecutionMillis`. The first two are deterministic; the wall-clock budget is a backstop. See [Bound execution time](/docs/how-to/bound-execution-time).
-- **Template size.** Parsing is linear in template length, and nesting is capped (1,000 open blocks, 100 nested sub-expressions), but Bigodin does not cap the length itself. Reject oversized templates before parsing.
+- **Template size.** Parsing is linear in template length, and nesting is capped (1,000 open blocks, 100 nested sub-expressions; see [Built-in limits](/docs/lib#built-in-limits)), but Bigodin does not cap the length itself. Reject oversized templates before parsing.
 - **AST validation if you accept ASTs over the wire.** A persisted AST is a trusted artifact in Bigodin's model. If you accept ASTs from untrusted sources (rather than parsing source you received), validate the shape before running.
 
 ## Related
